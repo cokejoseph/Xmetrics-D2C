@@ -1,7 +1,5 @@
 import { useState, useEffect } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
-import { useAuthStore } from '../../stores/authStore'
-import { useAppStore } from '../../stores/appStore'
+import { Link } from 'react-router-dom'
 import {
   TrendingDown, Package, Zap, BarChart3, Bell, MessageSquare,
   Check, ChevronDown, ChevronUp, ArrowRight, Shield, Clock,
@@ -113,10 +111,6 @@ function FaqItem({ q, a }: { q: string; a: string }) {
 
 // ─── Main Landing Page ────────────────────────────────────────────────────────
 export default function LandingPage() {
-  const navigate = useNavigate()
-  const { loginAsDemo } = useAuthStore()
-  const { bootstrap } = useAppStore()
-
   // Landing page is always light — strip dark class while here, restore on leave
   useEffect(() => {
     const html = document.documentElement
@@ -124,12 +118,6 @@ export default function LandingPage() {
     html.classList.remove('dark')
     return () => { if (wasDark) html.classList.add('dark') }
   }, [])
-
-  const handleDemo = () => {
-    loginAsDemo()
-    bootstrap('user-demo-001')
-    navigate('/dashboard')
-  }
 
   return (
     <div className="min-h-screen bg-white font-sans">
@@ -202,12 +190,12 @@ export default function LandingPage() {
             >
               Start Free Trial <ArrowRight size={16} />
             </Link>
-            <button
-              onClick={handleDemo}
+            <Link
+              to="/login"
               className="flex items-center gap-2 bg-white/10 border border-white/25 text-white font-medium px-8 py-3.5 rounded-xl hover:bg-white/20 transition-colors text-sm"
             >
-              View Live Demo →
-            </button>
+              Sign In →
+            </Link>
           </div>
 
           <p className="mt-5 text-white/40 text-xs">No credit card required · 14-day free trial · Cancel anytime</p>
@@ -491,12 +479,6 @@ export default function LandingPage() {
             >
               Start Free Trial <ArrowRight size={16} />
             </Link>
-            <button
-              onClick={handleDemo}
-              className="flex items-center gap-2 bg-white/10 border border-white/25 text-white font-medium px-8 py-3.5 rounded-xl hover:bg-white/20 transition-colors text-sm"
-            >
-              View Live Demo →
-            </button>
           </div>
         </div>
       </section>
