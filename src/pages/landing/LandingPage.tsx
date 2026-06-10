@@ -1,10 +1,45 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { Link } from 'react-router-dom'
 import {
   TrendingDown, Package, Zap, BarChart3, Bell, MessageSquare,
   Check, ChevronDown, ChevronUp, ArrowRight, Shield, Clock,
   Truck, ShoppingCart, AlertTriangle, BarChart2, Users,
 } from 'lucide-react'
+
+// ─── Scroll-triggered fade-in wrapper ────────────────────────────────────────
+function AnimateIn({
+  children,
+  className = '',
+  delay = 0,
+}: {
+  children: React.ReactNode
+  className?: string
+  delay?: number
+}) {
+  const ref = useRef<HTMLDivElement>(null)
+  const [visible, setVisible] = useState(false)
+
+  useEffect(() => {
+    const el = ref.current
+    if (!el) return
+    const obs = new IntersectionObserver(
+      ([entry]) => { if (entry.isIntersecting) { setVisible(true); obs.disconnect() } },
+      { threshold: 0.1 }
+    )
+    obs.observe(el)
+    return () => obs.disconnect()
+  }, [])
+
+  return (
+    <div
+      ref={ref}
+      className={`${className} ${visible ? 'animate-fade-in-up' : 'opacity-0'}`}
+      style={delay ? { animationDelay: `${delay}ms` } : undefined}
+    >
+      {children}
+    </div>
+  )
+}
 
 // ─── FAQ data ─────────────────────────────────────────────────────────────────
 const FAQS = [
@@ -34,7 +69,7 @@ const FAQS = [
   },
 ]
 
-// ─── Pricing plans ─────────────────────────────────────────────────────────────
+// ─── Pricing plans ────────────────────────────────────────────────────────────
 const PLANS = [
   {
     name: 'Growth',
@@ -101,7 +136,7 @@ function FaqItem({ q, a }: { q: string; a: string }) {
           : <ChevronDown size={16} className="shrink-0 text-gray-400" />}
       </div>
       {open && (
-        <div className="px-6 pb-5 text-sm text-gray-600 leading-relaxed border-t border-gray-50">
+        <div className="px-6 pb-5 text-sm text-gray-600 leading-relaxed border-t border-gray-50 animate-fade-in">
           <div className="pt-3">{a}</div>
         </div>
       )}
@@ -123,35 +158,24 @@ export default function LandingPage() {
     <div className="min-h-screen bg-white font-sans">
 
       {/* ── NAVBAR ─────────────────────────────────────────────────────── */}
-      <nav className="fixed top-0 inset-x-0 z-50 bg-white/90 backdrop-blur border-b border-gray-100">
+      <nav className="fixed top-0 inset-x-0 z-50 bg-white/90 backdrop-blur border-b border-gray-100 animate-fade-in">
         <div className="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
-          {/* Logo */}
           <div className="flex items-center gap-2.5">
             <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-brand-500 to-brand-700 flex items-center justify-center shadow-sm">
               <span className="text-white font-bold text-sm">C</span>
             </div>
             <span className="font-semibold text-gray-900 text-lg">Centinal</span>
           </div>
-
-          {/* Nav links */}
           <div className="hidden md:flex items-center gap-8 text-sm text-gray-600">
             <a href="#features" className="hover:text-gray-900 transition-colors">Features</a>
             <a href="#pricing" className="hover:text-gray-900 transition-colors">Pricing</a>
             <a href="#faq" className="hover:text-gray-900 transition-colors">FAQ</a>
           </div>
-
-          {/* CTA */}
           <div className="flex items-center gap-3">
-            <Link
-              to="/login"
-              className="text-sm font-medium text-gray-600 hover:text-gray-900 transition-colors"
-            >
+            <Link to="/login" className="text-sm font-medium text-gray-600 hover:text-gray-900 transition-colors">
               Sign In
             </Link>
-            <Link
-              to="/signup"
-              className="text-sm font-semibold bg-brand-600 text-white px-4 py-2 rounded-xl hover:bg-brand-500 transition-colors shadow-sm"
-            >
+            <Link to="/signup" className="text-sm font-semibold bg-brand-600 text-white px-4 py-2 rounded-xl hover:bg-brand-500 transition-all shadow-sm hover:shadow-md hover:-translate-y-px">
               Get Started
             </Link>
           </div>
@@ -160,45 +184,66 @@ export default function LandingPage() {
 
       {/* ── HERO ───────────────────────────────────────────────────────── */}
       <section className="pt-32 pb-24 bg-brand-gradient text-white relative overflow-hidden">
-        {/* Subtle grid overlay */}
         <div
           className="absolute inset-0 opacity-[0.04]"
           style={{ backgroundImage: 'radial-gradient(circle, white 1px, transparent 1px)', backgroundSize: '32px 32px' }}
         />
-
         <div className="relative max-w-4xl mx-auto px-6 text-center">
-          <div className="inline-flex items-center gap-2 bg-white/10 border border-white/20 rounded-full px-4 py-1.5 text-xs font-medium mb-8">
+
+          {/* Badge — load anim */}
+          <div
+            className="inline-flex items-center gap-2 bg-white/10 border border-white/20 rounded-full px-4 py-1.5 text-xs font-medium mb-8 animate-fade-in-up"
+            style={{ animationDelay: '0ms' }}
+          >
             <Zap size={12} className="text-brand-300" />
             Built for Indian D2C brands
           </div>
 
-          <h1 className="text-4xl sm:text-5xl md:text-6xl font-bold leading-tight tracking-tight mb-6">
+          {/* Headline */}
+          <h1
+            className="text-4xl sm:text-5xl md:text-6xl font-bold leading-tight tracking-tight mb-6 animate-fade-in-up"
+            style={{ animationDelay: '80ms' }}
+          >
             The Operations Command&nbsp;Centre
             <br />
             <span className="text-brand-300">for D2C Brands</span>
           </h1>
 
-          <p className="text-lg text-white/70 max-w-2xl mx-auto mb-10 leading-relaxed">
+          {/* Subheading */}
+          <p
+            className="text-lg text-white/70 max-w-2xl mx-auto mb-10 leading-relaxed animate-fade-in-up"
+            style={{ animationDelay: '160ms' }}
+          >
             Stop losing 30% of revenue to RTO. Centinal gives you real-time order intelligence,
             automated exception alerts, and AI-powered RTO prevention — all in one place.
           </p>
 
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+          {/* CTAs */}
+          <div
+            className="flex flex-col sm:flex-row items-center justify-center gap-4 animate-fade-in-up"
+            style={{ animationDelay: '240ms' }}
+          >
             <Link
               to="/signup"
-              className="flex items-center gap-2 bg-white text-brand-700 font-semibold px-8 py-3.5 rounded-xl hover:bg-brand-50 transition-colors shadow-lg text-sm"
+              className="flex items-center gap-2 bg-white text-brand-700 font-semibold px-8 py-3.5 rounded-xl hover:bg-brand-50 transition-all shadow-lg hover:shadow-xl hover:-translate-y-0.5 text-sm"
             >
               Start Free Trial <ArrowRight size={16} />
             </Link>
             <Link
               to="/login"
-              className="flex items-center gap-2 bg-white/10 border border-white/25 text-white font-medium px-8 py-3.5 rounded-xl hover:bg-white/20 transition-colors text-sm"
+              className="flex items-center gap-2 bg-white/10 border border-white/25 text-white font-medium px-8 py-3.5 rounded-xl hover:bg-white/20 transition-all text-sm"
             >
               Sign In →
             </Link>
           </div>
 
-          <p className="mt-5 text-white/40 text-xs">No credit card required · 14-day free trial · Cancel anytime</p>
+          {/* Fine print */}
+          <p
+            className="mt-5 text-white/40 text-xs animate-fade-in"
+            style={{ animationDelay: '360ms' }}
+          >
+            No credit card required · 14-day free trial · Cancel anytime
+          </p>
         </div>
       </section>
 
@@ -210,11 +255,11 @@ export default function LandingPage() {
             { value: '₹2.4L', label: 'Saved per 1,000 orders' },
             { value: '8 min', label: 'Daily ops review' },
             { value: '99.9%', label: 'Platform uptime' },
-          ].map(s => (
-            <div key={s.value}>
+          ].map((s, i) => (
+            <AnimateIn key={s.value} delay={i * 80}>
               <p className="text-3xl font-bold text-brand-400 mb-1">{s.value}</p>
               <p className="text-sm text-gray-400">{s.label}</p>
-            </div>
+            </AnimateIn>
           ))}
         </div>
       </section>
@@ -222,7 +267,7 @@ export default function LandingPage() {
       {/* ── PROBLEM ────────────────────────────────────────────────────── */}
       <section className="py-24 bg-white">
         <div className="max-w-5xl mx-auto px-6">
-          <div className="text-center mb-16">
+          <AnimateIn className="text-center mb-16">
             <h2 className="text-3xl font-bold text-gray-900 mb-4">
               Running a D2C brand on 6 different tabs?
             </h2>
@@ -230,7 +275,7 @@ export default function LandingPage() {
               Most brands cobble together Shopify, Shiprocket, Razorpay, WhatsApp, and Excel.
               It works — until it doesn't.
             </p>
-          </div>
+          </AnimateIn>
 
           <div className="grid sm:grid-cols-2 gap-6">
             {[
@@ -254,16 +299,18 @@ export default function LandingPage() {
                 title: 'Daily ops take 2+ hours',
                 desc: 'Stitching together reports, chasing teams on WhatsApp, manually reconciling returns and COD.',
               },
-            ].map(item => (
-              <div key={item.title} className="flex gap-4 p-6 bg-gray-50 rounded-2xl border border-gray-100">
-                <div className="w-9 h-9 shrink-0 rounded-lg bg-white border border-gray-100 flex items-center justify-center shadow-sm">
-                  {item.icon}
+            ].map((item, i) => (
+              <AnimateIn key={item.title} delay={i * 80}>
+                <div className="flex gap-4 p-6 bg-gray-50 rounded-2xl border border-gray-100 hover:border-gray-200 hover:shadow-card transition-all duration-200">
+                  <div className="w-9 h-9 shrink-0 rounded-lg bg-white border border-gray-100 flex items-center justify-center shadow-sm">
+                    {item.icon}
+                  </div>
+                  <div>
+                    <h3 className="font-semibold text-gray-900 mb-1 text-sm">{item.title}</h3>
+                    <p className="text-gray-500 text-sm leading-relaxed">{item.desc}</p>
+                  </div>
                 </div>
-                <div>
-                  <h3 className="font-semibold text-gray-900 mb-1 text-sm">{item.title}</h3>
-                  <p className="text-gray-500 text-sm leading-relaxed">{item.desc}</p>
-                </div>
-              </div>
+              </AnimateIn>
             ))}
           </div>
         </div>
@@ -272,12 +319,12 @@ export default function LandingPage() {
       {/* ── FEATURES ───────────────────────────────────────────────────── */}
       <section id="features" className="py-24 bg-gray-50">
         <div className="max-w-5xl mx-auto px-6">
-          <div className="text-center mb-16">
+          <AnimateIn className="text-center mb-16">
             <h2 className="text-3xl font-bold text-gray-900 mb-4">Everything your ops team needs</h2>
             <p className="text-gray-500 max-w-xl mx-auto">
               One platform that connects all your tools and surfaces the right information at the right time.
             </p>
-          </div>
+          </AnimateIn>
 
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
             {[
@@ -311,14 +358,16 @@ export default function LandingPage() {
                 title: 'Fulfillment Workflow',
                 desc: '7-stage workflow from Packed → Delivered. Bulk AWB generation, pickup scheduling, and tracking.',
               },
-            ].map(f => (
-              <div key={f.title} className="bg-white rounded-2xl border border-gray-100 p-6 shadow-card hover:shadow-card-hover transition-shadow">
-                <div className="w-10 h-10 rounded-xl bg-brand-50 flex items-center justify-center mb-4">
-                  {f.icon}
+            ].map((f, i) => (
+              <AnimateIn key={f.title} delay={i * 70}>
+                <div className="bg-white rounded-2xl border border-gray-100 p-6 shadow-card hover:shadow-card-hover hover:-translate-y-1 transition-all duration-200 h-full">
+                  <div className="w-10 h-10 rounded-xl bg-brand-50 flex items-center justify-center mb-4">
+                    {f.icon}
+                  </div>
+                  <h3 className="font-semibold text-gray-900 mb-2">{f.title}</h3>
+                  <p className="text-gray-500 text-sm leading-relaxed">{f.desc}</p>
                 </div>
-                <h3 className="font-semibold text-gray-900 mb-2">{f.title}</h3>
-                <p className="text-gray-500 text-sm leading-relaxed">{f.desc}</p>
-              </div>
+              </AnimateIn>
             ))}
           </div>
         </div>
@@ -327,10 +376,10 @@ export default function LandingPage() {
       {/* ── HOW IT WORKS ───────────────────────────────────────────────── */}
       <section className="py-24 bg-white">
         <div className="max-w-4xl mx-auto px-6">
-          <div className="text-center mb-16">
+          <AnimateIn className="text-center mb-16">
             <h2 className="text-3xl font-bold text-gray-900 mb-4">Up and running in 10 minutes</h2>
             <p className="text-gray-500">No dev work, no data migration. Just connect and go.</p>
-          </div>
+          </AnimateIn>
 
           <div className="grid md:grid-cols-3 gap-10">
             {[
@@ -353,7 +402,7 @@ export default function LandingPage() {
                 icon: <Zap size={20} className="text-brand-600" />,
               },
             ].map((step, i) => (
-              <div key={step.step} className="relative text-center">
+              <AnimateIn key={step.step} delay={i * 100} className="relative text-center">
                 {i < 2 && (
                   <div className="hidden md:block absolute top-6 left-[calc(50%+2.5rem)] w-[calc(100%-5rem)] h-px bg-gray-200" />
                 )}
@@ -363,7 +412,7 @@ export default function LandingPage() {
                 <div className="text-xs font-bold text-brand-600 mb-1">{step.step}</div>
                 <h3 className="font-semibold text-gray-900 mb-2">{step.title}</h3>
                 <p className="text-gray-500 text-sm leading-relaxed">{step.desc}</p>
-              </div>
+              </AnimateIn>
             ))}
           </div>
         </div>
@@ -372,69 +421,62 @@ export default function LandingPage() {
       {/* ── PRICING ────────────────────────────────────────────────────── */}
       <section id="pricing" className="py-24 bg-white">
         <div className="max-w-5xl mx-auto px-6">
-          <div className="text-center mb-16">
+          <AnimateIn className="text-center mb-16">
             <h2 className="text-3xl font-bold text-gray-900 mb-4">Simple, transparent pricing</h2>
             <p className="text-gray-500">Pay based on order volume. Upgrade or downgrade anytime.</p>
-          </div>
+          </AnimateIn>
 
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5 max-w-4xl mx-auto">
-            {PLANS.map(plan => (
-              <div
-                key={plan.name}
-                className={`relative rounded-2xl border p-6 flex flex-col ${
+            {PLANS.map((plan, i) => (
+              <AnimateIn key={plan.name} delay={i * 100}>
+                <div className={`relative rounded-2xl border p-6 flex flex-col h-full hover:-translate-y-1 transition-all duration-200 ${
                   plan.highlight
-                    ? 'border-brand-600 bg-brand-600 text-white shadow-lg'
-                    : 'border-gray-100 bg-white'
-                }`}
-              >
-                {plan.highlight && (
-                  <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-0.5 bg-amber-400 text-gray-900 text-[10px] font-bold rounded-full tracking-wide">
-                    MOST POPULAR
-                  </div>
-                )}
-
-                <div className="mb-5">
-                  <h3 className={`font-bold mb-2 ${plan.highlight ? 'text-white' : 'text-gray-900'}`}>
-                    {plan.name}
-                  </h3>
-                  <div className="flex items-end gap-1">
-                    <span className={`text-3xl font-bold ${plan.highlight ? 'text-white' : 'text-gray-900'}`}>
-                      {plan.price}
-                    </span>
-                    {plan.period && (
-                      <span className={`text-sm mb-1 ${plan.highlight ? 'text-white/70' : 'text-gray-400'}`}>
-                        {plan.period}
+                    ? 'border-brand-600 bg-brand-600 text-white shadow-lg hover:shadow-xl'
+                    : 'border-gray-100 bg-white hover:shadow-card-hover'
+                }`}>
+                  {plan.highlight && (
+                    <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-0.5 bg-amber-400 text-gray-900 text-[10px] font-bold rounded-full tracking-wide">
+                      MOST POPULAR
+                    </div>
+                  )}
+                  <div className="mb-5">
+                    <h3 className={`font-bold mb-2 ${plan.highlight ? 'text-white' : 'text-gray-900'}`}>
+                      {plan.name}
+                    </h3>
+                    <div className="flex items-end gap-1">
+                      <span className={`text-3xl font-bold ${plan.highlight ? 'text-white' : 'text-gray-900'}`}>
+                        {plan.price}
                       </span>
-                    )}
+                      {plan.period && (
+                        <span className={`text-sm mb-1 ${plan.highlight ? 'text-white/70' : 'text-gray-400'}`}>
+                          {plan.period}
+                        </span>
+                      )}
+                    </div>
+                    <p className={`text-xs mt-1 ${plan.highlight ? 'text-white/60' : 'text-gray-400'}`}>
+                      {plan.orders}
+                    </p>
                   </div>
-                  <p className={`text-xs mt-1 ${plan.highlight ? 'text-white/60' : 'text-gray-400'}`}>
-                    {plan.orders}
-                  </p>
+                  <ul className="space-y-2 mb-6 flex-1">
+                    {plan.features.map(f => (
+                      <li key={f} className="flex items-start gap-2 text-xs">
+                        <Check size={13} className={`mt-0.5 shrink-0 ${plan.highlight ? 'text-white' : 'text-green-500'}`} />
+                        <span className={plan.highlight ? 'text-white/80' : 'text-gray-600'}>{f}</span>
+                      </li>
+                    ))}
+                  </ul>
+                  <Link
+                    to="/signup"
+                    className={`block text-center text-sm font-semibold py-2.5 rounded-xl transition-colors ${
+                      plan.highlight
+                        ? 'bg-white text-brand-600 hover:bg-brand-50'
+                        : 'bg-brand-50 text-brand-600 hover:bg-brand-100'
+                    }`}
+                  >
+                    {plan.name === 'Enterprise' ? 'Contact Us' : 'Get Started'}
+                  </Link>
                 </div>
-
-                <ul className="space-y-2 mb-6 flex-1">
-                  {plan.features.map(f => (
-                    <li key={f} className="flex items-start gap-2 text-xs">
-                      <Check
-                        size={13}
-                        className={`mt-0.5 shrink-0 ${plan.highlight ? 'text-white' : 'text-green-500'}`}
-                      />
-                      <span className={plan.highlight ? 'text-white/80' : 'text-gray-600'}>{f}</span>
-                    </li>
-                  ))}
-                </ul>
-
-                <Link
-                  to="/signup"
-                  className={`block text-center text-sm font-semibold py-2.5 rounded-xl transition-colors ${
-                    plan.highlight
-                      ? 'bg-white text-brand-600 hover:bg-brand-50'
-                      : 'bg-brand-50 text-brand-600 hover:bg-brand-100'
-                  }`}
-                >
-                  {plan.name === 'Enterprise' ? 'Contact Us' : 'Get Started'}
-                </Link>
-              </div>
+              </AnimateIn>
             ))}
           </div>
 
@@ -447,13 +489,18 @@ export default function LandingPage() {
       {/* ── FAQ ────────────────────────────────────────────────────────── */}
       <section id="faq" className="py-24 bg-gray-50">
         <div className="max-w-2xl mx-auto px-6">
-          <div className="text-center mb-12">
+          <AnimateIn className="text-center mb-12">
             <h2 className="text-3xl font-bold text-gray-900 mb-4">Frequently asked questions</h2>
-            <p className="text-gray-500">Still have questions? <a href="mailto:hello@centinal.app" className="text-brand-600 hover:underline">Email us</a></p>
-          </div>
+            <p className="text-gray-500">
+              Still have questions?{' '}
+              <a href="mailto:hello@centinal.app" className="text-brand-600 hover:underline">Email us</a>
+            </p>
+          </AnimateIn>
           <div className="space-y-3">
-            {FAQS.map(faq => (
-              <FaqItem key={faq.q} q={faq.q} a={faq.a} />
+            {FAQS.map((faq, i) => (
+              <AnimateIn key={faq.q} delay={i * 60}>
+                <FaqItem q={faq.q} a={faq.a} />
+              </AnimateIn>
             ))}
           </div>
         </div>
@@ -465,7 +512,7 @@ export default function LandingPage() {
           className="absolute inset-0 opacity-[0.04]"
           style={{ backgroundImage: 'radial-gradient(circle, white 1px, transparent 1px)', backgroundSize: '32px 32px' }}
         />
-        <div className="relative max-w-2xl mx-auto px-6 text-center">
+        <AnimateIn className="relative max-w-2xl mx-auto px-6 text-center">
           <h2 className="text-3xl sm:text-4xl font-bold mb-4">
             Your ops team deserves better tools.
           </h2>
@@ -475,19 +522,18 @@ export default function LandingPage() {
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
             <Link
               to="/signup"
-              className="flex items-center gap-2 bg-white text-brand-700 font-semibold px-8 py-3.5 rounded-xl hover:bg-brand-50 transition-colors shadow-lg text-sm"
+              className="flex items-center gap-2 bg-white text-brand-700 font-semibold px-8 py-3.5 rounded-xl hover:bg-brand-50 transition-all shadow-lg hover:shadow-xl hover:-translate-y-0.5 text-sm"
             >
               Start Free Trial <ArrowRight size={16} />
             </Link>
           </div>
-        </div>
+        </AnimateIn>
       </section>
 
       {/* ── FOOTER ─────────────────────────────────────────────────────── */}
       <footer className="bg-gray-950 text-white py-12">
         <div className="max-w-5xl mx-auto px-6">
           <div className="flex flex-col md:flex-row items-start justify-between gap-8 mb-10">
-            {/* Brand */}
             <div>
               <div className="flex items-center gap-2.5 mb-3">
                 <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-brand-500 to-brand-700 flex items-center justify-center">
@@ -499,8 +545,6 @@ export default function LandingPage() {
                 Operations command centre for Indian D2C brands. RTO intelligence, order management, and daily ops briefs.
               </p>
             </div>
-
-            {/* Links */}
             <div className="grid grid-cols-2 gap-x-16 gap-y-2 text-sm text-gray-400">
               <div className="space-y-2">
                 <a href="#features" className="block hover:text-white transition-colors">Features</a>
@@ -514,7 +558,6 @@ export default function LandingPage() {
               </div>
             </div>
           </div>
-
           <div className="border-t border-white/10 pt-6 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-gray-500">
             <p>© {new Date().getFullYear()} Centinal. All rights reserved.</p>
             <div className="flex items-center gap-1">
