@@ -5,7 +5,7 @@ import { useAppStore } from '../../stores/appStore'
 import {
   TrendingDown, Package, Zap, BarChart3, Bell, MessageSquare,
   Check, ChevronDown, ChevronUp, ArrowRight, Shield, Clock,
-  Truck, ShoppingCart, AlertTriangle, BarChart2, Users, Star,
+  Truck, ShoppingCart, AlertTriangle, BarChart2, Users,
 } from 'lucide-react'
 
 // ─── FAQ data ─────────────────────────────────────────────────────────────────
@@ -39,27 +39,11 @@ const FAQS = [
 // ─── Pricing plans ─────────────────────────────────────────────────────────────
 const PLANS = [
   {
-    name: 'Starter',
-    price: '₹999',
-    period: '/mo',
-    orders: '500 orders/mo',
-    highlight: false,
-    features: [
-      'Up to 500 orders / month',
-      '1 warehouse',
-      '2 team members',
-      'Order management',
-      'Basic analytics',
-      'Email support',
-    ],
-  },
-  {
     name: 'Growth',
-    price: '₹2,999',
+    price: '₹4,999',
     period: '/mo',
     orders: '3,000 orders/mo',
     highlight: true,
-    badge: 'MOST POPULAR',
     features: [
       'Up to 3,000 orders / month',
       '3 warehouses',
@@ -73,12 +57,12 @@ const PLANS = [
   },
   {
     name: 'Scale',
-    price: '₹7,999',
+    price: '₹9,999',
     period: '/mo',
-    orders: '15,000 orders/mo',
+    orders: '10,000 orders/mo',
     highlight: false,
     features: [
-      'Up to 15,000 orders / month',
+      'Up to 10,000 orders / month',
       'Unlimited warehouses',
       '15 team members',
       'Custom RTO rules',
@@ -389,41 +373,6 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* ── SOCIAL PROOF ───────────────────────────────────────────────── */}
-      <section className="py-16 bg-brand-50">
-        <div className="max-w-4xl mx-auto px-6">
-          <div className="grid md:grid-cols-2 gap-8">
-            {[
-              {
-                quote: 'We cut our RTO rate from 28% to 17% in the first month. Centinal basically paid for itself on day one.',
-                name: 'Priya Sharma',
-                role: 'Founder, NourishBox',
-                stars: 5,
-              },
-              {
-                quote: "The daily brief is the first thing I check every morning. It's replaced three Google Sheets and a 45-minute standup.",
-                name: 'Arjun Kapoor',
-                role: 'Head of Ops, UrbanKart',
-                stars: 5,
-              },
-            ].map(t => (
-              <div key={t.name} className="bg-white rounded-2xl p-6 shadow-card border border-brand-100">
-                <div className="flex gap-0.5 mb-3">
-                  {Array.from({ length: t.stars }).map((_, i) => (
-                    <Star key={i} size={14} className="text-amber-400 fill-amber-400" />
-                  ))}
-                </div>
-                <p className="text-gray-700 text-sm leading-relaxed mb-4">"{t.quote}"</p>
-                <div>
-                  <p className="font-semibold text-gray-900 text-sm">{t.name}</p>
-                  <p className="text-gray-400 text-xs">{t.role}</p>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
       {/* ── PRICING ────────────────────────────────────────────────────── */}
       <section id="pricing" className="py-24 bg-white">
         <div className="max-w-5xl mx-auto px-6">
@@ -432,7 +381,7 @@ export default function LandingPage() {
             <p className="text-gray-500">Pay based on order volume. Upgrade or downgrade anytime.</p>
           </div>
 
-          <div className="grid sm:grid-cols-2 xl:grid-cols-4 gap-5">
+          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5 max-w-4xl mx-auto">
             {PLANS.map(plan => (
               <div
                 key={plan.name}
