@@ -3,6 +3,7 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { useAuthStore } from './stores/authStore'
 import { useAppStore } from './stores/appStore'
 import AppLayout from './components/layout/AppLayout'
+import LandingPage from './pages/landing/LandingPage'
 
 // ── Lazy-loaded route pages (code-split per route) ───────────────────────────
 const Login = lazy(() => import('./pages/auth/Login'))
@@ -36,6 +37,19 @@ function PageSpinner() {
   )
 }
 
+// ── Root route: landing page for guests, dashboard for authed users ──────────
+function RootRoute() {
+  const { user, isLoading } = useAuthStore()
+  if (isLoading) return (
+    <div className="min-h-screen bg-white flex items-center justify-center">
+      <div className="animate-spin w-8 h-8 border-2 border-brand-600 border-t-transparent rounded-full" />
+    </div>
+  )
+  if (user) return <Navigate to="/dashboard" replace />
+  return <LandingPage />
+}
+
+// ── Auth guard for protected app routes ──────────────────────────────────────
 function AuthGuard({ children }: { children: React.ReactNode }) {
   const { user, isLoading: authLoading } = useAuthStore()
   const { currentBrand, isLoading: appLoading } = useAppStore()
@@ -71,37 +85,38 @@ export default function App() {
     <BrowserRouter>
       <Suspense fallback={<PageSpinner />}>
         <Routes>
+          {/* Public routes */}
+          <Route path="/" element={<RootRoute />} />
           <Route path="/login" element={<Login />} />
           <Route path="/signup" element={<Signup />} />
           <Route path="/onboarding" element={<Onboarding />} />
 
+          {/* Protected app routes — layout wrapper (no path, just wraps) */}
           <Route
-            path="/"
             element={
               <AuthGuard>
                 <AppLayout />
               </AuthGuard>
             }
           >
-            <Route index element={<Navigate to="/dashboard" replace />} />
-            <Route path="dashboard" element={<Dashboard />} />
-            <Route path="orders" element={<OrderList />} />
-            <Route path="orders/new" element={<NewOrder />} />
-            <Route path="orders/:id" element={<OrderDetail />} />
-            <Route path="fulfillment" element={<Fulfillment />} />
-            <Route path="payments" element={<Payments />} />
-            <Route path="exceptions" element={<Exceptions />} />
-            <Route path="customers" element={<CustomerList />} />
-            <Route path="customers/:id" element={<CustomerDetail />} />
-            <Route path="products" element={<Products />} />
-            <Route path="analytics" element={<Analytics />} />
-            <Route path="briefs" element={<DailyBrief />} />
-            <Route path="briefs/history" element={<BriefHistory />} />
-            <Route path="settings/brand" element={<BrandSettings />} />
-            <Route path="settings/integrations" element={<IntegrationsSettings />} />
-            <Route path="settings/warehouses" element={<WarehousesSettings />} />
-            <Route path="settings/team" element={<TeamSettings />} />
-            <Route path="settings/billing" element={<BillingSettings />} />
+            <Route path="/dashboard" element={<Dashboard />} />
+            <Route path="/orders" element={<OrderList />} />
+            <Route path="/orders/new" element={<NewOrder />} />
+            <Route path="/orders/:id" element={<OrderDetail />} />
+            <Route path="/fulfillment" element={<Fulfillment />} />
+            <Route path="/payments" element={<Payments />} />
+            <Route path="/exceptions" element={<Exceptions />} />
+            <Route path="/customers" element={<CustomerList />} />
+            <Route path="/customers/:id" element={<CustomerDetail />} />
+            <Route path="/products" element={<Products />} />
+            <Route path="/analytics" element={<Analytics />} />
+            <Route path="/briefs" element={<DailyBrief />} />
+            <Route path="/briefs/history" element={<BriefHistory />} />
+            <Route path="/settings/brand" element={<BrandSettings />} />
+            <Route path="/settings/integrations" element={<IntegrationsSettings />} />
+            <Route path="/settings/warehouses" element={<WarehousesSettings />} />
+            <Route path="/settings/team" element={<TeamSettings />} />
+            <Route path="/settings/billing" element={<BillingSettings />} />
           </Route>
         </Routes>
       </Suspense>
