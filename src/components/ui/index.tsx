@@ -20,7 +20,7 @@ export function Button({
   return (
     <button
       className={cn(
-        'inline-flex items-center justify-center gap-2 font-medium rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed',
+        'inline-flex items-center justify-center gap-2 font-medium rounded-lg transition-all active:scale-[0.97] disabled:opacity-50 disabled:cursor-not-allowed',
         {
           'bg-brand-600 text-white hover:bg-brand-500 active:bg-brand-700 shadow-[0_1px_3px_rgba(79,70,229,0.3)]': variant === 'primary',
           'bg-white text-gray-700 border border-gray-200 hover:bg-gray-50 hover:border-gray-300': variant === 'secondary',
@@ -81,7 +81,7 @@ export function Card({
   className, children, ...props
 }: React.HTMLAttributes<HTMLDivElement>) {
   return (
-    <div className={cn('bg-white rounded-2xl shadow-card border border-gray-100/80', className)} {...props}>
+    <div className={cn('bg-white rounded-2xl shadow-card border border-gray-100/80 transition-shadow duration-200', className)} {...props}>
       {children}
     </div>
   )

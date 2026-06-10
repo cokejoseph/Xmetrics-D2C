@@ -96,6 +96,10 @@
 .animate-fade-in {
   animation: fadeIn 0.45s ease-out both;
 }
+/* Fast page-enter: pure opacity fade (no translate) so children can slide independently */
+.animate-page-enter {
+  animation: fadeIn 0.18s ease-out both;
+}
 
 /* ══════════════════════════════════════════════
    DARK MODE  — kept OUTSIDE @layer so unlayered

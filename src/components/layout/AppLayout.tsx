@@ -1,4 +1,4 @@
-import { Outlet } from 'react-router-dom'
+import { Outlet, useLocation } from 'react-router-dom'
 import Sidebar from './Sidebar'
 import TopBar from './TopBar'
 import MobileNav from './MobileNav'
@@ -6,6 +6,8 @@ import DemoModeBanner from './DemoModeBanner'
 import { DEMO_MODE } from '../../lib/supabase'
 
 export default function AppLayout() {
+  const location = useLocation()
+
   return (
     <div className="flex h-screen bg-page-bg overflow-hidden">
       {/* Sidebar — desktop */}
@@ -17,7 +19,11 @@ export default function AppLayout() {
         <TopBar />
 
         <main className="flex-1 overflow-y-auto">
-          <div className="max-w-[1400px] mx-auto px-5 py-6 pb-20 lg:pb-6">
+          {/* key re-mounts on every route change → triggers animate-page-enter */}
+          <div
+            key={location.pathname}
+            className="max-w-[1400px] mx-auto px-5 py-6 pb-20 lg:pb-6 animate-page-enter"
+          >
             <Outlet />
           </div>
         </main>

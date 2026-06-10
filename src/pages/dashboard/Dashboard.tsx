@@ -66,7 +66,7 @@ export default function Dashboard() {
     <div className="space-y-5">
       {/* Morning Brief Widget */}
       {brief.headline.total_orders > 0 && (
-        <Card className="p-5 bg-gradient-to-br from-[#1E1B4B] via-[#312E81] to-[#2E1065] text-white border-0 overflow-hidden relative">
+        <Card className="p-5 bg-gradient-to-br from-[#1E1B4B] via-[#312E81] to-[#2E1065] text-white border-0 overflow-hidden relative animate-fade-in-up">
           <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,rgba(129,140,248,0.15),transparent_60%)]" />
           <div className="relative flex items-start justify-between mb-4">
             <div>
@@ -98,42 +98,22 @@ export default function Dashboard() {
         </Card>
       )}
 
-      {/* KPI Cards */}
+      {/* KPI Cards — staggered */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <KPICard
-          title="Revenue Today"
-          value={`₹${Math.round(todayRevenue).toLocaleString('en-IN')}`}
-          trend={{ value: 12, positive: true }}
-          icon={<TrendingUp size={18} />}
-          sub={`${todayOrders.length} orders`}
-        />
-        <KPICard
-          title="Paid Orders"
-          value={String(todayPaid)}
-          trend={{ value: 8, positive: true }}
-          icon={<ShoppingBag size={18} />}
-          sub="Today"
-        />
-        <KPICard
-          title="RTO Rate"
-          value={`${rtoRate.toFixed(1)}%`}
-          trend={{ value: 2, positive: false }}
-          icon={<Truck size={18} />}
-          sub="All-time"
-          invertTrend
-        />
-        <KPICard
-          title="Open Exceptions"
-          value={String(openExceptions)}
-          trend={{ value: openExceptions, positive: false }}
-          icon={<AlertTriangle size={18} />}
-          sub="Unresolved"
-          invertTrend
-        />
+        {([
+          { title: 'Revenue Today', value: `₹${Math.round(todayRevenue).toLocaleString('en-IN')}`, trend: { value: 12, positive: true }, icon: <TrendingUp size={18} />, sub: `${todayOrders.length} orders`, invertTrend: false },
+          { title: 'Paid Orders',   value: String(todayPaid), trend: { value: 8, positive: true }, icon: <ShoppingBag size={18} />, sub: 'Today', invertTrend: false },
+          { title: 'RTO Rate',      value: `${rtoRate.toFixed(1)}%`, trend: { value: 2, positive: false }, icon: <Truck size={18} />, sub: 'All-time', invertTrend: true },
+          { title: 'Open Exceptions', value: String(openExceptions), trend: { value: openExceptions, positive: false }, icon: <AlertTriangle size={18} />, sub: 'Unresolved', invertTrend: true },
+        ]).map((kpi, i) => (
+          <div key={kpi.title} className="animate-fade-in-up" style={{ animationDelay: `${i * 65}ms` }}>
+            <KPICard {...kpi} />
+          </div>
+        ))}
       </div>
 
       {/* Charts row */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 animate-fade-in-up" style={{ animationDelay: '200ms' }}>
         <Card className="lg:col-span-2 p-5">
           <h3 className="text-sm font-semibold text-gray-900 mb-4">Revenue & Orders — 14 Days</h3>
           <RevenueAreaChart data={revenueChartData} />
@@ -145,7 +125,7 @@ export default function Dashboard() {
       </div>
 
       {/* Channel + Exceptions */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 animate-fade-in-up" style={{ animationDelay: '290ms' }}>
         <Card className="p-5">
           <h3 className="text-sm font-semibold text-gray-900 mb-4">Channel Performance</h3>
           <ChannelBarChart data={channelData} />
@@ -173,7 +153,7 @@ export default function Dashboard() {
       </div>
 
       {/* Ready to Pack + Recent Orders */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 animate-fade-in-up" style={{ animationDelay: '370ms' }}>
         <Card className="p-5">
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-sm font-semibold text-gray-900">Ready to Pack</h3>
