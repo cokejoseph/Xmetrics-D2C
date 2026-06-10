@@ -1,0 +1,146 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,300;0,14..32,400;0,14..32,500;0,14..32,600;0,14..32,700;1,14..32,400&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    background-color: #F7F8FC;
+    color: #0f172a;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    font-feature-settings: 'cv11', 'ss01';
+  }
+
+  #root { width: 100%; min-height: 100vh; }
+
+  input[type='search']::-webkit-search-cancel-button { display: none; }
+
+  ::-webkit-scrollbar { width: 4px; height: 4px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: #c7d2fe; border-radius: 4px; }
+  ::-webkit-scrollbar-thumb:hover { background: #818cf8; }
+}
+
+@layer components {
+  .card {
+    @apply bg-white rounded-2xl shadow-card border border-gray-100/80;
+  }
+
+  .btn-primary {
+    @apply bg-brand-600 text-white px-4 py-2 rounded-xl text-sm font-semibold
+           hover:bg-brand-500 active:bg-brand-700 transition-all
+           shadow-[0_1px_3px_rgba(79,70,229,0.3)];
+  }
+
+  .btn-secondary {
+    @apply bg-white text-gray-700 px-4 py-2 rounded-xl text-sm font-medium
+           border border-gray-200 hover:bg-gray-50 hover:border-gray-300
+           transition-all;
+  }
+
+  .btn-danger {
+    @apply bg-red-50 text-red-600 px-4 py-2 rounded-xl text-sm font-medium
+           border border-red-100 hover:bg-red-100 transition-all;
+  }
+
+  .input-field {
+    @apply w-full px-3 py-2 border border-gray-200 rounded-xl text-sm
+           bg-white placeholder-gray-400
+           focus:outline-none focus:ring-2 focus:ring-brand-500/20
+           focus:border-brand-500 transition-all;
+  }
+
+  .sidebar-nav-item {
+    @apply flex items-center gap-2.5 px-3 py-2 rounded-xl
+           text-sidebar-text text-sm font-medium cursor-pointer
+           transition-all duration-150
+           hover:bg-sidebar-hover hover:text-sidebar-text-active;
+  }
+
+  .sidebar-nav-item.active {
+    @apply bg-sidebar-active text-sidebar-text-active;
+  }
+
+  /* KPI card value */
+  .kpi-value {
+    @apply text-2xl font-bold tracking-tight text-gray-900;
+  }
+
+  /* Subtle section divider */
+  .section-label {
+    @apply px-3 py-1.5 text-[10px] font-semibold uppercase tracking-widest text-sidebar-text/50;
+  }
+}
+
+/* ══════════════════════════════════════════════
+   DARK MODE  — kept OUTSIDE @layer so unlayered
+   styles always beat Tailwind's layered utilities
+══════════════════════════════════════════════ */
+.dark { color-scheme: dark; }
+
+.dark body {
+  background-color: #0f0f12;
+  color: #e2e8f0;
+}
+
+/* ── Text ────────────────── */
+.dark .text-gray-900 { color: #f1f5f9; }   /* slate-100  — headings, values    */
+.dark .text-gray-800 { color: #e2e8f0; }   /* slate-200                        */
+.dark .text-gray-700 { color: #cbd5e1; }   /* slate-300  — secondary text      */
+.dark .text-gray-600 { color: #94a3b8; }   /* slate-400                        */
+.dark .text-gray-500 { color: #94a3b8; }   /* slate-400  — was #64748b (invisible!) */
+.dark .text-gray-400 { color: #64748b; }   /* slate-500  — was #4b5563 (invisible!) */
+
+/* ── Backgrounds ─────────── */
+.dark .bg-page-bg   { background-color: #0f0f12; }              /* custom token override    */
+.dark .bg-white     { background-color: #1e1e24; }              /* elevated card surface    */
+.dark .bg-gray-50   { background-color: rgba(255,255,255,0.03); }
+.dark .bg-gray-100  { background-color: rgba(255,255,255,0.07); }
+.dark .bg-gray-200  { background-color: rgba(255,255,255,0.1); }
+.dark .bg-brand-50  { background-color: rgba(79,70,229,0.12); } /* selected rows, icon bg   */
+.dark .bg-brand-100 { background-color: rgba(79,70,229,0.2); }
+
+/* ── Borders ─────────────── */
+.dark .border-gray-50  { border-color: rgba(255,255,255,0.04); }   /* table row dividers */
+.dark .border-gray-100 { border-color: rgba(255,255,255,0.08); }
+.dark .border-gray-200 { border-color: rgba(255,255,255,0.1); }
+.dark .border-gray-300 { border-color: rgba(255,255,255,0.15); }
+
+/* divide-y utilities (OrderDetail tbody) */
+.dark .divide-gray-50 > :not([hidden]) ~ :not([hidden]) { border-color: rgba(255,255,255,0.04); }
+
+/* ── Hover states ────────── */
+.dark .hover\:bg-gray-50:hover      { background-color: rgba(255,255,255,0.04); }
+.dark .hover\:bg-gray-50\/50:hover  { background-color: rgba(255,255,255,0.04); }   /* table row hover */
+.dark .hover\:bg-gray-100:hover     { background-color: rgba(255,255,255,0.07); }
+.dark .hover\:border-gray-300:hover { border-color: rgba(255,255,255,0.15); }
+
+/* ── Input fields ────────── */
+.dark .input-field {
+  background-color: #26262e;
+  border-color: rgba(255,255,255,0.1);
+  color: #e2e8f0;
+}
+.dark .input-field::placeholder { color: #64748b; }
+
+/* ── Card & modal surfaces ── */
+/* bg-white → elevated card (already covered above)              */
+/* bg-white/95 = TopBar semi-transparent header                  */
+.dark .bg-white\/95  { background-color: rgba(15,15,18,0.95); }
+
+/* border-gray-100/80 = Card border (Tailwind opacity modifier)  */
+.dark .border-gray-100\/80 { border-color: rgba(255,255,255,0.08); }
+
+/* Shadows: cards are flat in dark, modals keep depth            */
+.dark .shadow-card     { box-shadow: none; }
+.dark .shadow-dropdown { box-shadow: 0 8px 30px rgba(0,0,0,0.5); }
+
+/* ── Scrollbar ───────────── */
+.dark ::-webkit-scrollbar-thumb       { background: #374151; border-radius: 4px; }
+.dark ::-webkit-scrollbar-thumb:hover { background: #4b5563; }

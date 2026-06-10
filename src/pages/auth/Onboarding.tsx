@@ -1,0 +1,200 @@
+import { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
+import { Loader2 } from 'lucide-react'
+import { Button, Input, Select } from '../../components/ui'
+import { useAppStore } from '../../stores/appStore'
+import { useAuthStore } from '../../stores/authStore'
+import { DEMO_BRAND } from '../../data/seed'
+import { DEMO_MODE, supabase } from '../../lib/supabase'
+import { createBrand, addWarehouseDB } from '../../lib/db'
+
+export default function Onboarding() {
+  const [step, setStep] = useState(1)
+  const [brandName, setBrandName] = useState('')
+  const [marketType, setMarketType] = useState('D2C')
+  const [warehouseName, setWarehouseName] = useState('')
+  const [warehouseCity, setWarehouseCity] = useState('')
+  const [saving, setSaving] = useState(false)
+  const [error, setError] = useState('')
+  const navigate = useNavigate()
+  const { bootstrap } = useAppStore()
+  const { user } = useAuthStore()
+
+  const handleFinish = async () => {
+    if (DEMO_MODE) {
+      // Demo mode: skip DB, load seed data directly
+      bootstrap('user-demo-001')
+      navigate('/dashboard')
+      return
+    }
+
+    setSaving(true)
+    setError('')
+
+    // Resolve current user — authStore may not have hydrated yet if the user
+    // landed here right after signup. Fall back to querying Supabase directly.
+    let currentUser = user
+    if (!currentUser) {
+      const { data } = await supabase!.auth.getUser()
+      if (data?.user) {
+        currentUser = { id: data.user.id, email: data.user.email! }
+      }
+    }
+
+    if (!currentUser) {
+      setSaving(false)
+      setError('Session not found — please sign in again.')
+      return
+    }
+
+    // Create the brand + owner membership in Supabase
+    const { brand, error: brandErr } = await createBrand(
+      currentUser.id,
+      currentUser.email.split('@')[0] ?? 'Owner',
+      currentUser.email,
+      brandName || 'My Brand',
+      marketType
+    )
+
+    if (brandErr || !brand) {
+      setSaving(false)
+      setError(brandErr ?? 'Failed to create brand. Please try again.')
+      return
+    }
+
+    // Optionally create first warehouse
+    if (warehouseName && warehouseCity) {
+      await addWarehouseDB({
+        brand_id: brand.id,
+        name: warehouseName,
+        address: '',
+        city: warehouseCity,
+        state: '',
+        pincode: '',
+        contact_name: '',
+        contact_phone: '',
+        is_primary: true,
+      })
+    }
+
+    // Bootstrap the app state from Supabase
+    await bootstrap(currentUser.id)
+    navigate('/dashboard')
+  }
+
+  return (
+    <div className="min-h-screen bg-brand-900 flex items-center justify-center p-4">
+      <div className="w-full max-w-md">
+        <div className="flex items-center gap-3 justify-center mb-8">
+          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-brand-500 to-brand-700 flex items-center justify-center shadow-[0_2px_8px_rgba(79,70,229,0.4)]">
+            <span className="text-white font-bold text-lg">C</span>
+          </div>
+          <span className="text-white font-semibold text-2xl">Centinal</span>
+        </div>
+
+        <div className="bg-white rounded-2xl p-8 shadow-xl">
+          {/* Progress */}
+          <div className="flex gap-2 mb-6">
+            {[1, 2, 3].map(s => (
+              <div key={s} className={`flex-1 h-1 rounded-full ${s <= step ? 'bg-brand-600' : 'bg-gray-100'}`} />
+            ))}
+          </div>
+
+          {step === 1 && (
+            <div>
+              <h1 className="text-xl font-semibold text-gray-900 mb-1">Setup your brand</h1>
+              <p className="text-gray-500 text-sm mb-6">Tell us about your business</p>
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Brand name</label>
+                  <Input
+                    value={brandName}
+                    onChange={e => setBrandName(e.target.value)}
+                    placeholder="e.g. Zestify Foods"
+                    autoFocus
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Market type</label>
+                  <Select value={marketType} onChange={e => setMarketType(e.target.value)}>
+                    <option value="D2C">D2C (Direct to Consumer)</option>
+                    <option value="B2B">B2B</option>
+                    <option value="Hybrid">Hybrid</option>
+                  </Select>
+                </div>
+                <Button className="w-full" onClick={() => setStep(2)} disabled={!brandName.trim()}>
+                  Continue →
+                </Button>
+              </div>
+            </div>
+          )}
+
+          {step === 2 && (
+            <div>
+              <h1 className="text-xl font-semibold text-gray-900 mb-1">Add your warehouse</h1>
+              <p className="text-gray-500 text-sm mb-6">Where do you ship from?</p>
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Warehouse name</label>
+                  <Input
+                    value={warehouseName}
+                    onChange={e => setWarehouseName(e.target.value)}
+                    placeholder="e.g. Delhi Main Warehouse"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">City</label>
+                  <Input
+                    value={warehouseCity}
+                    onChange={e => setWarehouseCity(e.target.value)}
+                    placeholder="e.g. New Delhi"
+                  />
+                </div>
+                <Button className="w-full" onClick={() => setStep(3)}>
+                  Continue →
+                </Button>
+                <button
+                  className="w-full text-center text-sm text-gray-500 hover:text-gray-700 py-1"
+                  onClick={() => setStep(3)}
+                >
+                  Skip for now
+                </button>
+              </div>
+            </div>
+          )}
+
+          {step === 3 && (
+            <div>
+              <h1 className="text-xl font-semibold text-gray-900 mb-1">You're all set!</h1>
+              <p className="text-gray-500 text-sm mb-6">
+                {DEMO_MODE
+                  ? "We'll load sample data so you can explore Centinal right away."
+                  : 'Your brand workspace will be created and ready to use.'}
+              </p>
+              <div className="bg-brand-50 rounded-xl p-4 mb-6 space-y-1">
+                <p className="text-sm font-medium text-brand-900">{brandName || DEMO_BRAND.name}</p>
+                <p className="text-xs text-brand-600">{marketType} · {DEMO_MODE ? 'Demo data loaded' : 'Live workspace'}</p>
+                {warehouseName && (
+                  <p className="text-xs text-brand-500">📦 {warehouseName}, {warehouseCity}</p>
+                )}
+              </div>
+              {error && (
+                <p className="mb-4 text-sm text-red-600 bg-red-50 px-3 py-2 rounded-lg">{error}</p>
+              )}
+              <Button className="w-full" onClick={handleFinish} disabled={saving}>
+                {saving ? (
+                  <span className="flex items-center justify-center gap-2">
+                    <Loader2 size={16} className="animate-spin" />
+                    Setting up workspace…
+                  </span>
+                ) : (
+                  'Open Dashboard →'
+                )}
+              </Button>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  )
+}

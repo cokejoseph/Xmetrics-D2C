@@ -1,0 +1,146 @@
+import { useParams, Link } from 'react-router-dom'
+import { ArrowLeft, Phone, Mail, MapPin } from 'lucide-react'
+import { useAppStore } from '../../stores/appStore'
+import { Card } from '../../components/ui'
+import { FulfillmentBadge, PaymentBadge, ChannelBadge } from '../../components/shared/StatusBadge'
+
+export default function CustomerDetail() {
+  const { id } = useParams<{ id: string }>()
+  const { customers, orders } = useAppStore()
+  const customer = customers.find(c => c.id === id)
+
+  if (!customer) {
+    return (
+      <div className="text-center py-20">
+        <p className="text-gray-500">Customer not found</p>
+        <Link to="/customers" className="text-brand-600 mt-2 inline-block hover:underline">← Back</Link>
+      </div>
+    )
+  }
+
+  const customerOrders = orders
+    .filter(o => o.customer_id === customer.id)
+    .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
+
+  const avgOrderValue = customer.total_orders > 0 ? customer.total_spent / customer.total_orders : 0
+  const rtoCount = customerOrders.filter(o => o.fulfillment_status === 'RTO_INITIATED').length
+  const rtoRate = customerOrders.length > 0 ? (rtoCount / customerOrders.length) * 100 : 0
+
+  return (
+    <div className="space-y-4">
+      <div className="flex items-center gap-3">
+        <Link to="/customers" className="p-2 rounded-lg hover:bg-gray-100 text-gray-500">
+          <ArrowLeft size={16} />
+        </Link>
+        <div>
+          <h1 className="text-xl font-semibold text-gray-900">{customer.name}</h1>
+          <div className="flex gap-1 mt-0.5">
+            {customer.tags.map(tag => (
+              <span key={tag} className="px-1.5 py-0.5 bg-gray-100 text-gray-600 rounded text-[10px] font-medium">
+                {tag}
+              </span>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+        <div className="space-y-4">
+          {/* Contact */}
+          <Card className="p-4">
+            <h2 className="text-sm font-semibold text-gray-900 mb-3">Contact</h2>
+            <div className="space-y-2">
+              <div className="flex items-center gap-2 text-sm text-gray-700">
+                <Phone size={14} className="text-gray-400" /> {customer.phone}
+              </div>
+              {customer.email && (
+                <div className="flex items-center gap-2 text-sm text-gray-700">
+                  <Mail size={14} className="text-gray-400" /> {customer.email}
+                </div>
+              )}
+              {(customer.address || customer.city) && (
+                <div className="flex items-start gap-2 text-sm text-gray-700">
+                  <MapPin size={14} className="text-gray-400 mt-0.5" />
+                  <div>
+                    {customer.address && <p>{customer.address}</p>}
+                    <p>{customer.city}, {customer.state} — {customer.pincode}</p>
+                  </div>
+                </div>
+              )}
+            </div>
+          </Card>
+
+          {/* Stats */}
+          <Card className="p-4">
+            <h2 className="text-sm font-semibold text-gray-900 mb-3">Stats</h2>
+            <div className="grid grid-cols-2 gap-3">
+              <Stat label="Total Orders" value={String(customer.total_orders)} />
+              <Stat label="Lifetime Value" value={`₹${customer.total_spent.toLocaleString('en-IN')}`} />
+              <Stat label="Avg Order Value" value={`₹${Math.round(avgOrderValue).toLocaleString('en-IN')}`} />
+              <Stat label="RTO Rate" value={`${Math.round(rtoRate)}%`} />
+            </div>
+          </Card>
+
+        </div>
+
+        {/* Order History */}
+        <div className="lg:col-span-2">
+          <Card>
+            <div className="px-4 py-3 border-b border-gray-100">
+              <h2 className="text-sm font-semibold text-gray-900">Order History ({customerOrders.length})</h2>
+            </div>
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead>
+                  <tr className="border-b border-gray-100">
+                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">Order</th>
+                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide hidden sm:table-cell">Channel</th>
+                    <th className="px-4 py-3 text-right text-xs font-semibold text-gray-500 uppercase tracking-wide">Amount</th>
+                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide hidden sm:table-cell">Payment</th>
+                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">Status</th>
+                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide hidden md:table-cell">Date</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {customerOrders.map(order => (
+                    <tr key={order.id} className="border-b border-gray-50 hover:bg-gray-50/50">
+                      <td className="px-4 py-3">
+                        <Link to={`/orders/${order.id}`} className="text-sm font-medium text-brand-600 hover:underline">
+                          {order.order_number}
+                        </Link>
+                      </td>
+                      <td className="px-4 py-3 hidden sm:table-cell">
+                        <ChannelBadge channel={order.channel} />
+                      </td>
+                      <td className="px-4 py-3 text-right text-sm font-medium text-gray-900">
+                        ₹{(order.gross_amount - order.discount_amount).toLocaleString('en-IN')}
+                      </td>
+                      <td className="px-4 py-3 hidden sm:table-cell">
+                        <PaymentBadge status={order.payment_status} />
+                      </td>
+                      <td className="px-4 py-3">
+                        <FulfillmentBadge status={order.fulfillment_status} />
+                      </td>
+                      <td className="px-4 py-3 hidden md:table-cell text-xs text-gray-500">
+                        {new Date(order.created_at).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: '2-digit' })}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </Card>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function Stat({ label, value }: { label: string; value: string }) {
+  return (
+    <div>
+      <p className="text-lg font-bold text-gray-900">{value}</p>
+      <p className="text-xs text-gray-500">{label}</p>
+    </div>
+  )
+}
