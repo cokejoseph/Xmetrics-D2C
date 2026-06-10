@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useAuthStore } from '../../stores/authStore'
 import { useAppStore } from '../../stores/appStore'
@@ -116,6 +116,14 @@ export default function LandingPage() {
   const navigate = useNavigate()
   const { loginAsDemo } = useAuthStore()
   const { bootstrap } = useAppStore()
+
+  // Landing page is always light — strip dark class while here, restore on leave
+  useEffect(() => {
+    const html = document.documentElement
+    const wasDark = html.classList.contains('dark')
+    html.classList.remove('dark')
+    return () => { if (wasDark) html.classList.add('dark') }
+  }, [])
 
   const handleDemo = () => {
     loginAsDemo()
