@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { CheckCircle } from 'lucide-react'
 import { useAppStore } from '../../stores/appStore'
 import { Card, Button } from '../../components/ui'
+import { RazorpayCheckout } from '../../components/shared/RazorpayCheckout'
 import type { PlanType } from '../../types'
 
 const PLANS: {
@@ -83,16 +84,13 @@ const PLANS: {
 export default function Billing() {
   const { currentPlan } = useAppStore()
   const [selected, setSelected] = useState<PlanType>(currentPlan ?? 'GROWTH')
-  const [upgraded, setUpgraded] = useState(false)
+  const [payStatus, setPayStatus] = useState<{ ok: boolean; message: string } | null>(null)
 
   const usageOrders = 287
   const planLimit = PLANS.find(p => p.key === currentPlan)?.orders ?? 500
   const usagePct = Math.min(100, (usageOrders / planLimit) * 100)
 
-  const handleUpgrade = () => {
-    setUpgraded(true)
-    setTimeout(() => setUpgraded(false), 2500)
-  }
+  const selectedPlan = PLANS.find(p => p.key === selected)!
 
   return (
     <div className="space-y-6">
@@ -177,11 +175,29 @@ export default function Billing() {
       </div>
 
       {selected !== currentPlan && (
-        <div className="flex items-center gap-4">
-          <Button onClick={handleUpgrade}>
-            {upgraded ? 'Plan updated!' : `Upgrade to ${PLANS.find(p => p.key === selected)?.name}`}
-          </Button>
-          {upgraded && <p className="text-sm text-green-600 font-medium">Your plan has been updated (demo)</p>}
+        <div className="space-y-2">
+          {payStatus && (
+            <p className={`text-sm font-medium ${payStatus.ok ? 'text-green-600' : 'text-red-600'}`}>
+              {payStatus.message}
+            </p>
+          )}
+
+          {selectedPlan.key === 'ENTERPRISE' ? (
+            <Button variant="secondary" onClick={() => window.open('mailto:hello@centinal.in?subject=Enterprise Plan Enquiry', '_blank')}>
+              Contact us for Enterprise
+            </Button>
+          ) : (
+            <RazorpayCheckout
+              planName={selectedPlan.name}
+              amountInRupees={selectedPlan.price}
+              onSuccess={(paymentId) =>
+                setPayStatus({ ok: true, message: `Payment successful! ID: ${paymentId}` })
+              }
+              onError={(err) =>
+                setPayStatus({ ok: false, message: err })
+              }
+            />
+          )}
         </div>
       )}
 
