@@ -167,7 +167,7 @@ export default function OrderList() {
                 )}
               </tr>
             </thead>
-            <tbody>
+            <tbody className="stagger-rows">
               {filtered.map(order => (
                 <OrderRow
                   key={order.id}

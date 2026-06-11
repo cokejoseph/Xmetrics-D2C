@@ -96,7 +96,7 @@ export default function Payments() {
                 <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide hidden lg:table-cell">Date</th>
               </tr>
             </thead>
-            <tbody>
+            <tbody className="stagger-rows">
               {filtered.map(payment => {
                 const order = orders.find(o => o.id === payment.order_id)
                 return (

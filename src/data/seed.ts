@@ -1121,13 +1121,3 @@ export const WEEKLY_REVENUE = Array.from({ length: 14 }, (_, i) => {
   }
 })
 
-// ─── Channel breakdown ─────────────────────────────────────────────────────
-
-export const CHANNEL_DATA = (() => {
-  const map = new Map<string, { orders: number; revenue: number }>()
-  for (const o of DEMO_ORDERS) {
-    const e = map.get(o.channel) ?? { orders: 0, revenue: 0 }
-    map.set(o.channel, { orders: e.orders + 1, revenue: e.revenue + o.gross_amount - o.discount_amount })
-  }
-  return Array.from(map.entries()).map(([channel, data]) => ({ channel, ...data }))
-})()

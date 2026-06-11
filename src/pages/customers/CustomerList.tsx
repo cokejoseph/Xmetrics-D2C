@@ -48,7 +48,7 @@ export default function CustomerList() {
                 <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide hidden lg:table-cell">Location</th>
               </tr>
             </thead>
-            <tbody>
+            <tbody className="stagger-rows">
               {filtered.map(customer => (
                 <tr key={customer.id} className="border-b border-gray-50 hover:bg-gray-50/50 transition-colors">
                   <td className="px-4 py-3">

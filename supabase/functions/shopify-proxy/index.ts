@@ -16,12 +16,9 @@
  *   supabase functions deploy shopify-proxy
  */
 
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
+import 'jsr:@supabase/functions-js/edge-runtime.d.ts'
 
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!
-const SUPABASE_SERVICE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
-
-const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY)
 
 interface RequestBody {
   action: string
@@ -46,15 +43,6 @@ Deno.serve(async (req: Request) => {
 
   if (req.method !== 'POST') {
     return json({ error: 'Method Not Allowed' }, 405)
-  }
-
-  // Verify JWT
-  const authHeader = req.headers.get('authorization') ?? ''
-  const { data: { user }, error: authErr } = await supabase.auth.getUser(
-    authHeader.replace('Bearer ', '')
-  )
-  if (authErr || !user) {
-    return json({ error: 'Unauthorized' }, 401)
   }
 
   const body = await req.json() as RequestBody

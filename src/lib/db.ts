@@ -28,26 +28,30 @@ export async function createBrand(
   brandName: string,
   marketType: string
 ): Promise<{ brand: Brand | null; error: string | null }> {
-  // 1. Insert brand
-  const { data: brand, error: brandErr } = await supabase!
+  // Generate ID client-side so we can insert brand_member before SELECTing.
+  // The SELECT policy on brands checks brand_members, so we must insert the
+  // member first — otherwise .select() after INSERT returns nothing (RLS blocks it).
+  const brandId = crypto.randomUUID()
+
+  // 1. Insert brand (no .select() — avoids the RLS bootstrap problem)
+  const { error: brandErr } = await supabase!
     .from('brands')
     .insert({
+      id: brandId,
       name: brandName,
       owner_id: userId,
       market_type: marketType,
       status: 'ACTIVE',
       settings: {},
     })
-    .select()
-    .single()
 
-  if (brandErr || !brand) return { brand: null, error: brandErr?.message ?? 'Brand creation failed' }
+  if (brandErr) return { brand: null, error: brandErr.message }
 
-  // 2. Add owner as brand_member
+  // 2. Add owner as brand_member (now SELECT policy will pass)
   const { error: memberErr } = await supabase!
     .from('brand_members')
     .insert({
-      brand_id: brand.id,
+      brand_id: brandId,
       user_id: userId,
       role: 'OWNER',
       name: ownerName,
@@ -56,7 +60,18 @@ export async function createBrand(
 
   if (memberErr) return { brand: null, error: memberErr.message }
 
-  return { brand: brand as Brand, error: null }
+  // Return a Brand object directly — we already know every field we inserted,
+  // so no need to SELECT (which would be subject to RLS and timing issues).
+  const brand: Brand = {
+    id: brandId,
+    name: brandName,
+    owner_id: userId,
+    market_type: marketType as Brand['market_type'],
+    status: 'ACTIVE',
+    settings: {},
+    created_at: new Date().toISOString(),
+  }
+  return { brand, error: null }
 }
 
 export async function getBrandForUser(userId: string): Promise<Brand | null> {

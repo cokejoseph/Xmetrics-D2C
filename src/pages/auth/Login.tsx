@@ -4,6 +4,7 @@ import { useAuthStore } from '../../stores/authStore'
 import { useAppStore } from '../../stores/appStore'
 import { Button, Input } from '../../components/ui'
 import { DEMO_MODE } from '../../lib/supabase'
+import AuthShell from './AuthShell'
 
 export default function Login() {
   const [email, setEmail] = useState(DEMO_MODE ? 'demo@zestifyfoods.in' : '')
@@ -34,71 +35,59 @@ export default function Login() {
   }
 
   return (
-    <div className="min-h-screen bg-brand-900 flex items-center justify-center p-4">
-      <div className="w-full max-w-sm">
-        {/* Logo */}
-        <div className="flex items-center gap-3 justify-center mb-8">
-          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-brand-500 to-brand-700 flex items-center justify-center shadow-[0_2px_8px_rgba(79,70,229,0.4)]">
-            <span className="text-white font-bold text-lg">C</span>
-          </div>
-          <span className="text-white font-semibold text-2xl">Centinal</span>
+    <AuthShell>
+      <h1 className="text-xl font-semibold text-gray-900 mb-1">Welcome back</h1>
+      <p className="text-gray-500 text-sm mb-6">Sign in to your account</p>
+
+      {DEMO_MODE && (
+        <div className="mb-4 p-3 bg-amber-50 border border-amber-100 rounded-lg text-amber-700 text-xs">
+          Demo mode — credentials pre-filled. Click Sign In to explore.
         </div>
+      )}
 
-        <div className="bg-white rounded-2xl p-8 shadow-xl">
-          <h1 className="text-xl font-semibold text-gray-900 mb-1">Welcome back</h1>
-          <p className="text-gray-500 text-sm mb-6">Sign in to your account</p>
-
-          {DEMO_MODE && (
-            <div className="mb-4 p-3 bg-amber-50 border border-amber-100 rounded-lg text-amber-700 text-xs">
-              Demo mode — credentials pre-filled. Click Sign In to explore.
-            </div>
-          )}
-
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
-              <Input
-                type="email"
-                value={email}
-                onChange={e => setEmail(e.target.value)}
-                placeholder="you@company.com"
-                required
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Password</label>
-              <Input
-                type="password"
-                value={password}
-                onChange={e => setPassword(e.target.value)}
-                placeholder="••••••••"
-                required
-              />
-            </div>
-            {error && <p className="text-red-600 text-sm">{error}</p>}
-            <Button type="submit" className="w-full" disabled={loading}>
-              {loading ? 'Signing in…' : 'Sign In'}
-            </Button>
-          </form>
-
-          <div className="mt-4 pt-4 border-t border-gray-100">
-            <button
-              type="button"
-              onClick={handleDemo}
-              className="w-full py-2.5 rounded-xl text-sm font-medium text-brand-600 bg-brand-50 hover:bg-brand-100 transition-colors"
-            >
-              Try Demo — no account needed →
-            </button>
-          </div>
-
-          <p className="mt-4 text-center text-sm text-gray-500">
-            No account?{' '}
-            <Link to="/signup" className="text-brand-600 font-medium hover:underline">
-              Sign up
-            </Link>
-          </p>
+      <form onSubmit={handleSubmit} className="space-y-4">
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
+          <Input
+            type="email"
+            value={email}
+            onChange={e => setEmail(e.target.value)}
+            placeholder="you@company.com"
+            required
+          />
         </div>
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">Password</label>
+          <Input
+            type="password"
+            value={password}
+            onChange={e => setPassword(e.target.value)}
+            placeholder="••••••••"
+            required
+          />
+        </div>
+        {error && <p className="text-red-600 text-sm">{error}</p>}
+        <Button type="submit" className="w-full" disabled={loading}>
+          {loading ? 'Signing in…' : 'Sign In'}
+        </Button>
+      </form>
+
+      <div className="mt-4 pt-4 border-t border-gray-100">
+        <button
+          type="button"
+          onClick={handleDemo}
+          className="w-full py-2.5 rounded-xl text-sm font-medium text-brand-600 bg-brand-50 hover:bg-brand-100 transition-colors"
+        >
+          Try Demo — no account needed →
+        </button>
       </div>
-    </div>
+
+      <p className="mt-4 text-center text-sm text-gray-500">
+        No account?{' '}
+        <Link to="/signup" className="text-brand-600 font-medium hover:underline">
+          Sign up
+        </Link>
+      </p>
+    </AuthShell>
   )
 }

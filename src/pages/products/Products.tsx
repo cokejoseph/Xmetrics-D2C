@@ -36,7 +36,7 @@ export default function Products() {
         </Button>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 stagger-children">
         {activeProducts.map(product => {
           const margin = product.selling_price > 0
             ? ((product.selling_price - product.cost_price) / product.selling_price * 100)

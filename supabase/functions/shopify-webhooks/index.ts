@@ -19,8 +19,8 @@
  *   (append ?brand_id=<uuid> so we can look up the right integration)
  */
 
+import 'jsr:@supabase/functions-js/edge-runtime.d.ts'
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
-import { hmac } from 'https://deno.land/x/hmac@v2.0.1/mod.ts'
 
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!
 const SUPABASE_SERVICE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
@@ -171,14 +171,19 @@ Deno.serve(async (req: Request) => {
 
   const webhookSecret = integration.credentials?.webhook_secret as string | undefined
   if (webhookSecret) {
-    // Verify HMAC
     const shopifyHmac = req.headers.get('x-shopify-hmac-sha256')
     if (!shopifyHmac) {
       return new Response(JSON.stringify({ error: 'Missing HMAC header' }), {
         status: 401, headers: { 'Content-Type': 'application/json' },
       })
     }
-    const computed = await hmac('sha256', webhookSecret, bodyText, 'utf8', 'base64')
+    const encoder = new TextEncoder()
+    const key = await crypto.subtle.importKey(
+      'raw', encoder.encode(webhookSecret),
+      { name: 'HMAC', hash: 'SHA-256' }, false, ['sign']
+    )
+    const sig = await crypto.subtle.sign('HMAC', key, encoder.encode(bodyText))
+    const computed = btoa(String.fromCharCode(...new Uint8Array(sig)))
     if (computed !== shopifyHmac) {
       return new Response(JSON.stringify({ error: 'Invalid HMAC signature' }), {
         status: 401, headers: { 'Content-Type': 'application/json' },

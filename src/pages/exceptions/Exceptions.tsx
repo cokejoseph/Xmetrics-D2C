@@ -42,7 +42,7 @@ export default function Exceptions() {
         <h2 className="text-sm font-semibold text-gray-700 mb-3">
           Unresolved <span className="text-gray-400 font-normal">({unresolved.length})</span>
         </h2>
-        <div className="space-y-3">
+        <div className="space-y-3 stagger-children">
           {unresolved.length === 0 && (
             <Card className="p-8 text-center text-gray-500 text-sm">
               No unresolved exceptions 🎉

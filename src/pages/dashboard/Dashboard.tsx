@@ -1,4 +1,4 @@
-import { useMemo } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import {
   TrendingUp, ShoppingBag, Truck, AlertTriangle,
@@ -9,8 +9,6 @@ import { generateDailyBrief } from '../../lib/briefEngine'
 import { Card } from '../../components/ui'
 import { RevenueAreaChart, StatusDonut, ChannelBarChart } from '../../components/charts'
 import { FulfillmentBadge, RTOScoreBar, SeverityBadge } from '../../components/shared/StatusBadge'
-import { WEEKLY_REVENUE } from '../../data/seed'
-
 export default function Dashboard() {
   const { orders, customers, products, exceptions } = useAppStore()
 
@@ -29,8 +27,23 @@ export default function Dashboard() {
   const rtoRate = allDelivered + allRTO > 0 ? (allRTO / (allDelivered + allRTO)) * 100 : 0
   const openExceptions = exceptions.filter(e => e.status === 'UNRESOLVED').length
 
-  // Chart data
-  const revenueChartData = WEEKLY_REVENUE
+  // 14-day rolling revenue chart from real orders
+  const revenueChartData = useMemo(() => {
+    const days = 14
+    const now = new Date()
+    return Array.from({ length: days }, (_, i) => {
+      const d = new Date(now)
+      d.setDate(d.getDate() - (days - 1 - i))
+      const dateStr = d.toISOString().slice(0, 10)
+      const label = d.toLocaleDateString('en-IN', { day: '2-digit', month: 'short' })
+      const dayOrders = orders.filter(o => o.created_at.startsWith(dateStr))
+      return {
+        label,
+        revenue: dayOrders.reduce((s, o) => s + o.gross_amount - o.discount_amount, 0),
+        orders: dayOrders.length,
+      }
+    })
+  }, [orders])
 
   // Order status donut
   const statusCounts = useMemo(() => {
@@ -63,11 +76,11 @@ export default function Dashboard() {
     .slice(0, 6)
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-5 stagger-children">
       {/* Morning Brief Widget */}
       {brief.headline.total_orders > 0 && (
-        <Card className="p-5 bg-gradient-to-br from-[#1E1B4B] via-[#312E81] to-[#2E1065] text-white border-0 overflow-hidden relative animate-fade-in-up">
-          <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,rgba(129,140,248,0.15),transparent_60%)]" />
+        <Card className="p-5 bg-gradient-to-br from-[#172554] via-[#1E40AF] to-[#0C4A6E] text-white border-0 overflow-hidden relative">
+          <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,rgba(96,165,250,0.18),transparent_60%)]" />
           <div className="relative flex items-start justify-between mb-4">
             <div>
               <div className="flex items-center gap-2 mb-1">
@@ -91,20 +104,20 @@ export default function Dashboard() {
                 <span className={`w-1.5 h-1.5 rounded-full mt-2 shrink-0 ${
                   action.priority === 'HIGH' ? 'bg-red-400' : action.priority === 'MEDIUM' ? 'bg-amber-400' : 'bg-green-400'
                 }`} />
-                <span className="text-indigo-200 leading-5">{action.text}</span>
+                <span className="text-blue-200 leading-5">{action.text}</span>
               </div>
             ))}
           </div>
         </Card>
       )}
 
-      {/* KPI Cards — staggered */}
+      {/* KPI Cards — staggered, values count up on mount */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         {([
-          { title: 'Revenue Today', value: `₹${Math.round(todayRevenue).toLocaleString('en-IN')}`, trend: { value: 12, positive: true }, icon: <TrendingUp size={18} />, sub: `${todayOrders.length} orders`, invertTrend: false },
-          { title: 'Paid Orders',   value: String(todayPaid), trend: { value: 8, positive: true }, icon: <ShoppingBag size={18} />, sub: 'Today', invertTrend: false },
-          { title: 'RTO Rate',      value: `${rtoRate.toFixed(1)}%`, trend: { value: 2, positive: false }, icon: <Truck size={18} />, sub: 'All-time', invertTrend: true },
-          { title: 'Open Exceptions', value: String(openExceptions), trend: { value: openExceptions, positive: false }, icon: <AlertTriangle size={18} />, sub: 'Unresolved', invertTrend: true },
+          { title: 'Revenue Today', value: <CountUp value={todayRevenue} format={n => `₹${Math.round(n).toLocaleString('en-IN')}`} />, trend: { value: 12, positive: true }, icon: <TrendingUp size={18} />, sub: `${todayOrders.length} orders`, invertTrend: false },
+          { title: 'Paid Orders',   value: <CountUp value={todayPaid} format={n => String(Math.round(n))} />, trend: { value: 8, positive: true }, icon: <ShoppingBag size={18} />, sub: 'Today', invertTrend: false },
+          { title: 'RTO Rate',      value: <CountUp value={rtoRate} format={n => `${n.toFixed(1)}%`} />, trend: { value: 2, positive: false }, icon: <Truck size={18} />, sub: 'All-time', invertTrend: true },
+          { title: 'Open Exceptions', value: <CountUp value={openExceptions} format={n => String(Math.round(n))} />, trend: { value: openExceptions, positive: false }, icon: <AlertTriangle size={18} />, sub: 'Unresolved', invertTrend: true },
         ]).map((kpi, i) => (
           <div key={kpi.title} className="animate-fade-in-up" style={{ animationDelay: `${i * 65}ms` }}>
             <KPICard {...kpi} />
@@ -210,11 +223,30 @@ export default function Dashboard() {
   )
 }
 
+// Eased count-up for KPI values — runs once on mount, re-runs if the value changes
+function CountUp({ value, format }: { value: number; format: (n: number) => string }) {
+  const [display, setDisplay] = useState(0)
+  useEffect(() => {
+    if (value === 0) { setDisplay(0); return }
+    let raf = 0
+    const start = performance.now()
+    const duration = 750
+    const tick = (now: number) => {
+      const p = Math.min(1, (now - start) / duration)
+      setDisplay(value * (1 - Math.pow(1 - p, 3)))
+      if (p < 1) raf = requestAnimationFrame(tick)
+    }
+    raf = requestAnimationFrame(tick)
+    return () => cancelAnimationFrame(raf)
+  }, [value])
+  return <span className="tabular-nums">{format(display)}</span>
+}
+
 function KPICard({
   title, value, trend, icon, sub, invertTrend = false,
 }: {
   title: string
-  value: string
+  value: React.ReactNode
   trend: { value: number; positive: boolean }
   icon: React.ReactNode
   sub: string

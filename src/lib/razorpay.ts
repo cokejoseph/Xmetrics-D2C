@@ -4,8 +4,7 @@
  * Razorpay integration covers:
  *   1. Validating API credentials (test connection)
  *   2. Fetching & syncing historical payments
- *   3. Initiating refunds for RTO orders
- *   4. Settlement reconciliation (match Razorpay settlements to orders)
+ *   3. Standard Checkout for subscription billing (RazorpayCheckout component)
  *
  * The actual webhook handler (payment.captured / payment.failed / refund.processed)
  * lives at: supabase/functions/webhooks-razorpay/index.ts
@@ -14,7 +13,6 @@
  */
 
 import { supabase, DEMO_MODE } from './supabase'
-import type { Payment } from '../types'
 
 // ─── Types ──────────────────────────────────────────────────────────────────
 
@@ -35,13 +33,6 @@ export interface RazorpaySyncResult {
   payments_synced: number
   settlements_matched: number
   errors: string[]
-}
-
-export interface RazorpayRefundResult {
-  ok: boolean
-  refund_id?: string
-  amount?: number
-  error?: string
 }
 
 // ─── Credential validation ──────────────────────────────────────────────────
@@ -121,80 +112,6 @@ export async function syncRazorpayPayments(
   }
 }
 
-// ─── Refunds ───────────────────────────────────────────────────────────────
-
-/**
- * Initiate a Razorpay refund for a payment.
- * Used from the Payments page and Order Detail for RTO cases.
- */
-export async function initiateRazorpayRefund(
-  gatewayRef: string,       // Razorpay payment_id (pay_XXXXX)
-  amountPaise: number,      // Amount in paise (₹1 = 100 paise)
-  reason: 'rto_return' | 'customer_request' | 'merchant_initiated' = 'merchant_initiated'
-): Promise<RazorpayRefundResult> {
-  if (DEMO_MODE) {
-    await delay(600)
-    return {
-      ok: true,
-      refund_id: `rfnd_demo_${Date.now()}`,
-      amount: amountPaise / 100,
-    }
-  }
-
-  try {
-    const { data, error } = await supabase!.functions.invoke('razorpay-proxy', {
-      body: {
-        action: 'create_refund',
-        payment_id: gatewayRef,
-        amount: amountPaise,
-        notes: { reason },
-      },
-    })
-    if (error) throw new Error(error.message)
-    if (!data?.ok) throw new Error(data?.error ?? 'Refund failed')
-    return { ok: true, refund_id: data.refund_id, amount: data.amount / 100 }
-  } catch (e) {
-    return { ok: false, error: e instanceof Error ? e.message : 'Refund failed' }
-  }
-}
-
-// ─── Settlement reconciliation ─────────────────────────────────────────────
-
-/**
- * Fetch Razorpay settlements and match them to Sentinal payment records.
- * Returns a list of matched payments with settlement details populated.
- */
-export async function fetchRazorpaySettlements(
-  credentials: RazorpayCredentials,
-  brandId: string
-): Promise<{ settlements: Payment[]; unmatched_count: number; error?: string }> {
-  if (DEMO_MODE) {
-    return { settlements: [], unmatched_count: 0 }
-  }
-
-  try {
-    const { data, error } = await supabase!.functions.invoke('razorpay-proxy', {
-      body: {
-        action: 'fetch_settlements',
-        brand_id: brandId,
-        key_id: credentials.key_id,
-        key_secret: credentials.key_secret,
-      },
-    })
-    if (error) throw new Error(error.message)
-    return {
-      settlements: data.settlements ?? [],
-      unmatched_count: data.unmatched_count ?? 0,
-    }
-  } catch (e) {
-    return {
-      settlements: [],
-      unmatched_count: 0,
-      error: e instanceof Error ? e.message : 'Failed to fetch settlements',
-    }
-  }
-}
-
 // ─── Full connect flow ─────────────────────────────────────────────────────
 
 export async function connectRazorpay(
@@ -215,18 +132,6 @@ export async function connectRazorpay(
 
   return { ok: true, syncResult }
 }
-
-// ─── Utility helpers ───────────────────────────────────────────────────────
-
-/** Convert ₹ to paise for Razorpay API calls */
-export const rupeesToPaise = (rupees: number) => Math.round(rupees * 100)
-
-/** Convert paise to ₹ for display */
-export const paiseToRupees = (paise: number) => paise / 100
-
-/** Format a Razorpay payment ID for display */
-export const formatPaymentId = (id: string) =>
-  id.length > 16 ? `${id.slice(0, 8)}…${id.slice(-6)}` : id
 
 function delay(ms: number) {
   return new Promise(resolve => setTimeout(resolve, ms))

@@ -136,7 +136,7 @@ export default function Fulfillment() {
                 )}
               </tr>
             </thead>
-            <tbody>
+            <tbody className="stagger-rows">
               {tabOrders.map(order => {
                 const shipment = order.shipments?.[0]
                 return (

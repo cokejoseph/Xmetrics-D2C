@@ -7,6 +7,7 @@ import { useAuthStore } from '../../stores/authStore'
 import { DEMO_BRAND } from '../../data/seed'
 import { DEMO_MODE, supabase } from '../../lib/supabase'
 import { createBrand, addWarehouseDB } from '../../lib/db'
+import AuthShell from './AuthShell'
 
 export default function Onboarding() {
   const [step, setStep] = useState(1)
@@ -83,17 +84,8 @@ export default function Onboarding() {
   }
 
   return (
-    <div className="min-h-screen bg-brand-900 flex items-center justify-center p-4">
-      <div className="w-full max-w-md">
-        <div className="flex items-center gap-3 justify-center mb-8">
-          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-brand-500 to-brand-700 flex items-center justify-center shadow-[0_2px_8px_rgba(79,70,229,0.4)]">
-            <span className="text-white font-bold text-lg">C</span>
-          </div>
-          <span className="text-white font-semibold text-2xl">Centinal</span>
-        </div>
-
-        <div className="bg-white rounded-2xl p-8 shadow-xl">
-          {/* Progress */}
+    <AuthShell width="max-w-md">
+      {/* Progress */}
           <div className="flex gap-2 mb-6">
             {[1, 2, 3].map(s => (
               <div key={s} className={`flex-1 h-1 rounded-full ${s <= step ? 'bg-brand-600' : 'bg-gray-100'}`} />
@@ -193,8 +185,6 @@ export default function Onboarding() {
               </Button>
             </div>
           )}
-        </div>
-      </div>
-    </div>
+    </AuthShell>
   )
 }

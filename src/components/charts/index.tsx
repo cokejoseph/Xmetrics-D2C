@@ -3,13 +3,12 @@ import {
   XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
 } from 'recharts'
 
-const ACCENT = '#6366F1'
-const ACCENT_LIGHT = '#818CF8'
+const ACCENT = '#3B82F6'
 
 // Semantic colors per fulfilment status — intentionally distinct
 const STATUS_COLORS: Record<string, string> = {
   PENDING:          '#94A3B8',
-  CONFIRMED:        '#6366F1',
+  CONFIRMED:        '#3B82F6',
   PROCESSING:       '#8B5CF6',
   PACKING:          '#A78BFA',
   READY_TO_SHIP:    '#F59E0B',
@@ -43,7 +42,7 @@ export function RevenueAreaChart({ data }: { data: RevenuePoint[] }) {
             <stop offset="95%" stopColor={ACCENT} stopOpacity={0} />
           </linearGradient>
         </defs>
-        <CartesianGrid strokeDasharray="3 3" stroke="#EEF2FF" vertical={false} />
+        <CartesianGrid strokeDasharray="3 3" stroke="#EFF6FF" vertical={false} />
         <XAxis dataKey="label" tick={{ fontSize: 11, fill: '#94a3b8' }} axisLine={false} tickLine={false} />
         <YAxis tick={{ fontSize: 11, fill: '#94a3b8' }} axisLine={false} tickLine={false}
           tickFormatter={v => `₹${(v / 1000).toFixed(0)}k`} />
@@ -62,7 +61,7 @@ export function OrdersBarChart({ data }: { data: Array<{ label: string; orders: 
   return (
     <ResponsiveContainer width="100%" height={200}>
       <BarChart data={data} margin={{ top: 8, right: 8, bottom: 0, left: 0 }}>
-        <CartesianGrid strokeDasharray="3 3" stroke="#EEF2FF" vertical={false} />
+        <CartesianGrid strokeDasharray="3 3" stroke="#EFF6FF" vertical={false} />
         <XAxis dataKey="label" tick={{ fontSize: 11, fill: '#94a3b8' }} axisLine={false} tickLine={false} />
         <YAxis tick={{ fontSize: 11, fill: '#94a3b8' }} axisLine={false} tickLine={false} />
         <Tooltip contentStyle={{ border: 'none', borderRadius: 12, boxShadow: '0 8px 24px rgba(0,0,0,0.1)', fontSize: 12, padding: '8px 12px' }} />
@@ -78,7 +77,7 @@ export function ChannelBarChart({ data }: { data: ChannelPoint[] }) {
   return (
     <ResponsiveContainer width="100%" height={200}>
       <BarChart data={data} layout="vertical" margin={{ top: 5, right: 12, bottom: 5, left: 64 }}>
-        <CartesianGrid strokeDasharray="3 3" stroke="#EEF2FF" horizontal={false} />
+        <CartesianGrid strokeDasharray="3 3" stroke="#EFF6FF" horizontal={false} />
         <XAxis type="number" tick={{ fontSize: 11, fill: '#94a3b8' }} axisLine={false} tickLine={false} />
         <YAxis dataKey="channel" type="category" tick={{ fontSize: 11, fill: '#64748b' }} axisLine={false} tickLine={false} />
         <Tooltip contentStyle={{ border: 'none', borderRadius: 12, boxShadow: '0 8px 24px rgba(0,0,0,0.1)', fontSize: 12, padding: '8px 12px' }} />
@@ -155,23 +154,3 @@ export function StatusDonut({ data }: { data: DonutData[] }) {
   )
 }
 
-export function MiniLineChart({ data, dataKey, color = ACCENT_LIGHT }: {
-  data: Array<Record<string, unknown>>
-  dataKey: string
-  color?: string
-}) {
-  return (
-    <ResponsiveContainer width="100%" height={60}>
-      <AreaChart data={data} margin={{ top: 2, right: 2, bottom: 2, left: 2 }}>
-        <defs>
-          <linearGradient id={`mini-${dataKey}`} x1="0" y1="0" x2="0" y2="1">
-            <stop offset="5%"  stopColor={color} stopOpacity={0.15} />
-            <stop offset="95%" stopColor={color} stopOpacity={0} />
-          </linearGradient>
-        </defs>
-        <Area type="monotone" dataKey={dataKey} stroke={color} strokeWidth={1.5}
-          fill={`url(#mini-${dataKey})`} dot={false} />
-      </AreaChart>
-    </ResponsiveContainer>
-  )
-}

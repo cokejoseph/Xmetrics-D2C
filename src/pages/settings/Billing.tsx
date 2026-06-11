@@ -32,7 +32,7 @@ const PLANS: {
   {
     key: 'GROWTH',
     name: 'Growth',
-    price: 2999,
+    price: 4999,
     period: '/mo',
     orders: 3000,
     highlight: true,
@@ -41,7 +41,6 @@ const PLANS: {
       '3 warehouses',
       '5 team members',
       'All integrations',
-      'Reorder engine',
       'Demand forecast',
       'Daily briefs',
       'Priority support',
@@ -50,11 +49,11 @@ const PLANS: {
   {
     key: 'SCALE',
     name: 'Scale',
-    price: 7999,
+    price: 9999,
     period: '/mo',
-    orders: 15000,
+    orders: 10000,
     features: [
-      'Up to 15,000 orders/month',
+      'Up to 10,000 orders/month',
       'Unlimited warehouses',
       '15 team members',
       'Custom RTO rules',

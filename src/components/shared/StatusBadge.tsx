@@ -1,6 +1,6 @@
 import { Badge } from '../ui'
 import type {
-  FulfillmentStatus, PaymentStatus, RTORiskLevel, OrderChannel,
+  FulfillmentStatus, PaymentStatus, OrderChannel,
   ExceptionSeverity, ShipmentStatus,
 } from '../../types'
 
@@ -44,14 +44,6 @@ export function ChannelBadge({ channel }: { channel: OrderChannel }) {
     <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-semibold ${colors[channel]}`}>
       {channel}
     </span>
-  )
-}
-
-export function RTORiskBadge({ level }: { level: RTORiskLevel }) {
-  return (
-    <Badge variant={level === 'HIGH' ? 'danger' : level === 'MEDIUM' ? 'warning' : 'success'}>
-      {level}
-    </Badge>
   )
 }
 

@@ -9,7 +9,7 @@
  *   3. Registering webhooks on the merchant's Shopify store
  */
 
-import { supabase, DEMO_MODE } from './supabase'
+import { DEMO_MODE, SUPABASE_URL, callEdgeFunction } from './supabase'
 
 // ─── Types ─────────────────────────────────────────────────────────────────
 
@@ -55,15 +55,12 @@ export async function testShopifyConnection(
   }
 
   try {
-    const { data, error } = await supabase!.functions.invoke('shopify-proxy', {
-      body: {
-        action: 'test_connection',
-        shop_domain: credentials.shop_domain,
-        api_key: credentials.api_key,
-      },
+    const data = await callEdgeFunction('shopify-proxy', {
+      action: 'test_connection',
+      shop_domain: credentials.shop_domain,
+      api_key: credentials.api_key,
     })
 
-    if (error) throw new Error(error.message)
     if (!data?.ok) throw new Error(data?.error ?? 'Connection failed')
 
     return {
@@ -103,25 +100,22 @@ export async function registerShopifyWebhooks(
     return { registered: [...SHOPIFY_WEBHOOK_TOPICS], errors: [] }
   }
 
-  const supabaseUrl = import.meta.env.VITE_SUPABASE_URL as string
-  const webhookUrl = `${supabaseUrl}/functions/v1/shopify-webhooks?brand_id=${brandId}`
+  const webhookUrl = `${SUPABASE_URL}/functions/v1/shopify-webhooks?brand_id=${brandId}`
 
   const registered: string[] = []
   const errors: string[] = []
 
   for (const topic of SHOPIFY_WEBHOOK_TOPICS) {
     try {
-      const { data, error } = await supabase!.functions.invoke('shopify-proxy', {
-        body: {
-          action: 'register_webhook',
-          shop_domain: credentials.shop_domain,
-          api_key: credentials.api_key,
-          topic,
-          address: webhookUrl,
-        },
+      const data = await callEdgeFunction('shopify-proxy', {
+        action: 'register_webhook',
+        shop_domain: credentials.shop_domain,
+        api_key: credentials.api_key,
+        topic,
+        address: webhookUrl,
       })
-      if (error || !data?.ok) {
-        errors.push(`${topic}: ${data?.error ?? error?.message ?? 'Failed'}`)
+      if (!data?.ok) {
+        errors.push(`${topic}: ${data?.error ?? 'Failed'}`)
       } else {
         registered.push(topic)
       }
@@ -160,17 +154,13 @@ export async function syncShopifyOrders(
 
   try {
     onProgress?.('Fetching orders from Shopify…')
-    const { data, error } = await supabase!.functions.invoke('shopify-proxy', {
-      body: {
-        action: 'sync_orders',
-        brand_id: brandId,
-        shop_domain: credentials.shop_domain,
-        api_key: credentials.api_key,
-        days: 90,
-      },
+    const data = await callEdgeFunction('shopify-proxy', {
+      action: 'sync_orders',
+      brand_id: brandId,
+      shop_domain: credentials.shop_domain,
+      api_key: credentials.api_key,
+      days: 90,
     })
-
-    if (error) throw new Error(error.message)
 
     onProgress?.(`Imported ${data.orders_imported} orders`)
 
@@ -235,12 +225,6 @@ export function normaliseShopDomain(input: string): string {
     .replace(/\/$/, '')
     .toLowerCase()
     .trim()
-}
-
-/** Build the Shopify Admin API base URL from a shop domain */
-export function shopifyAdminUrl(shopDomain: string): string {
-  const domain = normaliseShopDomain(shopDomain)
-  return `https://${domain}/admin/api/2024-01`
 }
 
 // ─── Utils ─────────────────────────────────────────────────────────────────

@@ -296,22 +296,6 @@ export interface Exception {
   order?: Order
 }
 
-// ─── Order Profit ──────────────────────────────────────────────────────────
-
-export interface OrderProfit {
-  id: string
-  brand_id: string
-  order_id: string
-  revenue: number
-  cogs: number
-  shipping_cost: number
-  rto_cost: number
-  discount: number
-  net_profit: number
-  margin_percent: number
-  calculated_at: string
-}
-
 // ─── Daily Brief ───────────────────────────────────────────────────────────
 
 export interface BriefHeadline {
@@ -447,15 +431,3 @@ export interface SearchResult {
   url: string
 }
 
-// ─── Webhook ───────────────────────────────────────────────────────────────
-
-export interface WebhookEvent {
-  id: string
-  brand_id: string
-  source: string
-  event_type: string
-  payload: Record<string, unknown>
-  status: 'PENDING' | 'PROCESSED' | 'FAILED'
-  processed_at: string | null
-  created_at: string
-}

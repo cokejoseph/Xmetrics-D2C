@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useAuthStore } from '../../stores/authStore'
 import { loadRazorpayScript } from '../../lib/razorpay'
 import type { RazorpayCheckoutResponse } from '../../lib/razorpay'
+import { DEMO_MODE, callEdgeFunction } from '../../lib/supabase'
 import { Button } from '../ui'
 
 interface RazorpayCheckoutProps {
@@ -10,27 +11,6 @@ interface RazorpayCheckoutProps {
   onSuccess?: (paymentId: string) => void
   onError?: (error: string) => void
   className?: string
-}
-
-const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL as string | undefined
-const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY as string | undefined
-
-async function callEdgeFunction(name: string, body: object) {
-  if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
-    throw new Error('Supabase not configured')
-  }
-  const res = await fetch(`${SUPABASE_URL}/functions/v1/${name}`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'apikey': SUPABASE_ANON_KEY,
-      'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
-    },
-    body: JSON.stringify(body),
-  })
-  const json = await res.json()
-  if (!res.ok) throw new Error(json.error ?? `Edge function ${name} failed (${res.status})`)
-  return json
 }
 
 export function RazorpayCheckout({
@@ -44,7 +24,7 @@ export function RazorpayCheckout({
   const [loading, setLoading] = useState(false)
 
   const handlePay = async () => {
-    if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
+    if (DEMO_MODE) {
       onError?.('Payments are unavailable in demo mode. Connect Supabase to enable billing.')
       return
     }
@@ -81,7 +61,7 @@ export function RazorpayCheckout({
         description: `${planName} Plan — Monthly`,
         order_id: order.order_id,
         prefill: { email: user?.email ?? '' },
-        theme: { color: '#4F46E5' },
+        theme: { color: '#2563EB' },
         modal: {
           ondismiss: () => setLoading(false),
         },

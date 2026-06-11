@@ -25,14 +25,14 @@ export default function TopBar() {
           to="/exceptions"
           className="relative p-2 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-50 transition-colors"
         >
-          <Bell size={18} />
+          <Bell size={18} className={unresolved > 0 ? 'animate-bell-ring' : undefined} />
           {unresolved > 0 && (
-            <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-red-500" />
+            <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-red-500 animate-pulse-dot" />
           )}
         </Link>
 
         {/* Avatar */}
-        <div className="ml-1 w-8 h-8 rounded-full bg-gradient-to-br from-brand-600 to-brand-800 flex items-center justify-center text-white text-xs font-semibold shadow-[0_2px_8px_rgba(79,70,229,0.35)]">
+        <div className="ml-1 w-8 h-8 rounded-full bg-gradient-to-br from-brand-600 to-brand-800 flex items-center justify-center text-white text-xs font-semibold shadow-[0_2px_8px_rgba(37,99,235,0.35)] ring-2 ring-transparent hover:ring-brand-300/60 hover:scale-105 transition-all duration-200 cursor-default">
           R
         </div>
       </div>

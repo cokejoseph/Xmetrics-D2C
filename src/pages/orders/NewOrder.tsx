@@ -1,9 +1,11 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import { ArrowLeft, Plus, Trash2 } from 'lucide-react'
 import { useAppStore } from '../../stores/appStore'
 import { Card, Button, Input, Select } from '../../components/ui'
 import { calculateRTOScore } from '../../lib/services'
+import { lookupPincode } from '../../lib/pincodeService'
+import type { PincodeResult } from '../../lib/pincodeService'
 import type { PaymentMethod, OrderChannel } from '../../types'
 
 interface LineItem {
@@ -29,6 +31,17 @@ export default function NewOrder() {
   const [lines, setLines] = useState<LineItem[]>([{ product_id: '', quantity: 1, unit_price: 0, sku: '' }])
   const [notes, setNotes] = useState('')
   const [submitting, setSubmitting] = useState(false)
+  const [pincodeData, setPincodeData] = useState<PincodeResult | null>(null)
+  const [pincodeLoading, setPincodeLoading] = useState(false)
+
+  useEffect(() => {
+    if (pincode.length !== 6) { setPincodeData(null); return }
+    setPincodeLoading(true)
+    lookupPincode(pincode).then(data => {
+      setPincodeData(data)
+      setPincodeLoading(false)
+    })
+  }, [pincode])
 
   const addLine = () => setLines(l => [...l, { product_id: '', quantity: 1, unit_price: 0, sku: '' }])
   const removeLine = (i: number) => setLines(l => l.filter((_, idx) => idx !== i))
@@ -46,8 +59,18 @@ export default function NewOrder() {
 
   const brandAov = 450
   const isFirstOrder = !customers.some(c => c.phone === customerPhone)
-  const rtoPreview = pincode.length === 6
-    ? calculateRTOScore({ payment_method: paymentMethod, pincode, customer_id: null, order_value: total, brand_aov: brandAov, is_first_order: isFirstOrder, has_prior_rto: false, address_complete: !!(address && pincode) })
+  const rtoPreview = pincode.length === 6 && !pincodeLoading
+    ? calculateRTOScore({
+        payment_method: paymentMethod,
+        pincode,
+        customer_id: null,
+        order_value: total,
+        brand_aov: brandAov,
+        is_first_order: isFirstOrder,
+        has_prior_rto: false,
+        address_complete: !!(address && pincode),
+        pincodeData,
+      })
     : null
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -202,14 +225,29 @@ export default function NewOrder() {
             </div>
           </div>
 
-          {rtoPreview && (
-            <div className={`mt-4 p-3 rounded-xl text-sm ${
-              rtoPreview.level === 'HIGH' ? 'bg-red-50 text-red-700' :
-              rtoPreview.level === 'MEDIUM' ? 'bg-amber-50 text-amber-700' :
-              'bg-green-50 text-green-700'
-            }`}>
-              <p className="font-medium">RTO Pre-score: {rtoPreview.score}/100 — {rtoPreview.level} RISK</p>
-              <p className="text-xs mt-0.5 opacity-80">{rtoPreview.factors[0]}</p>
+          {pincode.length === 6 && (
+            <div className="mt-4">
+              {pincodeLoading ? (
+                <div className="p-3 rounded-xl bg-gray-50 text-sm text-gray-400 animate-pulse">
+                  Looking up pincode…
+                </div>
+              ) : rtoPreview ? (
+                <div className={`p-3 rounded-xl text-sm ${
+                  rtoPreview.level === 'HIGH'   ? 'bg-red-50 text-red-700' :
+                  rtoPreview.level === 'MEDIUM' ? 'bg-amber-50 text-amber-700' :
+                                                  'bg-green-50 text-green-700'
+                }`}>
+                  <p className="font-medium">RTO Pre-score: {rtoPreview.score}/100 — {rtoPreview.level} RISK</p>
+                  {pincodeData && (
+                    <p className="text-xs mt-0.5 opacity-80">
+                      {pincodeData.district}, {pincodeData.state}
+                      {!pincodeData.deliverable && ' · Non-deliverable pincode'}
+                      {pincodeData.highRiskState && ' · High-risk region'}
+                    </p>
+                  )}
+                  <p className="text-xs mt-0.5 opacity-70">{rtoPreview.factors[0]}</p>
+                </div>
+              ) : null}
             </div>
           )}
         </Card>

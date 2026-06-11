@@ -34,7 +34,7 @@ export default function Sidebar() {
       {/* Logo */}
       <div className="px-4 py-5 border-b border-white/5">
         <div className="flex items-center gap-2">
-          <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-brand-500 to-brand-700 flex items-center justify-center shadow-[0_2px_8px_rgba(79,70,229,0.4)]">
+          <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-brand-500 to-brand-700 flex items-center justify-center shadow-[0_2px_8px_rgba(37,99,235,0.4)]">
             <span className="text-white font-bold text-sm">C</span>
           </div>
           <span className="text-white font-semibold text-base tracking-tight">Centinal</span>

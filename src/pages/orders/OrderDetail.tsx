@@ -1,4 +1,5 @@
 import { useParams, Link } from 'react-router-dom'
+import { useState, useEffect } from 'react'
 import { ArrowLeft, MapPin, Package, Clock, User, Truck, CreditCard, ShieldAlert } from 'lucide-react'
 import { useAppStore } from '../../stores/appStore'
 import { Card, Badge } from '../../components/ui'
@@ -7,11 +8,19 @@ import {
   ShipmentStatusBadge, PaymentMethodBadge,
 } from '../../components/shared/StatusBadge'
 import { calculateRTOScore } from '../../lib/services'
+import { lookupPincode } from '../../lib/pincodeService'
+import type { PincodeResult } from '../../lib/pincodeService'
 
 export default function OrderDetail() {
   const { id } = useParams<{ id: string }>()
   const { orders, products, customers } = useAppStore()
   const order = orders.find(o => o.id === id)
+  const [pincodeData, setPincodeData] = useState<PincodeResult | null>(null)
+
+  useEffect(() => {
+    if (!order?.shipping_address.pincode) return
+    lookupPincode(order.shipping_address.pincode).then(setPincodeData)
+  }, [order?.shipping_address.pincode])
 
   if (!order) {
     return (
@@ -37,7 +46,7 @@ export default function OrderDetail() {
   const netProfit = revenue - discount - cogs - shippingCost - rtoReserve
   const margin = revenue > 0 ? (netProfit / (revenue - discount)) * 100 : 0
 
-  // RTO score
+  // RTO score — enriched with live pincode data
   const rtoResult = calculateRTOScore({
     payment_method: order.payment_method,
     pincode: order.shipping_address.pincode,
@@ -47,6 +56,7 @@ export default function OrderDetail() {
     is_first_order: (customer?.total_orders ?? 1) <= 1,
     has_prior_rto: customer?.tags?.includes('rto-history') ?? false,
     address_complete: !!(order.shipping_address.address && order.shipping_address.pincode),
+    pincodeData,
   })
 
   const shipment = order.shipments?.[0]
@@ -232,10 +242,24 @@ export default function OrderDetail() {
             </div>
             <div className="w-full h-2 bg-gray-100 rounded-full mb-3">
               <div
-                className={`h-full rounded-full ${rtoResult.score >= 60 ? 'bg-red-500' : rtoResult.score >= 30 ? 'bg-amber-500' : 'bg-green-500'}`}
+                className={`h-full rounded-full transition-all duration-500 ${rtoResult.score >= 60 ? 'bg-red-500' : rtoResult.score >= 30 ? 'bg-amber-500' : 'bg-green-500'}`}
                 style={{ width: `${rtoResult.score}%` }}
               />
             </div>
+
+            {/* Pincode location context */}
+            {pincodeData && (
+              <div className="mb-3 px-2.5 py-2 bg-gray-50 rounded-lg text-xs text-gray-600 space-y-0.5">
+                <p className="font-medium text-gray-700">{pincodeData.district}, {pincodeData.state}</p>
+                <div className="flex flex-wrap gap-x-3">
+                  <span>Tier {pincodeData.tier}</span>
+                  {pincodeData.isRural && <span className="text-amber-600">Rural area</span>}
+                  {!pincodeData.deliverable && <span className="text-red-600 font-medium">Non-deliverable</span>}
+                  {pincodeData.highRiskState && <span className="text-red-600">High-risk region</span>}
+                </div>
+              </div>
+            )}
+
             <div className="space-y-1">
               {rtoResult.factors.map((f, i) => (
                 <p key={i} className="text-xs text-gray-600">• {f}</p>

@@ -22,7 +22,7 @@ export function Button({
       className={cn(
         'inline-flex items-center justify-center gap-2 font-medium rounded-lg transition-all active:scale-[0.97] disabled:opacity-50 disabled:cursor-not-allowed',
         {
-          'bg-brand-600 text-white hover:bg-brand-500 active:bg-brand-700 shadow-[0_1px_3px_rgba(79,70,229,0.3)]': variant === 'primary',
+          'bg-brand-600 text-white hover:bg-brand-500 active:bg-brand-700 shadow-[0_1px_3px_rgba(37,99,235,0.3)] hover:shadow-[0_4px_12px_rgba(37,99,235,0.35)] hover:-translate-y-px': variant === 'primary',
           'bg-white text-gray-700 border border-gray-200 hover:bg-gray-50 hover:border-gray-300': variant === 'secondary',
           'bg-red-50 text-red-600 border border-red-100 hover:bg-red-100': variant === 'danger',
           'text-gray-600 hover:bg-gray-100': variant === 'ghost',
@@ -81,7 +81,7 @@ export function Card({
   className, children, ...props
 }: React.HTMLAttributes<HTMLDivElement>) {
   return (
-    <div className={cn('bg-white rounded-2xl shadow-card border border-gray-100/80 transition-shadow duration-200', className)} {...props}>
+    <div className={cn('bg-white rounded-2xl shadow-card border border-gray-100/80 transition-shadow duration-200 hover:shadow-[0_6px_20px_rgba(15,23,42,0.07)]', className)} {...props}>
       {children}
     </div>
   )
@@ -132,10 +132,10 @@ export function Modal({ open, onClose, title, children, size = 'md' }: ModalProp
   return (
     <DialogPrimitive.Root open={open} onOpenChange={v => !v && onClose()}>
       <DialogPrimitive.Portal>
-        <DialogPrimitive.Overlay className="fixed inset-0 bg-black/30 backdrop-blur-sm z-50 animate-in fade-in" />
+        <DialogPrimitive.Overlay className="fixed inset-0 bg-black/30 backdrop-blur-sm z-50 animate-fade-in" />
         <DialogPrimitive.Content
           className={cn(
-            'fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 bg-white rounded-2xl shadow-dropdown z-50 animate-in fade-in zoom-in-95',
+            'fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 bg-white rounded-2xl shadow-dropdown z-50 animate-modal-in',
             {
               'w-full max-w-sm': size === 'sm',
               'w-full max-w-md': size === 'md',
@@ -162,51 +162,3 @@ export function Modal({ open, onClose, title, children, size = 'md' }: ModalProp
   )
 }
 
-// ─── Textarea ──────────────────────────────────────────────────────────────
-
-export function Textarea({
-  className, ...props
-}: React.TextareaHTMLAttributes<HTMLTextAreaElement>) {
-  return (
-    <textarea
-      className={cn('input-field resize-none', className)}
-      {...props}
-    />
-  )
-}
-
-// ─── Spinner ───────────────────────────────────────────────────────────────
-
-export function Spinner({ size = 16 }: { size?: number }) {
-  return (
-    <svg
-      width={size}
-      height={size}
-      viewBox="0 0 24 24"
-      fill="none"
-      className="animate-spin text-brand-600"
-    >
-      <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" strokeDasharray="31.4" strokeDashoffset="10" strokeLinecap="round" />
-    </svg>
-  )
-}
-
-// ─── Empty State ───────────────────────────────────────────────────────────
-
-export function EmptyState({
-  icon, title, description, action,
-}: {
-  icon?: React.ReactNode
-  title: string
-  description?: string
-  action?: React.ReactNode
-}) {
-  return (
-    <div className="flex flex-col items-center justify-center py-16 text-center">
-      {icon && <div className="mb-4 text-gray-300">{icon}</div>}
-      <p className="text-gray-600 font-medium">{title}</p>
-      {description && <p className="text-gray-400 text-sm mt-1 max-w-xs">{description}</p>}
-      {action && <div className="mt-4">{action}</div>}
-    </div>
-  )
-}

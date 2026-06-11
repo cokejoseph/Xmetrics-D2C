@@ -153,7 +153,7 @@ export default function GlobalSearch() {
       </div>
 
       {open && results.length > 0 && (
-        <div className="absolute top-full left-0 right-0 mt-1.5 bg-white rounded-xl shadow-dropdown border border-gray-100 py-1 z-50">
+        <div className="absolute top-full left-0 right-0 mt-1.5 bg-white rounded-xl shadow-dropdown border border-gray-100 py-1 z-50 animate-dropdown-in">
           {results.map(result => (
             <button
               key={`${result.type}-${result.id}`}

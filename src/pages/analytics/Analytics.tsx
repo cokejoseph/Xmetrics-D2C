@@ -3,7 +3,6 @@ import { useAppStore } from '../../stores/appStore'
 import { buildSKUForecast } from '../../lib/forecastEngine'
 import { Card } from '../../components/ui'
 import { RevenueAreaChart, OrdersBarChart, StatusDonut, ChannelBarChart } from '../../components/charts'
-import { WEEKLY_REVENUE } from '../../data/seed'
 import type { ForecastStatus } from '../../types'
 
 const FORECAST_STATUS_STYLE: Record<ForecastStatus, { label: string; cls: string }> = {
@@ -51,7 +50,23 @@ export default function Analytics() {
     }))
   }, [orders])
 
-  const dailyOrders = WEEKLY_REVENUE.map(r => ({ label: r.label, orders: r.orders }))
+  const revenueChartData = useMemo(() => {
+    const days = 14
+    const now = new Date()
+    return Array.from({ length: days }, (_, i) => {
+      const d = new Date(now)
+      d.setDate(d.getDate() - (days - 1 - i))
+      const dateStr = d.toISOString().slice(0, 10)
+      const label = d.toLocaleDateString('en-IN', { day: '2-digit', month: 'short' })
+      const dayOrders = orders.filter(o => o.created_at.startsWith(dateStr))
+      return {
+        label,
+        revenue: dayOrders.reduce((s, o) => s + o.gross_amount - o.discount_amount, 0),
+        orders: dayOrders.length,
+      }
+    })
+  }, [orders])
+  const dailyOrders = revenueChartData.map(r => ({ label: r.label, orders: r.orders }))
   const statusCounts = useMemo(() => {
     const map = new Map<string, number>()
     for (const o of orders) map.set(o.fulfillment_status, (map.get(o.fulfillment_status) ?? 0) + 1)
@@ -91,7 +106,7 @@ export default function Analytics() {
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
             <Card className="p-5">
               <h3 className="text-sm font-semibold text-gray-900 mb-4">Revenue Trend (14 days)</h3>
-              <RevenueAreaChart data={WEEKLY_REVENUE} />
+              <RevenueAreaChart data={revenueChartData} />
             </Card>
             <Card className="p-5">
               <h3 className="text-sm font-semibold text-gray-900 mb-4">Daily Orders</h3>
@@ -122,7 +137,7 @@ export default function Analytics() {
                     <th className="px-4 py-3 text-right text-xs font-semibold text-gray-500 uppercase tracking-wide">RTO Rate</th>
                   </tr>
                 </thead>
-                <tbody>
+                <tbody className="stagger-rows">
                   {channelData.sort((a, b) => b.orders - a.orders).map(c => (
                     <tr key={c.channel} className="border-b border-gray-50">
                       <td className="px-4 py-3 text-sm font-medium text-gray-900">{c.channel}</td>
@@ -163,7 +178,7 @@ export default function Analytics() {
                     <th className="px-4 py-3 text-right text-xs font-semibold text-gray-500 uppercase tracking-wide hidden lg:table-cell">Reorder Qty</th>
                   </tr>
                 </thead>
-                <tbody>
+                <tbody className="stagger-rows">
                   {forecasts.sort((a, b) => {
                     const order: ForecastStatus[] = ['OUT_OF_STOCK', 'REORDER_NOW', 'REORDER_SOON', 'IN_STOCK', 'DEAD_STOCK', 'INSUFFICIENT_DATA', 'UNPREDICTABLE']
                     return order.indexOf(a.status) - order.indexOf(b.status)

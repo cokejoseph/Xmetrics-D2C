@@ -1,6 +1,9 @@
 import type { RTOScoreResult, RTORiskLevel, PaymentMethod } from '../types'
+import type { PincodeResult } from './pincodeService'
 
-// ─── RTO Scoring Engine (client-side mirror of edge function) ──────────────
+// ─── RTO Scoring Engine ────────────────────────────────────────────────────
+// Pass `pincodeData` (from lookupPincode()) for enriched scoring.
+// Without it, falls back to prefix-based tier estimation.
 
 interface RTOScoreInput {
   payment_method: PaymentMethod
@@ -11,16 +14,16 @@ interface RTOScoreInput {
   is_first_order: boolean
   has_prior_rto: boolean
   address_complete: boolean
+  pincodeData?: PincodeResult | null
 }
 
-// Tier classification based on pincode prefix patterns (simplified)
-function getPincodeTier(pincode: string): 1 | 2 | 3 {
-  const tier1Prefixes = ['110', '400', '500', '560', '600', '700', '380', '411', '302']
-  const tier2Prefixes = ['226', '208', '160', '641', '682', '440', '474', '462', '342', '305']
-
+// Fallback: prefix-based tier when API data isn't available yet
+function getPincodeTierFallback(pincode: string): 1 | 2 | 3 {
+  const tier1 = ['110', '400', '500', '560', '600', '700', '380', '411', '302']
+  const tier2 = ['226', '208', '160', '641', '682', '440', '474', '462', '342', '305']
   const prefix = pincode.slice(0, 3)
-  if (tier1Prefixes.includes(prefix)) return 1
-  if (tier2Prefixes.includes(prefix)) return 2
+  if (tier1.includes(prefix)) return 1
+  if (tier2.includes(prefix)) return 2
   return 3
 }
 
@@ -28,7 +31,7 @@ export function calculateRTOScore(input: RTOScoreInput): RTOScoreResult {
   let score = 0
   const factors: string[] = []
 
-  // Payment method
+  // ── Payment method ──────────────────────────────────────────────────────
   switch (input.payment_method) {
     case 'COD':
       score += 40
@@ -53,20 +56,55 @@ export function calculateRTOScore(input: RTOScoreInput): RTOScoreResult {
       break
   }
 
-  // Pincode tier
-  const tier = getPincodeTier(input.pincode)
-  if (tier === 3) {
-    score += 20
-    factors.push('Tier-3 location (+20)')
-  } else if (tier === 2) {
-    score += 10
-    factors.push('Tier-2 location (+10)')
+  // ── Location signals (enriched via postalpincode.in API) ────────────────
+  const pd = input.pincodeData
+
+  if (pd) {
+    // Non-deliverable pincode — courier won't attempt delivery
+    if (!pd.deliverable) {
+      score += 50
+      factors.push('Non-deliverable pincode (+50)')
+    }
+
+    // High-RTO states: NE India, J&K, island territories
+    if (pd.highRiskState) {
+      score += 25
+      factors.push(`High-risk region: ${pd.state} (+25)`)
+    }
+
+    // Rural post office = remote address
+    if (pd.isRural) {
+      score += 15
+      factors.push('Rural post office area (+15)')
+    }
+
+    // Tier from real district data
+    if (pd.tier === 3) {
+      score += 20
+      factors.push(`Tier-3 location: ${pd.district} (+20)`)
+    } else if (pd.tier === 2) {
+      score += 10
+      factors.push(`Tier-2 location: ${pd.district} (+10)`)
+    } else {
+      score -= 5
+      factors.push(`Tier-1 location: ${pd.district} (−5)`)
+    }
   } else {
-    score -= 5
-    factors.push('Tier-1 location (−5)')
+    // Fallback: prefix-based estimate
+    const tier = getPincodeTierFallback(input.pincode)
+    if (tier === 3) {
+      score += 20
+      factors.push('Tier-3 area — estimated (+20)')
+    } else if (tier === 2) {
+      score += 10
+      factors.push('Tier-2 area — estimated (+10)')
+    } else {
+      score -= 5
+      factors.push('Tier-1 area — estimated (−5)')
+    }
   }
 
-  // Customer history
+  // ── Customer history ────────────────────────────────────────────────────
   if (input.is_first_order) {
     score += 20
     factors.push('First-time customer (+20)')
@@ -80,7 +118,7 @@ export function calculateRTOScore(input: RTOScoreInput): RTOScoreResult {
     factors.push('Prior RTO on record (+15)')
   }
 
-  // Order value vs AOV
+  // ── Order value vs AOV ──────────────────────────────────────────────────
   if (input.brand_aov > 0) {
     const ratio = input.order_value / input.brand_aov
     if (ratio > 2) {
@@ -92,7 +130,7 @@ export function calculateRTOScore(input: RTOScoreInput): RTOScoreResult {
     }
   }
 
-  // Address quality
+  // ── Address quality ─────────────────────────────────────────────────────
   if (!input.address_complete) {
     score += 10
     factors.push('Incomplete address (+10)')
@@ -107,20 +145,6 @@ export function calculateRTOScore(input: RTOScoreInput): RTOScoreResult {
   else level = 'LOW'
 
   return { score, level, factors }
-}
-
-export function getRTOLevelColor(level: RTORiskLevel): string {
-  switch (level) {
-    case 'HIGH': return 'text-red-600'
-    case 'MEDIUM': return 'text-amber-600'
-    case 'LOW': return 'text-green-600'
-  }
-}
-
-export function getRTOBarColor(score: number): string {
-  if (score >= 60) return 'bg-red-500'
-  if (score >= 30) return 'bg-amber-500'
-  return 'bg-green-500'
 }
 
 // ─── Shiprocket mock services ──────────────────────────────────────────────
