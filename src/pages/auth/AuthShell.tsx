@@ -24,9 +24,9 @@ export default function AuthShell({
         {/* Logo */}
         <div className="flex items-center gap-3 justify-center mb-8 animate-fade-in-up">
           <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-brand-500 to-brand-700 flex items-center justify-center shadow-[0_2px_8px_rgba(37,99,235,0.4)]">
-            <span className="text-white font-bold text-lg">C</span>
+            <span className="text-white font-bold text-lg">x</span>
           </div>
-          <span className="text-white font-semibold text-2xl">Centinal</span>
+          <span className="text-white font-semibold text-2xl">xMetrics</span>
         </div>
 
         {/* Card with soft glow */}

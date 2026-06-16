@@ -210,7 +210,7 @@ export function buildWhatsAppText(brief: BriefData): string {
   const d = brief.delivery_health
   const lines: string[] = []
 
-  lines.push(`📊 *Centinal Daily Brief — ${dayLabel(brief.date)}*`)
+  lines.push(`📊 *xMetrics Daily Brief — ${dayLabel(brief.date)}*`)
   lines.push('')
   lines.push(`📦 Orders: ${h.total_orders}  |  💰 Revenue: ₹${Math.round(h.total_revenue).toLocaleString('en-IN')}`)
   lines.push(`✅ Paid: ${h.paid_count}  |  🔄 COD: ${h.cod_count}  |  🔁 RTO: ${h.rto_count}`)

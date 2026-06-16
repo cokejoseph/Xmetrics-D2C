@@ -57,7 +57,7 @@ export function RazorpayCheckout({
         key: razorpayKey,
         amount: order.amount,
         currency: order.currency,
-        name: 'Centinal',
+        name: 'xMetrics',
         description: `${planName} Plan — Monthly`,
         order_id: order.order_id,
         prefill: { email: user?.email ?? '' },

@@ -7,7 +7,7 @@ interface ThemeState {
 
 function getInitial(): boolean {
   try {
-    const saved = localStorage.getItem('centinal-theme')
+    const saved = localStorage.getItem('xmetrics-theme')
     if (saved) return saved === 'dark'
     return window.matchMedia('(prefers-color-scheme: dark)').matches
   } catch {
@@ -17,7 +17,7 @@ function getInitial(): boolean {
 
 function applyTheme(dark: boolean) {
   document.documentElement.classList.toggle('dark', dark)
-  try { localStorage.setItem('centinal-theme', dark ? 'dark' : 'light') } catch {}
+  try { localStorage.setItem('xmetrics-theme', dark ? 'dark' : 'light') } catch {}
 }
 
 // Apply before first render so there's no flash

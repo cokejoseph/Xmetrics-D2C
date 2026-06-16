@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react'
+﻿import { useState, useEffect, useRef } from 'react'
 import { Link } from 'react-router-dom'
 import {
   TrendingDown, Package, Zap, BarChart3, Bell, MessageSquare,
@@ -6,7 +6,7 @@ import {
   Truck, ShoppingCart, AlertTriangle, BarChart2, Users,
 } from 'lucide-react'
 
-// ─── Scroll-triggered fade-in wrapper ────────────────────────────────────────
+// â”€â”€â”€ Scroll-triggered fade-in wrapper â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 function AnimateIn({
   children,
   className = '',
@@ -41,7 +41,7 @@ function AnimateIn({
   )
 }
 
-// ─── Scroll progress bar (sits at the bottom edge of the navbar) ────────────
+// â”€â”€â”€ Scroll progress bar (sits at the bottom edge of the navbar) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 function ScrollProgress() {
   const [progress, setProgress] = useState(0)
 
@@ -64,7 +64,7 @@ function ScrollProgress() {
   )
 }
 
-// ─── Card with mouse-tracking spotlight highlight ────────────────────────────
+// â”€â”€â”€ Card with mouse-tracking spotlight highlight â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 function SpotlightCard({
   className = '',
   children,
@@ -84,7 +84,7 @@ function SpotlightCard({
   )
 }
 
-// ─── Count-up number (triggers when scrolled into view) ─────────────────────
+// â”€â”€â”€ Count-up number (triggers when scrolled into view) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 function CountUp({
   end,
   prefix = '',
@@ -131,7 +131,7 @@ function CountUp({
   )
 }
 
-// ─── Particle network — drifting nodes linked by faint lines (hero backdrop) ─
+// â”€â”€â”€ Particle network â€” drifting nodes linked by faint lines (hero backdrop) â”€
 function ParticleField() {
   const canvasRef = useRef<HTMLCanvasElement>(null)
 
@@ -198,7 +198,7 @@ function ParticleField() {
   return <canvas ref={canvasRef} className="absolute inset-0 w-full h-full opacity-60 pointer-events-none" />
 }
 
-// ─── Magnetic CTA — pulls gently toward the cursor while hovered ────────────
+// â”€â”€â”€ Magnetic CTA â€” pulls gently toward the cursor while hovered â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 function MagneticLink({
   to, className = '', children,
 }: {
@@ -234,7 +234,7 @@ function MagneticLink({
   )
 }
 
-// ─── Integration flow — data streams from the stack into the Centinal core ──
+// â”€â”€â”€ Integration flow â€” data streams from the stack into the xMetrics core â”€â”€
 const FLOW_NODES = [
   { x: 95,  y: 64,  label: 'Shopify' },
   { x: 95,  y: 216, label: 'Razorpay' },
@@ -250,7 +250,7 @@ const FLOW_PATHS = [
 
 function IntegrationFlow() {
   return (
-    <svg viewBox="0 0 800 280" className="w-full max-w-3xl mx-auto" aria-label="Shopify, Razorpay, Shiprocket and WhatsApp feeding into Centinal">
+    <svg viewBox="0 0 800 280" className="w-full max-w-3xl mx-auto" aria-label="Shopify, Razorpay, Shiprocket and WhatsApp feeding into xMetrics">
       <defs>
         <linearGradient id="coreGrad" x1="0" y1="0" x2="1" y2="1">
           <stop offset="0%" stopColor="#3B82F6" />
@@ -287,15 +287,15 @@ function IntegrationFlow() {
   )
 }
 
-// ─── Hero: live dashboard mockup ─────────────────────────────────────────────
+// â”€â”€â”€ Hero: live dashboard mockup â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 const ORDER_POOL = [
-  { id: '#3412', name: 'Ananya S.', city: 'Bengaluru', amount: '₹1,249', method: 'UPI', score: 12, verdict: 'SHIP' },
-  { id: '#3411', name: 'Rahul M.', city: 'Patna', amount: '₹2,899', method: 'COD', score: 78, verdict: 'HOLD' },
-  { id: '#3410', name: 'Priya K.', city: 'Mumbai', amount: '₹849', method: 'Card', score: 8, verdict: 'SHIP' },
-  { id: '#3409', name: 'Vikram T.', city: 'Indore', amount: '₹1,599', method: 'COD', score: 46, verdict: 'VERIFY' },
-  { id: '#3408', name: 'Meera J.', city: 'Jaipur', amount: '₹2,149', method: 'COD', score: 64, verdict: 'HOLD' },
-  { id: '#3407', name: 'Arjun N.', city: 'Kochi', amount: '₹999', method: 'UPI', score: 11, verdict: 'SHIP' },
-  { id: '#3406', name: 'Divya R.', city: 'Hyderabad', amount: '₹1,749', method: 'Card', score: 18, verdict: 'SHIP' },
+  { id: '#3412', name: 'Ananya S.', city: 'Bengaluru', amount: 'â‚¹1,249', method: 'UPI', score: 12, verdict: 'SHIP' },
+  { id: '#3411', name: 'Rahul M.', city: 'Patna', amount: 'â‚¹2,899', method: 'COD', score: 78, verdict: 'HOLD' },
+  { id: '#3410', name: 'Priya K.', city: 'Mumbai', amount: 'â‚¹849', method: 'Card', score: 8, verdict: 'SHIP' },
+  { id: '#3409', name: 'Vikram T.', city: 'Indore', amount: 'â‚¹1,599', method: 'COD', score: 46, verdict: 'VERIFY' },
+  { id: '#3408', name: 'Meera J.', city: 'Jaipur', amount: 'â‚¹2,149', method: 'COD', score: 64, verdict: 'HOLD' },
+  { id: '#3407', name: 'Arjun N.', city: 'Kochi', amount: 'â‚¹999', method: 'UPI', score: 11, verdict: 'SHIP' },
+  { id: '#3406', name: 'Divya R.', city: 'Hyderabad', amount: 'â‚¹1,749', method: 'Card', score: 18, verdict: 'SHIP' },
 ] as const
 
 const VERDICT_STYLE: Record<string, string> = {
@@ -346,7 +346,7 @@ function HeroMockup() {
       {/* glow under the card */}
       <div className="absolute -inset-6 bg-brand-500/25 blur-3xl rounded-full" />
 
-      {/* animated gradient frame — light travels around the card edge */}
+      {/* animated gradient frame â€” light travels around the card edge */}
       <div
         ref={cardRef}
         className="relative rounded-2xl shadow-2xl p-[1.5px] text-left animate-border-pan bg-[linear-gradient(120deg,rgba(96,165,250,0.55),rgba(255,255,255,0.3),rgba(14,165,233,0.65),rgba(96,165,250,0.55))]"
@@ -359,7 +359,7 @@ function HeroMockup() {
           <span className="w-2.5 h-2.5 rounded-full bg-amber-400" />
           <span className="w-2.5 h-2.5 rounded-full bg-green-400" />
           <div className="ml-3 flex-1 max-w-xs bg-white border border-gray-100 rounded-md px-3 py-1 text-[10px] text-gray-400">
-            app.centinal.in/dashboard
+            app.xMetrics.in/dashboard
           </div>
         </div>
 
@@ -368,8 +368,8 @@ function HeroMockup() {
           <div className="sm:col-span-3 space-y-3">
             <div className="grid grid-cols-3 gap-2.5">
               {[
-                { label: 'Revenue Today', value: <span key={revenue} className="animate-tick-flash">₹{revenue.toLocaleString('en-IN')}</span>, delta: '+12.4%', up: true },
-                { label: 'RTO Rate', value: '11.2%' as React.ReactNode, delta: '−8.1%', up: false },
+                { label: 'Revenue Today', value: <span key={revenue} className="animate-tick-flash">â‚¹{revenue.toLocaleString('en-IN')}</span>, delta: '+12.4%', up: true },
+                { label: 'RTO Rate', value: '11.2%' as React.ReactNode, delta: 'âˆ’8.1%', up: false },
                 { label: 'Exceptions', value: '3' as React.ReactNode, delta: '2 new', up: false },
               ].map(k => (
                 <div key={k.label} className="bg-gray-50 rounded-xl p-2.5 border border-gray-100">
@@ -383,7 +383,7 @@ function HeroMockup() {
             {/* animated revenue chart */}
             <div className="bg-gray-50 rounded-xl p-3 border border-gray-100">
               <div className="flex items-center justify-between mb-2">
-                <p className="text-[10px] font-semibold text-gray-600">Revenue — 14 days</p>
+                <p className="text-[10px] font-semibold text-gray-600">Revenue â€” 14 days</p>
                 <span className="flex items-center gap-1 text-[9px] text-green-500 font-semibold">
                   <span className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse-dot" /> Live
                 </span>
@@ -414,7 +414,7 @@ function HeroMockup() {
 
           {/* right: live order feed with RTO scores */}
           <div className="sm:col-span-2 bg-gray-50 rounded-xl p-3 border border-gray-100">
-            <p className="text-[10px] font-semibold text-gray-600 mb-2.5">Incoming Orders · RTO Score</p>
+            <p className="text-[10px] font-semibold text-gray-600 mb-2.5">Incoming Orders Â· RTO Score</p>
             <div className="space-y-2">
               {feed.map((o, i) => (
                 <div
@@ -429,7 +429,7 @@ function HeroMockup() {
                     </span>
                   </div>
                   <div className="flex items-center justify-between text-[9px] text-gray-400 mb-1.5">
-                    <span>{o.city} · {o.method}</span>
+                    <span>{o.city} Â· {o.method}</span>
                     <span className="font-medium text-gray-600">{o.amount}</span>
                   </div>
                   <div className="h-1 rounded-full bg-gray-100 overflow-hidden">
@@ -449,30 +449,30 @@ function HeroMockup() {
       {/* floating accent chips */}
       <div className="hidden md:flex absolute -left-10 top-16 items-center gap-2 bg-white rounded-xl shadow-lg border border-gray-100 px-3 py-2 animate-float">
         <Shield size={14} className="text-green-500" />
-        <span className="text-[11px] font-semibold text-gray-700">RTO blocked — ₹2,899 saved</span>
+        <span className="text-[11px] font-semibold text-gray-700">RTO blocked â€” â‚¹2,899 saved</span>
       </div>
       <div className="hidden md:flex absolute -right-8 bottom-12 items-center gap-2 bg-white rounded-xl shadow-lg border border-gray-100 px-3 py-2 animate-float" style={{ animationDelay: '1.5s' }}>
         <MessageSquare size={14} className="text-brand-500" />
-        <span className="text-[11px] font-semibold text-gray-700">Daily brief sent · 7:00 AM</span>
+        <span className="text-[11px] font-semibold text-gray-700">Daily brief sent Â· 7:00 AM</span>
       </div>
     </div>
   )
 }
 
-// ─── Live RTO scoring demo (cycles through orders) ──────────────────────────
+// â”€â”€â”€ Live RTO scoring demo (cycles through orders) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 const DEMO_ORDERS = [
   {
-    name: 'Rohan Gupta', city: 'Gurugram, 122001', amount: '₹3,499', method: 'COD',
+    name: 'Rohan Gupta', city: 'Gurugram, 122001', amount: 'â‚¹3,499', method: 'COD',
     score: 81, verdict: 'HOLD' as const,
-    factors: ['Pincode RTO rate 28%', 'COD above brand AOV ×2.1', 'First-time customer'],
+    factors: ['Pincode RTO rate 28%', 'COD above brand AOV Ã—2.1', 'First-time customer'],
   },
   {
-    name: 'Sneha Iyer', city: 'Chennai, 600041', amount: '₹1,199', method: 'UPI',
+    name: 'Sneha Iyer', city: 'Chennai, 600041', amount: 'â‚¹1,199', method: 'UPI',
     score: 9, verdict: 'SHIP' as const,
     factors: ['Prepaid order', '3 successful deliveries', 'Pincode RTO rate 4%'],
   },
   {
-    name: 'Amit Verma', city: 'Lucknow, 226010', amount: '₹1,899', method: 'COD',
+    name: 'Amit Verma', city: 'Lucknow, 226010', amount: 'â‚¹1,899', method: 'COD',
     score: 48, verdict: 'VERIFY' as const,
     factors: ['COD order', 'Pincode RTO rate 16%', 'Address quality: medium'],
   },
@@ -554,11 +554,11 @@ function RtoDemo() {
   )
 }
 
-// ─── FAQ data ─────────────────────────────────────────────────────────────────
+// â”€â”€â”€ FAQ data â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 const FAQS = [
   {
     q: 'How does the RTO scoring actually work?',
-    a: 'Centinal analyses pincode delivery history, address quality, phone signal strength, COD patterns, and customer history. Each order gets a risk score (0–100) that maps to Ship (green), Verify (yellow), or Hold (red). This happens instantly on order creation.',
+    a: 'xMetrics analyses pincode delivery history, address quality, phone signal strength, COD patterns, and customer history. Each order gets a risk score (0â€“100) that maps to Ship (green), Verify (yellow), or Hold (red). This happens instantly on order creation.',
   },
   {
     q: 'When do I get access?',
@@ -566,7 +566,7 @@ const FAQS = [
   },
   {
     q: 'Which platforms do you integrate with?',
-    a: 'Centinal connects with Shopify (orders + products), Shiprocket (fulfillment + tracking), Razorpay (payments + settlements), and WhatsApp Business (alerts + daily brief). More integrations are on the roadmap.',
+    a: 'xMetrics connects with Shopify (orders + products), Shiprocket (fulfillment + tracking), Razorpay (payments + settlements), and WhatsApp Business (alerts + daily brief). More integrations are on the roadmap.',
   },
   {
     q: 'Is my data safe?',
@@ -578,15 +578,15 @@ const FAQS = [
   },
   {
     q: 'Do you offer a free trial?',
-    a: "Yes — use the live demo to explore the full app with real-looking seed data before signing up. When you're ready, the Starter plan gives you 14 days free to try with your own store data.",
+    a: "Yes â€” use the live demo to explore the full app with real-looking seed data before signing up. When you're ready, the Starter plan gives you 14 days free to try with your own store data.",
   },
 ]
 
-// ─── Pricing plans ────────────────────────────────────────────────────────────
+// â”€â”€â”€ Pricing plans â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 const PLANS = [
   {
     name: 'Growth',
-    price: '₹4,999',
+    price: 'â‚¹4,999',
     period: '/mo',
     orders: '3,000 orders/mo',
     highlight: true,
@@ -602,7 +602,7 @@ const PLANS = [
   },
   {
     name: 'Scale',
-    price: '₹9,999',
+    price: 'â‚¹9,999',
     period: '/mo',
     orders: '10,000 orders/mo',
     highlight: false,
@@ -633,7 +633,7 @@ const PLANS = [
   },
 ]
 
-// ─── FAQ Item ─────────────────────────────────────────────────────────────────
+// â”€â”€â”€ FAQ Item â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 function FaqItem({ q, a }: { q: string; a: string }) {
   const [open, setOpen] = useState(false)
   return (
@@ -656,9 +656,9 @@ function FaqItem({ q, a }: { q: string; a: string }) {
   )
 }
 
-// ─── Main Landing Page ────────────────────────────────────────────────────────
+// â”€â”€â”€ Main Landing Page â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 export default function LandingPage() {
-  // Landing page is always light — strip dark class while here, restore on leave
+  // Landing page is always light â€” strip dark class while here, restore on leave
   useEffect(() => {
     const html = document.documentElement
     const wasDark = html.classList.contains('dark')
@@ -669,7 +669,7 @@ export default function LandingPage() {
   return (
     <div className="min-h-screen bg-white font-sans">
 
-      {/* ── NAVBAR ─────────────────────────────────────────────────────── */}
+      {/* â”€â”€ NAVBAR â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
       <nav className="fixed top-0 inset-x-0 z-50 bg-white/90 backdrop-blur border-b border-gray-100 animate-fade-in">
         <ScrollProgress />
         <div className="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
@@ -677,7 +677,7 @@ export default function LandingPage() {
             <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-brand-500 to-brand-700 flex items-center justify-center shadow-sm">
               <span className="text-white font-bold text-sm">C</span>
             </div>
-            <span className="font-semibold text-gray-900 text-lg">Centinal</span>
+            <span className="font-semibold text-gray-900 text-lg">xMetrics</span>
           </div>
           <div className="hidden md:flex items-center gap-8 text-sm text-gray-600">
             <a href="#features" className="hover:text-gray-900 transition-colors">Features</a>
@@ -695,7 +695,7 @@ export default function LandingPage() {
         </div>
       </nav>
 
-      {/* ── HERO ───────────────────────────────────────────────────────── */}
+      {/* â”€â”€ HERO â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
       <section
         className="pt-32 pb-20 bg-brand-gradient text-white relative overflow-hidden"
         onMouseMove={e => {
@@ -721,7 +721,7 @@ export default function LandingPage() {
 
         <div className="relative max-w-5xl mx-auto px-6 text-center">
 
-          {/* Badge — load anim */}
+          {/* Badge â€” load anim */}
           <div
             className="inline-flex items-center gap-2 bg-white/10 border border-white/20 rounded-full px-4 py-1.5 text-xs font-medium mb-8 animate-fade-in-up backdrop-blur"
             style={{ animationDelay: '0ms' }}
@@ -747,7 +747,7 @@ export default function LandingPage() {
             className="text-lg text-white/70 max-w-2xl mx-auto mb-10 leading-relaxed animate-fade-in-up"
             style={{ animationDelay: '160ms' }}
           >
-            Stop losing 30% of revenue to RTO. Centinal scores every order in real time,
+            Stop losing 30% of revenue to RTO. xMetrics scores every order in real time,
             flags exceptions before customers complain, and compresses your daily ops
             review into 8 minutes.
           </p>
@@ -770,7 +770,7 @@ export default function LandingPage() {
             className="mb-14 text-white/40 text-xs animate-fade-in"
             style={{ animationDelay: '360ms' }}
           >
-            No credit card required · 14-day free trial · Cancel anytime
+            No credit card required Â· 14-day free trial Â· Cancel anytime
           </p>
 
           {/* Product mockup */}
@@ -783,13 +783,13 @@ export default function LandingPage() {
         <div className="absolute bottom-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-sky-400/50 to-transparent" />
       </section>
 
-      {/* ── STATS BAR ──────────────────────────────────────────────────── */}
+      {/* â”€â”€ STATS BAR â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
       <section className="relative bg-gray-950 text-white py-12">
         <div className="absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-brand-500/60 to-transparent" />
         <div className="max-w-5xl mx-auto px-6 grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
           {[
             { end: 35, suffix: '%', label: 'Avg RTO reduction' },
-            { end: 2.4, prefix: '₹', suffix: 'L', decimals: 1, label: 'Saved per 1,000 orders' },
+            { end: 2.4, prefix: 'â‚¹', suffix: 'L', decimals: 1, label: 'Saved per 1,000 orders' },
             { end: 8, suffix: ' min', label: 'Daily ops review' },
             { end: 99.9, suffix: '%', decimals: 1, label: 'Platform uptime' },
           ].map((s, i) => (
@@ -803,7 +803,7 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* ── INTEGRATION FLOW ───────────────────────────────────────────── */}
+      {/* â”€â”€ INTEGRATION FLOW â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
       <section className="py-14 bg-white border-b border-gray-50">
         <AnimateIn className="max-w-4xl mx-auto px-6 text-center">
           <p className="text-[11px] font-semibold uppercase tracking-widest text-gray-400 mb-6">
@@ -813,7 +813,7 @@ export default function LandingPage() {
         </AnimateIn>
       </section>
 
-      {/* ── PROBLEM ────────────────────────────────────────────────────── */}
+      {/* â”€â”€ PROBLEM â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
       <section className="py-24 bg-white">
         <div className="max-w-5xl mx-auto px-6">
           <AnimateIn className="text-center mb-16">
@@ -822,7 +822,7 @@ export default function LandingPage() {
             </h2>
             <p className="text-gray-500 max-w-xl mx-auto">
               Most brands cobble together Shopify, Shiprocket, Razorpay, WhatsApp, and Excel.
-              It works — until it doesn't.
+              It works â€” until it doesn't.
             </p>
           </AnimateIn>
 
@@ -836,12 +836,12 @@ export default function LandingPage() {
               {
                 icon: <TrendingDown size={20} className="text-orange-500" />,
                 title: 'RTO decisions are guesswork',
-                desc: 'You accept every COD order and absorb 25–35% returns. No data, no scoring, no way to stop it.',
+                desc: 'You accept every COD order and absorb 25â€“35% returns. No data, no scoring, no way to stop it.',
               },
               {
                 icon: <AlertTriangle size={20} className="text-amber-500" />,
                 title: 'Exceptions arrive too late',
-                desc: 'Stuck shipments, failed payments, NDR escalations — you find out after the customer complains.',
+                desc: 'Stuck shipments, failed payments, NDR escalations â€” you find out after the customer complains.',
               },
               {
                 icon: <Clock size={20} className="text-blue-500" />,
@@ -865,7 +865,7 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* ── RTO LIVE DEMO ──────────────────────────────────────────────── */}
+      {/* â”€â”€ RTO LIVE DEMO â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
       <section className="py-24 bg-gray-50 overflow-hidden">
         <div className="max-w-5xl mx-auto px-6 grid lg:grid-cols-2 gap-14 items-center">
           <AnimateIn>
@@ -876,13 +876,13 @@ export default function LandingPage() {
               Watch an order get scored<br />in real time
             </h2>
             <p className="text-gray-500 leading-relaxed mb-6">
-              The moment an order lands, Centinal weighs pincode delivery history, COD
-              patterns, address quality, and customer track record into a single 0–100
-              risk score — then tells you exactly what to do with it.
+              The moment an order lands, xMetrics weighs pincode delivery history, COD
+              patterns, address quality, and customer track record into a single 0â€“100
+              risk score â€” then tells you exactly what to do with it.
             </p>
             <ul className="space-y-3">
               {[
-                { icon: <Check size={14} className="text-green-500" />, text: 'Green orders ship automatically — no review needed' },
+                { icon: <Check size={14} className="text-green-500" />, text: 'Green orders ship automatically â€” no review needed' },
                 { icon: <AlertTriangle size={14} className="text-amber-500" />, text: 'Yellow orders get a WhatsApp confirmation nudge' },
                 { icon: <Shield size={14} className="text-red-500" />, text: 'Red orders hold for manual review before dispatch' },
               ].map(item => (
@@ -901,7 +901,7 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* ── FEATURES ───────────────────────────────────────────────────── */}
+      {/* â”€â”€ FEATURES â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
       <section id="features" className="py-24 bg-white">
         <div className="max-w-5xl mx-auto px-6">
           <AnimateIn className="text-center mb-16">
@@ -916,7 +916,7 @@ export default function LandingPage() {
               {
                 icon: <Shield size={22} className="text-brand-600" />,
                 title: 'RTO Intelligence Engine',
-                desc: 'Every order scored 0–100 in real time. Ship, Verify, or Hold — before you dispatch.',
+                desc: 'Every order scored 0â€“100 in real time. Ship, Verify, or Hold â€” before you dispatch.',
               },
               {
                 icon: <Package size={22} className="text-brand-600" />,
@@ -926,12 +926,12 @@ export default function LandingPage() {
               {
                 icon: <MessageSquare size={22} className="text-brand-600" />,
                 title: 'Daily Ops Brief',
-                desc: 'An 8-minute WhatsApp-ready summary of every important number — revenue, exceptions, fulfillment status.',
+                desc: 'An 8-minute WhatsApp-ready summary of every important number â€” revenue, exceptions, fulfillment status.',
               },
               {
                 icon: <Bell size={22} className="text-brand-600" />,
                 title: 'Exception Management',
-                desc: 'Stuck shipments, payment failures, NDR escalations — detected, categorised, and resolved fast.',
+                desc: 'Stuck shipments, payment failures, NDR escalations â€” detected, categorised, and resolved fast.',
               },
               {
                 icon: <BarChart3 size={22} className="text-brand-600" />,
@@ -941,7 +941,7 @@ export default function LandingPage() {
               {
                 icon: <Truck size={22} className="text-brand-600" />,
                 title: 'Fulfillment Workflow',
-                desc: '7-stage workflow from Packed → Delivered. Bulk AWB generation, pickup scheduling, and tracking.',
+                desc: '7-stage workflow from Packed â†’ Delivered. Bulk AWB generation, pickup scheduling, and tracking.',
               },
             ].map((f, i) => (
               <AnimateIn key={f.title} delay={i * 70}>
@@ -958,7 +958,7 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* ── HOW IT WORKS ───────────────────────────────────────────────── */}
+      {/* â”€â”€ HOW IT WORKS â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
       <section className="py-24 bg-gray-50">
         <div className="max-w-4xl mx-auto px-6">
           <AnimateIn className="text-center mb-16">
@@ -977,13 +977,13 @@ export default function LandingPage() {
               {
                 step: '02',
                 title: 'Every order gets scored',
-                desc: 'Centinal immediately scores each order for RTO risk and flags exceptions in real time.',
+                desc: 'xMetrics immediately scores each order for RTO risk and flags exceptions in real time.',
                 icon: <BarChart2 size={20} className="text-brand-600" />,
               },
               {
                 step: '03',
                 title: 'Run ops in 8 minutes',
-                desc: "Open your daily brief, resolve exceptions, approve fulfillment — and you're done.",
+                desc: "Open your daily brief, resolve exceptions, approve fulfillment â€” and you're done.",
                 icon: <Zap size={20} className="text-brand-600" />,
               },
             ].map((step, i) => (
@@ -1003,7 +1003,7 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* ── PRICING ────────────────────────────────────────────────────── */}
+      {/* â”€â”€ PRICING â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
       <section id="pricing" className="py-24 bg-gray-50">
         <div className="max-w-5xl mx-auto px-6">
           <AnimateIn className="text-center mb-16">
@@ -1071,14 +1071,14 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* ── FAQ ────────────────────────────────────────────────────────── */}
+      {/* â”€â”€ FAQ â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
       <section id="faq" className="py-24 bg-white">
         <div className="max-w-2xl mx-auto px-6">
           <AnimateIn className="text-center mb-12">
             <h2 className="text-3xl font-bold text-gray-900 mb-4">Frequently asked questions</h2>
             <p className="text-gray-500">
               Still have questions?{' '}
-              <a href="mailto:hello@centinal.app" className="text-brand-600 hover:underline">Email us</a>
+              <a href="mailto:hello@xMetrics.app" className="text-brand-600 hover:underline">Email us</a>
             </p>
           </AnimateIn>
           <div className="space-y-3">
@@ -1091,7 +1091,7 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* ── FINAL CTA ──────────────────────────────────────────────────── */}
+      {/* â”€â”€ FINAL CTA â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
       <section className="py-24 bg-brand-gradient text-white relative overflow-hidden">
         <div className="absolute -top-24 left-1/4 w-[400px] h-[400px] bg-brand-500/25 rounded-full blur-3xl animate-aurora" />
         <div className="absolute -bottom-32 right-1/4 w-[420px] h-[420px] bg-sky-500/20 rounded-full blur-3xl animate-aurora-2" />
@@ -1117,7 +1117,7 @@ export default function LandingPage() {
         </AnimateIn>
       </section>
 
-      {/* ── FOOTER ─────────────────────────────────────────────────────── */}
+      {/* â”€â”€ FOOTER â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
       <footer className="bg-gray-950 text-white py-12">
         <div className="max-w-5xl mx-auto px-6">
           <div className="flex flex-col md:flex-row items-start justify-between gap-8 mb-10">
@@ -1126,7 +1126,7 @@ export default function LandingPage() {
                 <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-brand-500 to-brand-700 flex items-center justify-center">
                   <span className="text-white font-bold text-xs">C</span>
                 </div>
-                <span className="font-semibold text-white">Centinal</span>
+                <span className="font-semibold text-white">xMetrics</span>
               </div>
               <p className="text-gray-400 text-sm max-w-xs leading-relaxed">
                 Operations command centre for Indian D2C brands. RTO intelligence, order management, and daily ops briefs.
@@ -1141,12 +1141,12 @@ export default function LandingPage() {
               <div className="space-y-2">
                 <Link to="/signup" className="block hover:text-white transition-colors">Sign Up</Link>
                 <Link to="/login" className="block hover:text-white transition-colors">Sign In</Link>
-                <a href="mailto:hello@centinal.app" className="block hover:text-white transition-colors">Contact</a>
+                <a href="mailto:hello@xMetrics.app" className="block hover:text-white transition-colors">Contact</a>
               </div>
             </div>
           </div>
           <div className="border-t border-white/10 pt-6 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-gray-500">
-            <p>© {new Date().getFullYear()} Centinal. All rights reserved.</p>
+            <p>Â© {new Date().getFullYear()} xMetrics. All rights reserved.</p>
             <div className="flex items-center gap-1">
               <Users size={12} />
               <span>Built for Indian D2C brands</span>

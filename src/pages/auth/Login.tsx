@@ -1,25 +1,16 @@
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useAuthStore } from '../../stores/authStore'
-import { useAppStore } from '../../stores/appStore'
 import { Button, Input } from '../../components/ui'
-import { DEMO_MODE } from '../../lib/supabase'
 import AuthShell from './AuthShell'
 
 export default function Login() {
-  const [email, setEmail] = useState(DEMO_MODE ? 'demo@zestifyfoods.in' : '')
-  const [password, setPassword] = useState(DEMO_MODE ? 'demo123' : '')
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
-  const { signIn, loginAsDemo } = useAuthStore()
-  const { bootstrap } = useAppStore()
+  const { signIn } = useAuthStore()
   const navigate = useNavigate()
-
-  const handleDemo = () => {
-    loginAsDemo()
-    bootstrap('user-demo-001')
-    navigate('/dashboard')
-  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -37,13 +28,7 @@ export default function Login() {
   return (
     <AuthShell>
       <h1 className="text-xl font-semibold text-gray-900 mb-1">Welcome back</h1>
-      <p className="text-gray-500 text-sm mb-6">Sign in to your account</p>
-
-      {DEMO_MODE && (
-        <div className="mb-4 p-3 bg-amber-50 border border-amber-100 rounded-lg text-amber-700 text-xs">
-          Demo mode — credentials pre-filled. Click Sign In to explore.
-        </div>
-      )}
+      <p className="text-gray-500 text-sm mb-6">Sign in to your xMetrics account</p>
 
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>
@@ -54,6 +39,7 @@ export default function Login() {
             onChange={e => setEmail(e.target.value)}
             placeholder="you@company.com"
             required
+            autoFocus
           />
         </div>
         <div>
@@ -72,17 +58,7 @@ export default function Login() {
         </Button>
       </form>
 
-      <div className="mt-4 pt-4 border-t border-gray-100">
-        <button
-          type="button"
-          onClick={handleDemo}
-          className="w-full py-2.5 rounded-xl text-sm font-medium text-brand-600 bg-brand-50 hover:bg-brand-100 transition-colors"
-        >
-          Try Demo — no account needed →
-        </button>
-      </div>
-
-      <p className="mt-4 text-center text-sm text-gray-500">
+      <p className="mt-6 text-center text-sm text-gray-500">
         No account?{' '}
         <Link to="/signup" className="text-brand-600 font-medium hover:underline">
           Sign up

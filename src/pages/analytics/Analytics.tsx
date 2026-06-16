@@ -1,7 +1,8 @@
 import { useState, useMemo } from 'react'
+import { ChevronUp, ChevronDown, Search } from 'lucide-react'
 import { useAppStore } from '../../stores/appStore'
 import { buildSKUForecast } from '../../lib/forecastEngine'
-import { Card } from '../../components/ui'
+import { Card, Input } from '../../components/ui'
 import { RevenueAreaChart, OrdersBarChart, StatusDonut, ChannelBarChart } from '../../components/charts'
 import type { ForecastStatus } from '../../types'
 
@@ -15,10 +16,14 @@ const FORECAST_STATUS_STYLE: Record<ForecastStatus, { label: string; cls: string
   UNPREDICTABLE: { label: 'Unpredictable', cls: 'bg-purple-100 text-purple-700' },
 }
 
-type TabType = 'overview' | 'forecast'
+type TabType = 'overview' | 'forecast' | 'pincode'
+type PincodeSortKey = 'orders' | 'revenue' | 'aov' | 'rto_rate'
 
 export default function Analytics() {
   const [tab, setTab] = useState<TabType>('overview')
+  const [pincodeSearch, setPincodeSearch] = useState('')
+  const [pincodeSort, setPincodeSort] = useState<PincodeSortKey>('orders')
+  const [pincodeSortAsc, setPincodeSortAsc] = useState(false)
   const { orders, products } = useAppStore()
 
   const { forecasts, summary } = useMemo(() => buildSKUForecast(products, orders), [products, orders])
@@ -50,6 +55,51 @@ export default function Analytics() {
     }))
   }, [orders])
 
+  const pincodeData = useMemo(() => {
+    const map = new Map<string, { city: string; state: string; orders: number; revenue: number; rto: number }>()
+    for (const o of orders) {
+      const pin = o.shipping_address.pincode
+      if (!pin) continue
+      const e = map.get(pin) ?? { city: o.shipping_address.city, state: o.shipping_address.state, orders: 0, revenue: 0, rto: 0 }
+      map.set(pin, {
+        city: e.city,
+        state: e.state,
+        orders: e.orders + 1,
+        revenue: e.revenue + o.gross_amount - o.discount_amount,
+        rto: e.rto + (o.fulfillment_status === 'RTO_INITIATED' ? 1 : 0),
+      })
+    }
+    return Array.from(map.entries()).map(([pincode, d]) => ({
+      pincode,
+      city: d.city,
+      state: d.state,
+      orders: d.orders,
+      revenue: d.revenue,
+      aov: d.orders > 0 ? Math.round(d.revenue / d.orders) : 0,
+      rto_count: d.rto,
+      rto_rate: d.orders > 0 ? (d.rto / d.orders) * 100 : 0,
+    }))
+  }, [orders])
+
+  const filteredPincodes = useMemo(() => {
+    let list = pincodeData
+    if (pincodeSearch) {
+      const q = pincodeSearch.toLowerCase()
+      list = list.filter(p => p.pincode.includes(q) || p.city.toLowerCase().includes(q) || p.state.toLowerCase().includes(q))
+    }
+    return [...list].sort((a, b) => {
+      const dir = pincodeSortAsc ? 1 : -1
+      return (a[pincodeSort] - b[pincodeSort]) * dir
+    })
+  }, [pincodeData, pincodeSearch, pincodeSort, pincodeSortAsc])
+
+  const pincodeSummary = useMemo(() => ({
+    total: pincodeData.length,
+    high_rto: pincodeData.filter(p => p.rto_rate >= 30).length,
+    zero_rto: pincodeData.filter(p => p.rto_rate === 0 && p.orders >= 2).length,
+    top_revenue: pincodeData.reduce((max, p) => p.revenue > max.revenue ? p : max, pincodeData[0] ?? { pincode: '—', revenue: 0, city: '' }),
+  }), [pincodeData])
+
   const revenueChartData = useMemo(() => {
     const days = 14
     const now = new Date()
@@ -79,15 +129,19 @@ export default function Analytics() {
 
       {/* Tabs */}
       <div className="flex gap-1 bg-gray-100 p-1 rounded-xl w-fit">
-        {(['overview', 'forecast'] as TabType[]).map(t => (
+        {([
+          { key: 'overview', label: 'Overview' },
+          { key: 'forecast', label: 'Demand Forecast' },
+          { key: 'pincode', label: 'Pincode Intelligence' },
+        ] as { key: TabType; label: string }[]).map(t => (
           <button
-            key={t}
-            onClick={() => setTab(t)}
-            className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors capitalize ${
-              tab === t ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'
+            key={t.key}
+            onClick={() => setTab(t.key)}
+            className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
+              tab === t.key ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'
             }`}
           >
-            {t === 'forecast' ? 'Demand Forecast' : 'Overview'}
+            {t.label}
           </button>
         ))}
       </div>
@@ -148,6 +202,106 @@ export default function Analytics() {
                   ))}
                 </tbody>
               </table>
+            </div>
+          </Card>
+        </div>
+      )}
+
+      {tab === 'pincode' && (
+        <div className="space-y-4">
+          {/* Summary cards */}
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+            <Card className="p-4">
+              <p className="text-xs text-gray-500 mb-1">Pincodes Reached</p>
+              <p className="text-2xl font-bold text-gray-900">{pincodeSummary.total}</p>
+            </Card>
+            <Card className="p-4">
+              <p className="text-xs text-gray-500 mb-1">High RTO Zones</p>
+              <p className="text-2xl font-bold text-red-600">{pincodeSummary.high_rto}</p>
+              <p className="text-[10px] text-gray-400">≥30% RTO rate</p>
+            </Card>
+            <Card className="p-4">
+              <p className="text-xs text-gray-500 mb-1">Zero RTO Zones</p>
+              <p className="text-2xl font-bold text-green-600">{pincodeSummary.zero_rto}</p>
+              <p className="text-[10px] text-gray-400">2+ orders, 0% RTO</p>
+            </Card>
+            <Card className="p-4">
+              <p className="text-xs text-gray-500 mb-1">Top Revenue Zone</p>
+              <p className="text-xl font-bold text-gray-900">{pincodeSummary.top_revenue?.pincode ?? '—'}</p>
+              <p className="text-[10px] text-gray-400">{pincodeSummary.top_revenue?.city}</p>
+            </Card>
+          </div>
+
+          <Card>
+            <div className="px-4 py-3 border-b border-gray-100 flex items-center gap-3">
+              <h3 className="text-sm font-semibold text-gray-900 flex-1">Pincode Performance</h3>
+              <div className="relative w-56">
+                <Search size={12} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-400" />
+                <Input
+                  value={pincodeSearch}
+                  onChange={e => setPincodeSearch(e.target.value)}
+                  placeholder="Search pincode or city…"
+                  className="pl-7 py-1.5 text-xs h-8"
+                />
+              </div>
+            </div>
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead>
+                  <tr className="border-b border-gray-100">
+                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">Pincode</th>
+                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide hidden sm:table-cell">City / State</th>
+                    <SortTh label="Orders" col="orders" sort={pincodeSort} asc={pincodeSortAsc} onSort={k => { if (pincodeSort === k) setPincodeSortAsc(p => !p); else { setPincodeSort(k); setPincodeSortAsc(false) } }} />
+                    <SortTh label="Revenue" col="revenue" sort={pincodeSort} asc={pincodeSortAsc} onSort={k => { if (pincodeSort === k) setPincodeSortAsc(p => !p); else { setPincodeSort(k); setPincodeSortAsc(false) } }} />
+                    <SortTh label="Avg Order" col="aov" sort={pincodeSort} asc={pincodeSortAsc} onSort={k => { if (pincodeSort === k) setPincodeSortAsc(p => !p); else { setPincodeSort(k); setPincodeSortAsc(false) } }} />
+                    <SortTh label="RTO Rate" col="rto_rate" sort={pincodeSort} asc={pincodeSortAsc} onSort={k => { if (pincodeSort === k) setPincodeSortAsc(p => !p); else { setPincodeSort(k); setPincodeSortAsc(false) } }} />
+                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">Risk</th>
+                  </tr>
+                </thead>
+                <tbody className="stagger-rows">
+                  {filteredPincodes.map(p => {
+                    const riskColor = p.rto_rate >= 30
+                      ? 'bg-red-100 text-red-700'
+                      : p.rto_rate >= 15
+                        ? 'bg-amber-100 text-amber-700'
+                        : 'bg-green-100 text-green-700'
+                    const riskLabel = p.rto_rate >= 30 ? 'High' : p.rto_rate >= 15 ? 'Medium' : 'Low'
+                    return (
+                      <tr key={p.pincode} className="border-b border-gray-50 hover:bg-gray-50/50">
+                        <td className="px-4 py-3">
+                          <span className="text-sm font-mono font-semibold text-gray-900">{p.pincode}</span>
+                        </td>
+                        <td className="px-4 py-3 hidden sm:table-cell">
+                          <p className="text-sm text-gray-700">{p.city}</p>
+                          <p className="text-xs text-gray-400">{p.state}</p>
+                        </td>
+                        <td className="px-4 py-3 text-right text-sm text-gray-700">{p.orders}</td>
+                        <td className="px-4 py-3 text-right text-sm text-gray-700">₹{p.revenue.toLocaleString('en-IN')}</td>
+                        <td className="px-4 py-3 text-right text-sm text-gray-700">₹{p.aov.toLocaleString('en-IN')}</td>
+                        <td className="px-4 py-3 text-right">
+                          <span className="text-sm text-gray-700">{p.rto_rate.toFixed(0)}%</span>
+                          {p.rto_count > 0 && <span className="text-[10px] text-gray-400 ml-1">({p.rto_count})</span>}
+                        </td>
+                        <td className="px-4 py-3">
+                          <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold ${riskColor}`}>
+                            {riskLabel}
+                          </span>
+                        </td>
+                      </tr>
+                    )
+                  })}
+                  {filteredPincodes.length === 0 && (
+                    <tr>
+                      <td colSpan={7} className="px-4 py-10 text-center text-sm text-gray-500">
+                        No pincodes match your search
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+            <div className="px-4 py-3 border-t border-gray-100 text-xs text-gray-500">
+              {filteredPincodes.length} of {pincodeData.length} pincodes
             </div>
           </Card>
         </div>
@@ -225,5 +379,31 @@ function SumCard({ label, value, cls }: { label: string; value: number; cls: str
       <p className={`text-2xl font-bold ${cls}`}>{value}</p>
       <p className="text-xs text-gray-500 mt-0.5">{label}</p>
     </Card>
+  )
+}
+
+function SortTh({
+  label, col, sort, asc, onSort,
+}: {
+  label: string
+  col: PincodeSortKey
+  sort: PincodeSortKey
+  asc: boolean
+  onSort: (k: PincodeSortKey) => void
+}) {
+  const active = sort === col
+  return (
+    <th
+      className="px-4 py-3 text-right text-xs font-semibold text-gray-500 uppercase tracking-wide cursor-pointer select-none hover:text-gray-700"
+      onClick={() => onSort(col)}
+    >
+      <span className="inline-flex items-center gap-0.5 justify-end">
+        {label}
+        {active
+          ? asc ? <ChevronUp size={11} /> : <ChevronDown size={11} />
+          : <ChevronDown size={11} className="opacity-30" />
+        }
+      </span>
+    </th>
   )
 }

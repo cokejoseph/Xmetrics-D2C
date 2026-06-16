@@ -160,7 +160,7 @@ export default function Onboarding() {
               <h1 className="text-xl font-semibold text-gray-900 mb-1">You're all set!</h1>
               <p className="text-gray-500 text-sm mb-6">
                 {DEMO_MODE
-                  ? "We'll load sample data so you can explore Centinal right away."
+                  ? "We'll load sample data so you can explore xMetrics right away."
                   : 'Your brand workspace will be created and ready to use.'}
               </p>
               <div className="bg-brand-50 rounded-xl p-4 mb-6 space-y-1">

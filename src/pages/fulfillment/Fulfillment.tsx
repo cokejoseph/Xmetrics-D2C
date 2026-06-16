@@ -1,39 +1,34 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
-import { Tag, Calendar } from 'lucide-react'
+import { Tag, Calendar, CheckCircle } from 'lucide-react'
 import { useAppStore } from '../../stores/appStore'
 import { Card, Button } from '../../components/ui'
 import { FulfillmentBadge, ChannelBadge, PaymentMethodBadge } from '../../components/shared/StatusBadge'
 import type { Order } from '../../types'
 
+// "Ready to Pack" tab removed — that lives in Orders page.
+// Entry point here is Packing (orders pushed from Orders → Start Packing).
 const TABS = [
-  { key: 'pack', label: 'Ready to Pack' },
-  { key: 'packing', label: 'Packing' },
-  { key: 'ready', label: 'Ready for Pickup' },
-  { key: 'pickup', label: 'Pickup Scheduled' },
-  { key: 'transit', label: 'In Transit' },
+  { key: 'packing',   label: 'Packing' },
+  { key: 'ready',     label: 'Ready for Pickup' },
+  { key: 'pickup',    label: 'Pickup Scheduled' },
+  { key: 'transit',   label: 'In Transit' },
   { key: 'delivered', label: 'Delivered' },
-  { key: 'rto', label: 'RTO / Returned' },
+  { key: 'rto',       label: 'RTO / Returned' },
 ] as const
 
 type TabKey = typeof TABS[number]['key']
 
 function getTabOrders(orders: Order[], tab: TabKey): Order[] {
   switch (tab) {
-    case 'pack':
-      return orders.filter(o => o.fulfillment_status === 'PACKING')
     case 'packing':
       return orders.filter(o => o.fulfillment_status === 'PACKING')
     case 'ready':
       return orders.filter(o => o.fulfillment_status === 'READY_TO_SHIP')
     case 'pickup':
-      return orders.filter(o =>
-        o.shipments?.some(s => s.status === 'PICKUP_SCHEDULED')
-      )
+      return orders.filter(o => o.shipments?.some(s => s.status === 'PICKUP_SCHEDULED'))
     case 'transit':
-      return orders.filter(o =>
-        ['SHIPPED', 'IN_TRANSIT', 'OUT_FOR_DELIVERY'].includes(o.fulfillment_status)
-      )
+      return orders.filter(o => ['SHIPPED', 'IN_TRANSIT', 'OUT_FOR_DELIVERY'].includes(o.fulfillment_status))
     case 'delivered':
       return orders.filter(o => o.fulfillment_status === 'DELIVERED')
     case 'rto':
@@ -45,29 +40,42 @@ function getTabOrders(orders: Order[], tab: TabKey): Order[] {
 
 export default function Fulfillment() {
   const { orders, generateLabels, updateOrder } = useAppStore()
-  const [tab, setTab] = useState<TabKey>('pack')
+  const [tab, setTab] = useState<TabKey>('packing')
   const [selected, setSelected] = useState<string[]>([])
+  const [pickupDate, setPickupDate] = useState('')
+  const [showPickupDate, setShowPickupDate] = useState(false)
 
   const tabOrders = getTabOrders(orders, tab)
 
   const toggleSelect = (id: string) =>
     setSelected(prev => prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id])
-
   const toggleAll = () =>
     setSelected(prev => prev.length === tabOrders.length ? [] : tabOrders.map(o => o.id))
 
+  const handleGenerateLabels = () => {
+    generateLabels(selected)
+    setSelected([])
+  }
+
   const handleSchedulePickup = () => {
+    if (!pickupDate) return
     selected.forEach(id => {
-      updateOrder(id, { fulfillment_status: 'READY_TO_SHIP' })
+      const order = orders.find(o => o.id === id)
+      if (!order) return
+      updateOrder(id, {
+        shipments: (order.shipments ?? []).map((s, i) =>
+          i === 0 ? { ...s, status: 'PICKUP_SCHEDULED' as const, pickup_scheduled_at: pickupDate } : s
+        ),
+      })
     })
     setSelected([])
+    setPickupDate('')
+    setShowPickupDate(false)
   }
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <h1 className="text-xl font-semibold text-gray-900">Fulfillment</h1>
-      </div>
+      <h1 className="text-xl font-semibold text-gray-900">Fulfillment</h1>
 
       {/* Tabs */}
       <div className="flex gap-1 overflow-x-auto pb-1">
@@ -76,16 +84,16 @@ export default function Fulfillment() {
           return (
             <button
               key={t.key}
-              onClick={() => { setTab(t.key); setSelected([]) }}
+              onClick={() => { setTab(t.key); setSelected([]); setShowPickupDate(false) }}
               className={`flex items-center gap-1.5 px-3 py-2 rounded-xl text-sm font-medium whitespace-nowrap transition-colors ${
                 tab === t.key
-                  ? 'bg-brand-900 text-white'
+                  ? 'bg-brand-600 text-white'
                   : 'bg-white text-gray-600 hover:bg-gray-50 border border-gray-100'
               }`}
             >
               {t.label}
               {count > 0 && (
-                <span className={`text-[10px] px-1.5 py-0.5 rounded-full ${
+                <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-semibold ${
                   tab === t.key ? 'bg-white/20 text-white' : 'bg-gray-100 text-gray-600'
                 }`}>
                   {count}
@@ -97,19 +105,39 @@ export default function Fulfillment() {
       </div>
 
       <Card>
-        {/* Tab actions */}
-        {(tab === 'pack' || tab === 'packing') && selected.length > 0 && (
-          <div className="flex gap-2 px-4 pt-4">
-            <Button size="sm" onClick={() => { generateLabels(selected); setSelected([]) }}>
+        {/* Packing: Generate Labels */}
+        {tab === 'packing' && selected.length > 0 && (
+          <div className="flex items-center gap-3 px-4 pt-4 pb-2">
+            <span className="text-sm text-gray-600">{selected.length} selected</span>
+            <Button size="sm" onClick={handleGenerateLabels}>
               <Tag size={14} /> Generate Labels ({selected.length})
             </Button>
           </div>
         )}
+
+        {/* Ready for Pickup: Schedule Pickup with date */}
         {tab === 'ready' && selected.length > 0 && (
-          <div className="flex gap-2 px-4 pt-4">
-            <Button size="sm" onClick={handleSchedulePickup}>
-              <Calendar size={14} /> Schedule Pickup ({selected.length})
-            </Button>
+          <div className="flex items-center gap-3 px-4 pt-4 pb-2 flex-wrap">
+            <span className="text-sm text-gray-600">{selected.length} selected</span>
+            {!showPickupDate ? (
+              <Button size="sm" variant="secondary" onClick={() => setShowPickupDate(true)}>
+                <Calendar size={14} /> Schedule Pickup
+              </Button>
+            ) : (
+              <>
+                <input
+                  type="date"
+                  value={pickupDate}
+                  min={new Date().toISOString().slice(0, 10)}
+                  onChange={e => setPickupDate(e.target.value)}
+                  className="px-3 py-1.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500"
+                />
+                <Button size="sm" onClick={handleSchedulePickup} disabled={!pickupDate}>
+                  <CheckCircle size={14} /> Confirm Pickup
+                </Button>
+                <button onClick={() => setShowPickupDate(false)} className="text-xs text-gray-400 hover:text-gray-600">Cancel</button>
+              </>
+            )}
           </div>
         )}
 
@@ -118,7 +146,12 @@ export default function Fulfillment() {
             <thead>
               <tr className="border-b border-gray-100">
                 <th className="px-4 py-3 text-left">
-                  <input type="checkbox" checked={selected.length === tabOrders.length && tabOrders.length > 0} onChange={toggleAll} className="rounded" />
+                  <input
+                    type="checkbox"
+                    checked={selected.length === tabOrders.length && tabOrders.length > 0}
+                    onChange={toggleAll}
+                    className="rounded"
+                  />
                 </th>
                 <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">Order</th>
                 <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">Customer</th>
@@ -126,6 +159,9 @@ export default function Fulfillment() {
                 <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">Amount</th>
                 <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide hidden md:table-cell">Payment</th>
                 <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">Status</th>
+                {(tab === 'pickup') && (
+                  <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide hidden lg:table-cell">Pickup Date</th>
+                )}
                 {(tab === 'transit' || tab === 'delivered' || tab === 'rto') && (
                   <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide hidden lg:table-cell">AWB</th>
                 )}
@@ -135,7 +171,10 @@ export default function Fulfillment() {
               {tabOrders.map(order => {
                 const shipment = order.shipments?.[0]
                 return (
-                  <tr key={order.id} className={`border-b border-gray-50 hover:bg-gray-50/50 transition-colors ${selected.includes(order.id) ? 'bg-brand-50' : ''}`}>
+                  <tr
+                    key={order.id}
+                    className={`border-b border-gray-50 hover:bg-gray-50/50 transition-colors ${selected.includes(order.id) ? 'bg-brand-50' : ''}`}
+                  >
                     <td className="px-4 py-3">
                       <input type="checkbox" checked={selected.includes(order.id)} onChange={() => toggleSelect(order.id)} className="rounded" />
                     </td>
@@ -160,6 +199,16 @@ export default function Fulfillment() {
                     <td className="px-4 py-3">
                       <FulfillmentBadge status={order.fulfillment_status} />
                     </td>
+                    {tab === 'pickup' && (
+                      <td className="px-4 py-3 hidden lg:table-cell">
+                        <span className="text-xs text-gray-600">
+                          {shipment?.pickup_scheduled_at
+                            ? new Date(shipment.pickup_scheduled_at).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })
+                            : '—'
+                          }
+                        </span>
+                      </td>
+                    )}
                     {(tab === 'transit' || tab === 'delivered' || tab === 'rto') && (
                       <td className="px-4 py-3 hidden lg:table-cell">
                         {shipment && (
@@ -175,7 +224,7 @@ export default function Fulfillment() {
               })}
               {tabOrders.length === 0 && (
                 <tr>
-                  <td colSpan={8} className="px-4 py-12 text-center text-gray-500 text-sm">
+                  <td colSpan={9} className="px-4 py-12 text-center text-gray-500 text-sm">
                     No orders in this stage
                   </td>
                 </tr>
@@ -187,7 +236,6 @@ export default function Fulfillment() {
           {tabOrders.length} orders
         </div>
       </Card>
-
     </div>
   )
 }
