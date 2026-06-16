@@ -234,7 +234,7 @@ function MagneticLink({
   )
 }
 
-// ─── Integration flow — data streams from the stack into the xMetrics core ──
+// ─── Integration flow — data streams from the stack into the Xmetrics core ──
 const FLOW_NODES = [
   { x: 95,  y: 64,  label: 'Shopify' },
   { x: 95,  y: 216, label: 'Razorpay' },
@@ -250,7 +250,7 @@ const FLOW_PATHS = [
 
 function IntegrationFlow() {
   return (
-    <svg viewBox="0 0 800 280" className="w-full max-w-3xl mx-auto" aria-label="Shopify, Razorpay, Shiprocket and WhatsApp feeding into xMetrics">
+    <svg viewBox="0 0 800 280" className="w-full max-w-3xl mx-auto" aria-label="Shopify, Razorpay, Shiprocket and WhatsApp feeding into Xmetrics">
       <defs>
         <linearGradient id="coreGrad" x1="0" y1="0" x2="1" y2="1">
           <stop offset="0%" stopColor="#3B82F6" />
@@ -558,7 +558,7 @@ function RtoDemo() {
 const FAQS = [
   {
     q: 'How does the RTO scoring actually work?',
-    a: 'xMetrics analyses pincode delivery history, address quality, phone signal strength, COD patterns, and customer history. Each order gets a risk score (0–100) that maps to Ship (green), Verify (yellow), or Hold (red). This happens instantly on order creation.',
+    a: 'Xmetrics analyses pincode delivery history, address quality, phone signal strength, COD patterns, and customer history. Each order gets a risk score (0–100) that maps to Ship (green), Verify (yellow), or Hold (red). This happens instantly on order creation.',
   },
   {
     q: 'When do I get access?',
@@ -566,7 +566,7 @@ const FAQS = [
   },
   {
     q: 'Which platforms do you integrate with?',
-    a: 'xMetrics connects with Shopify (orders + products), Shiprocket (fulfillment + tracking), Razorpay (payments + settlements), and WhatsApp Business (alerts + daily brief). More integrations are on the roadmap.',
+    a: 'Xmetrics connects with Shopify (orders + products), Shiprocket (fulfillment + tracking), Razorpay (payments + settlements), and WhatsApp Business (alerts + daily brief). More integrations are on the roadmap.',
   },
   {
     q: 'Is my data safe?',
@@ -677,7 +677,7 @@ export default function LandingPage() {
             <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-brand-500 to-brand-700 flex items-center justify-center shadow-sm">
               <span className="text-white font-bold text-sm">x</span>
             </div>
-            <span className="font-semibold text-gray-900 text-lg">xMetrics</span>
+            <span className="font-semibold text-gray-900 text-lg">Xmetrics</span>
           </div>
           <div className="hidden md:flex items-center gap-8 text-sm text-gray-600">
             <a href="#features" className="hover:text-gray-900 transition-colors">Features</a>
@@ -747,7 +747,7 @@ export default function LandingPage() {
             className="text-lg text-white/70 max-w-2xl mx-auto mb-10 leading-relaxed animate-fade-in-up"
             style={{ animationDelay: '160ms' }}
           >
-            Stop losing 30% of revenue to RTO. xMetrics scores every order in real time,
+            Stop losing 30% of revenue to RTO. Xmetrics scores every order in real time,
             flags exceptions before customers complain, and compresses your daily ops
             review into 8 minutes.
           </p>
@@ -876,7 +876,7 @@ export default function LandingPage() {
               Watch an order get scored<br />in real time
             </h2>
             <p className="text-gray-500 leading-relaxed mb-6">
-              The moment an order lands, xMetrics weighs pincode delivery history, COD
+              The moment an order lands, Xmetrics weighs pincode delivery history, COD
               patterns, address quality, and customer track record into a single 0–100
               risk score — then tells you exactly what to do with it.
             </p>
@@ -977,7 +977,7 @@ export default function LandingPage() {
               {
                 step: '02',
                 title: 'Every order gets scored',
-                desc: 'xMetrics immediately scores each order for RTO risk and flags exceptions in real time.',
+                desc: 'Xmetrics immediately scores each order for RTO risk and flags exceptions in real time.',
                 icon: <BarChart2 size={20} className="text-brand-600" />,
               },
               {
@@ -1126,7 +1126,7 @@ export default function LandingPage() {
                 <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-brand-500 to-brand-700 flex items-center justify-center">
                   <span className="text-white font-bold text-xs">x</span>
                 </div>
-                <span className="font-semibold text-white">xMetrics</span>
+                <span className="font-semibold text-white">Xmetrics</span>
               </div>
               <p className="text-gray-400 text-sm max-w-xs leading-relaxed">
                 Operations command centre for Indian D2C brands. RTO intelligence, order management, and daily ops briefs.
@@ -1146,7 +1146,7 @@ export default function LandingPage() {
             </div>
           </div>
           <div className="border-t border-white/10 pt-6 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-gray-500">
-            <p>© {new Date().getFullYear()} xMetrics. All rights reserved.</p>
+            <p>© {new Date().getFullYear()} Xmetrics. All rights reserved.</p>
             <div className="flex items-center gap-1">
               <Users size={12} />
               <span>Built for Indian D2C brands</span>

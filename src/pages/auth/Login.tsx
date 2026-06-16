@@ -28,7 +28,7 @@ export default function Login() {
   return (
     <AuthShell>
       <h1 className="text-xl font-semibold text-gray-900 mb-1">Welcome back</h1>
-      <p className="text-gray-500 text-sm mb-6">Sign in to your xMetrics account</p>
+      <p className="text-gray-500 text-sm mb-6">Sign in to your Xmetrics account</p>
 
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>

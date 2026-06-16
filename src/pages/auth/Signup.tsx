@@ -28,7 +28,7 @@ export default function Signup() {
   return (
     <AuthShell>
       <h1 className="text-xl font-semibold text-gray-900 mb-1">Create account</h1>
-      <p className="text-gray-500 text-sm mb-6">Start managing your D2C operations with xMetrics</p>
+      <p className="text-gray-500 text-sm mb-6">Start managing your D2C operations with Xmetrics</p>
 
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>
