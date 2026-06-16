@@ -725,15 +725,19 @@ function FaqItem({ q, a }: { q: string; a: string }) {
     >
       <div className="flex items-center justify-between gap-4 px-6 py-4">
         <span className="font-medium text-gray-900 text-sm">{q}</span>
-        {open
-          ? <ChevronUp size={16} className="shrink-0 text-brand-600" />
-          : <ChevronDown size={16} className="shrink-0 text-gray-400" />}
+        <ChevronDown
+          size={16}
+          className={`shrink-0 text-gray-400 transition-transform duration-300 ${open ? 'rotate-180' : ''}`}
+        />
       </div>
-      {open && (
-        <div className="px-6 pb-5 text-sm text-gray-600 leading-relaxed border-t border-gray-50 animate-fade-in">
-          <div className="pt-3">{a}</div>
+      <div
+        className={`overflow-hidden border-t border-gray-50 ${open ? 'accordion-enter' : 'accordion-exit'}`}
+        style={{ maxHeight: open ? '500px' : '0px', transition: 'max-height 0.35s cubic-bezier(0.22, 1, 0.36, 1)' }}
+      >
+        <div className="px-6 py-5 text-sm text-gray-600 leading-relaxed">
+          {a}
         </div>
-      )}
+      </div>
     </div>
   )
 }

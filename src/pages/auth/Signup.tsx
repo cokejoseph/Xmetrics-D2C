@@ -30,7 +30,7 @@ export default function Signup() {
       <h1 className="text-xl font-semibold text-gray-900 mb-1">Create account</h1>
       <p className="text-gray-500 text-sm mb-6">Start managing your D2C operations with Xmetrics</p>
 
-      <form onSubmit={handleSubmit} className="space-y-4">
+      <form onSubmit={handleSubmit} className="form-field-group space-y-4">
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">Work email</label>
           <Input type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="you@company.com" required autoFocus />

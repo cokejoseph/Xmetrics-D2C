@@ -1,10 +1,20 @@
 import { useEffect, lazy, Suspense } from 'react'
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
+import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom'
 import { useAuthStore } from './stores/authStore'
 import { useAppStore } from './stores/appStore'
 import AppLayout from './components/layout/AppLayout'
 import LandingPage from './pages/landing/LandingPage'
 import CustomCursor from './components/layout/CustomCursor'
+
+// Wrap Routes with location-based key for smooth transitions
+function RouteTransitionWrapper({ children }: { children: React.ReactNode }) {
+  const location = useLocation()
+  return (
+    <div key={location.pathname} className="page-enter">
+      {children}
+    </div>
+  )
+}
 
 // ── Lazy-loaded route pages (code-split per route) ───────────────────────────
 const Login = lazy(() => import('./pages/auth/Login'))
@@ -86,7 +96,8 @@ export default function App() {
     <BrowserRouter>
       <CustomCursor />
       <Suspense fallback={<PageSpinner />}>
-        <Routes>
+        <RouteTransitionWrapper>
+          <Routes>
           {/* Public routes */}
           <Route path="/" element={<RootRoute />} />
           <Route path="/login" element={<Login />} />
@@ -121,6 +132,7 @@ export default function App() {
             <Route path="/settings/billing" element={<BillingSettings />} />
           </Route>
         </Routes>
+        </RouteTransitionWrapper>
       </Suspense>
     </BrowserRouter>
   )

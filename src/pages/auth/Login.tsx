@@ -30,7 +30,7 @@ export default function Login() {
       <h1 className="text-xl font-semibold text-gray-900 mb-1">Welcome back</h1>
       <p className="text-gray-500 text-sm mb-6">Sign in to your Xmetrics account</p>
 
-      <form onSubmit={handleSubmit} className="space-y-4">
+      <form onSubmit={handleSubmit} className="form-field-group space-y-4">
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
           <Input

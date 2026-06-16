@@ -96,7 +96,7 @@ export default function Onboarding() {
             <div>
               <h1 className="text-xl font-semibold text-gray-900 mb-1">Setup your brand</h1>
               <p className="text-gray-500 text-sm mb-6">Tell us about your business</p>
-              <div className="space-y-4">
+              <div className="form-field-group space-y-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Brand name</label>
                   <Input
@@ -125,7 +125,7 @@ export default function Onboarding() {
             <div>
               <h1 className="text-xl font-semibold text-gray-900 mb-1">Add your warehouse</h1>
               <p className="text-gray-500 text-sm mb-6">Where do you ship from?</p>
-              <div className="space-y-4">
+              <div className="form-field-group space-y-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Warehouse name</label>
                   <Input
