@@ -150,15 +150,15 @@ function ParticleField() {
     resize()
     window.addEventListener('resize', resize)
 
-    const N = 55
+    const N = 90
     const pts = Array.from({ length: N }, () => ({
       x: Math.random() * canvas.width,
       y: Math.random() * canvas.height,
-      vx: (Math.random() - 0.5) * 0.18 * dpr,
-      vy: (Math.random() - 0.5) * 0.18 * dpr,
-      r: (Math.random() * 1.3 + 0.6) * dpr,
+      vx: (Math.random() - 0.5) * 0.22 * dpr,
+      vy: (Math.random() - 0.5) * 0.22 * dpr,
+      r: (Math.random() * 1.6 + 0.6) * dpr,
     }))
-    const LINK = 130 * dpr
+    const LINK = 150 * dpr
 
     let raf = 0
     const tick = () => {
@@ -174,8 +174,8 @@ function ParticleField() {
           const dy = pts[i].y - pts[j].y
           const d = Math.hypot(dx, dy)
           if (d < LINK) {
-            ctx.strokeStyle = `rgba(96,165,250,${(1 - d / LINK) * 0.25})`
-            ctx.lineWidth = 0.6 * dpr
+            ctx.strokeStyle = `rgba(147,197,253,${(1 - d / LINK) * 0.35})`
+            ctx.lineWidth = 0.7 * dpr
             ctx.beginPath()
             ctx.moveTo(pts[i].x, pts[i].y)
             ctx.lineTo(pts[j].x, pts[j].y)
@@ -183,7 +183,7 @@ function ParticleField() {
           }
         }
       }
-      ctx.fillStyle = 'rgba(147,197,253,0.65)'
+      ctx.fillStyle = 'rgba(186,230,253,0.8)'
       for (const p of pts) {
         ctx.beginPath()
         ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2)
@@ -195,7 +195,7 @@ function ParticleField() {
     return () => { cancelAnimationFrame(raf); window.removeEventListener('resize', resize) }
   }, [])
 
-  return <canvas ref={canvasRef} className="absolute inset-0 w-full h-full opacity-60 pointer-events-none" />
+  return <canvas ref={canvasRef} className="absolute inset-0 w-full h-full opacity-80 pointer-events-none" />
 }
 
 function ParticleFieldLight() {
