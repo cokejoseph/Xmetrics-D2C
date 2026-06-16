@@ -408,6 +408,16 @@
 }
 .modal-exit { animation: modalOut 0.2s cubic-bezier(0.4, 0, 0.6, 1); }
 
+/* Success pulse — celebrate action completion */
+@keyframes successPulse {
+  0%   { transform: scale(1); }
+  50%  { transform: scale(1.05); background-color: rgba(16, 185, 129, 0.1); }
+  100% { transform: scale(1); background-color: transparent; }
+}
+.animate-success {
+  animation: successPulse 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
 /* Button press — scale-down on active */
 @keyframes buttonPress {
   from { transform: scale(1); }

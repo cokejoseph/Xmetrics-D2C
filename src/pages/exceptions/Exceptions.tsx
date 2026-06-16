@@ -3,6 +3,7 @@ import { AlertOctagon, ExternalLink, Check, X } from 'lucide-react'
 import { useAppStore } from '../../stores/appStore'
 import { Card, Button } from '../../components/ui'
 import { SeverityBadge } from '../../components/shared/StatusBadge'
+import { showToast } from '../../lib/toast'
 import type { Exception } from '../../types'
 
 const TYPE_LABELS: Record<string, string> = {
@@ -52,8 +53,14 @@ export default function Exceptions() {
             <ExceptionCard
               key={exc.id}
               exception={exc}
-              onResolve={() => resolveException(exc.id)}
-              onDismiss={() => dismissException(exc.id)}
+              onResolve={() => {
+                resolveException(exc.id)
+                showToast.exceptionResolved()
+              }}
+              onDismiss={() => {
+                dismissException(exc.id)
+                showToast.exceptionDismissed()
+              }}
             />
           ))}
         </div>

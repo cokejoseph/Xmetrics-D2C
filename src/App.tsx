@@ -5,6 +5,8 @@ import { useAppStore } from './stores/appStore'
 import AppLayout from './components/layout/AppLayout'
 import LandingPage from './pages/landing/LandingPage'
 import CustomCursor from './components/layout/CustomCursor'
+import ToastProvider from './components/layout/ToastProvider'
+import ConfirmDialog from './components/layout/ConfirmDialog'
 
 // Location listener for route transition fade-in
 function RouteTransitionEffect() {
@@ -98,6 +100,8 @@ export default function App() {
   return (
     <BrowserRouter>
       <CustomCursor />
+      <ToastProvider />
+      <ConfirmDialog />
       <RouteTransitionEffect />
       <div className="page-enter">
         <Suspense fallback={<PageSpinner />}>
