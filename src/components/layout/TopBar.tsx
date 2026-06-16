@@ -11,7 +11,7 @@ export default function TopBar() {
   const { pathname } = useLocation()
   const showSearch = !NO_SEARCH_PREFIXES.some(p => pathname.startsWith(p))
   return (
-    <header className="h-14 shrink-0 bg-white/95 backdrop-blur-sm border-b border-gray-100 flex items-center px-5 gap-4 z-10">
+    <header className="h-14 shrink-0 bg-white/95 dark:bg-[#0f0f12]/95 backdrop-blur-sm border-b border-gray-100 dark:border-white/[0.08] flex items-center px-5 gap-4 z-10">
       {/* Search */}
       {showSearch && (
         <div className="flex-1 max-w-md">
@@ -23,6 +23,7 @@ export default function TopBar() {
         {/* Bell */}
         <Link
           to="/exceptions"
+          aria-label={`Exceptions ${unresolved > 0 ? `(${unresolved} unresolved)` : '(none)'}`}
           className="relative p-2 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-50 transition-colors"
         >
           <Bell size={18} className={unresolved > 0 ? 'animate-bell-ring' : undefined} />

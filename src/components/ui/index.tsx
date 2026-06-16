@@ -41,7 +41,7 @@ export function Button({
 
 // ─── Badge ─────────────────────────────────────────────────────────────────
 
-type BadgeVariant =
+export type BadgeVariant =
   | 'default' | 'success' | 'warning' | 'danger' | 'info' | 'gray'
   | 'cod' | 'upi' | 'card' | 'prepaid'
 
@@ -81,7 +81,7 @@ export function Card({
   className, children, ...props
 }: React.HTMLAttributes<HTMLDivElement>) {
   return (
-    <div className={cn('bg-white rounded-2xl shadow-card border border-gray-100/80 transition-shadow duration-200 hover:shadow-[0_6px_20px_rgba(15,23,42,0.07)]', className)} {...props}>
+    <div className={cn('bg-white dark:bg-[#1e1e24] rounded-2xl shadow-card border border-gray-100/80 dark:border-white/[0.08] transition-shadow duration-200 hover:shadow-[0_6px_20px_rgba(15,23,42,0.07)]', className)} {...props}>
       {children}
     </div>
   )

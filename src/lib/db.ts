@@ -84,7 +84,9 @@ export async function getBrandForUser(userId: string): Promise<Brand | null> {
     .single()
 
   if (error || !data) return null
-  return (data as any).brands as Brand
+
+  const brandData = data as unknown as { brands: Brand }
+  return brandData.brands
 }
 
 export async function updateBrandDB(brandId: string, changes: Partial<Brand>): Promise<SupabaseError> {

@@ -125,6 +125,7 @@ function ExceptionCard({
             <Button
               size="sm"
               variant="secondary"
+              aria-label="Resolve exception"
               className="text-green-700 border-green-100 hover:bg-green-50"
               onClick={onResolve}
             >
@@ -133,6 +134,7 @@ function ExceptionCard({
             <Button
               size="sm"
               variant="ghost"
+              aria-label="Dismiss exception"
               onClick={onDismiss}
               className="text-gray-500"
             >

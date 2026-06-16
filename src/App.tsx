@@ -7,6 +7,8 @@ import LandingPage from './pages/landing/LandingPage'
 import CustomCursor from './components/layout/CustomCursor'
 import ToastProvider from './components/layout/ToastProvider'
 import ConfirmDialog from './components/layout/ConfirmDialog'
+import ErrorBoundary from './components/layout/ErrorBoundary'
+import NotFound from './pages/NotFound'
 
 // Location listener for route transition fade-in
 function RouteTransitionEffect() {
@@ -98,50 +100,55 @@ export default function App() {
   }, [user, bootstrap])
 
   return (
-    <BrowserRouter>
-      <CustomCursor />
-      <ToastProvider />
-      <ConfirmDialog />
-      <RouteTransitionEffect />
-      <div className="page-enter">
-        <Suspense fallback={<PageSpinner />}>
-          <Routes>
-            {/* Public routes */}
-            <Route path="/" element={<RootRoute />} />
-            <Route path="/login" element={<Login />} />
-            <Route path="/signup" element={<Signup />} />
-            <Route path="/onboarding" element={<Onboarding />} />
+    <ErrorBoundary>
+      <BrowserRouter>
+        <CustomCursor />
+        <ToastProvider />
+        <ConfirmDialog />
+        <RouteTransitionEffect />
+        <div className="page-enter">
+          <Suspense fallback={<PageSpinner />}>
+            <Routes>
+              {/* Public routes */}
+              <Route path="/" element={<RootRoute />} />
+              <Route path="/login" element={<Login />} />
+              <Route path="/signup" element={<Signup />} />
+              <Route path="/onboarding" element={<Onboarding />} />
 
-            {/* Protected app routes — layout wrapper (no path, just wraps) */}
-            <Route
-              element={
-                <AuthGuard>
-                  <AppLayout />
-                </AuthGuard>
-              }
-            >
-              <Route path="/dashboard" element={<Dashboard />} />
-              <Route path="/orders" element={<OrderList />} />
-              <Route path="/orders/new" element={<NewOrder />} />
-              <Route path="/orders/:id" element={<OrderDetail />} />
-              <Route path="/fulfillment" element={<Fulfillment />} />
-              <Route path="/payments" element={<Payments />} />
-              <Route path="/exceptions" element={<Exceptions />} />
-              <Route path="/customers" element={<CustomerList />} />
-              <Route path="/customers/:id" element={<CustomerDetail />} />
-              <Route path="/products" element={<Products />} />
-              <Route path="/analytics" element={<Analytics />} />
-              <Route path="/briefs" element={<DailyBrief />} />
-              <Route path="/briefs/history" element={<BriefHistory />} />
-              <Route path="/settings/brand" element={<BrandSettings />} />
-              <Route path="/settings/integrations" element={<IntegrationsSettings />} />
-              <Route path="/settings/warehouses" element={<WarehousesSettings />} />
-              <Route path="/settings/team" element={<TeamSettings />} />
-              <Route path="/settings/billing" element={<BillingSettings />} />
-            </Route>
-          </Routes>
-        </Suspense>
-      </div>
-    </BrowserRouter>
+              {/* Protected app routes — layout wrapper (no path, just wraps) */}
+              <Route
+                element={
+                  <AuthGuard>
+                    <AppLayout />
+                  </AuthGuard>
+                }
+              >
+                <Route path="/dashboard" element={<Dashboard />} />
+                <Route path="/orders" element={<OrderList />} />
+                <Route path="/orders/new" element={<NewOrder />} />
+                <Route path="/orders/:id" element={<OrderDetail />} />
+                <Route path="/fulfillment" element={<Fulfillment />} />
+                <Route path="/payments" element={<Payments />} />
+                <Route path="/exceptions" element={<Exceptions />} />
+                <Route path="/customers" element={<CustomerList />} />
+                <Route path="/customers/:id" element={<CustomerDetail />} />
+                <Route path="/products" element={<Products />} />
+                <Route path="/analytics" element={<Analytics />} />
+                <Route path="/briefs" element={<DailyBrief />} />
+                <Route path="/briefs/history" element={<BriefHistory />} />
+                <Route path="/settings/brand" element={<BrandSettings />} />
+                <Route path="/settings/integrations" element={<IntegrationsSettings />} />
+                <Route path="/settings/warehouses" element={<WarehousesSettings />} />
+                <Route path="/settings/team" element={<TeamSettings />} />
+                <Route path="/settings/billing" element={<BillingSettings />} />
+              </Route>
+
+              {/* 404 catch-all */}
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+          </Suspense>
+        </div>
+      </BrowserRouter>
+    </ErrorBoundary>
   )
 }

@@ -7,7 +7,9 @@ import type { BrandMember } from '../../types'
 
 type Role = BrandMember['role']
 
-const ROLE_COLOR: Record<Role, string> = {
+import type { BadgeVariant } from '../../components/ui'
+
+const ROLE_COLOR: Record<Role, BadgeVariant> = {
   OWNER: 'danger',
   ADMIN: 'warning',
   EDITOR: 'info',
@@ -68,7 +70,7 @@ export default function Team() {
                     </td>
                     <td className="px-4 py-3">
                       {isOwner || isCurrentUser ? (
-                        <Badge variant={ROLE_COLOR[member.role] as any}>{member.role}</Badge>
+                        <Badge variant={ROLE_COLOR[member.role] as BadgeVariant}>{member.role}</Badge>
                       ) : (
                         <Select
                           value={member.role}

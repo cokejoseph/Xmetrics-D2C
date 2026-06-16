@@ -184,7 +184,11 @@ export const useAppStore = create<AppState>((set, get) => ({
       })
 
       // Step 3: realtime subscriptions
-      _realtimeChannels.forEach(ch => (ch as any).unsubscribe?.())
+      _realtimeChannels.forEach((ch) => {
+        if (ch && typeof ch.unsubscribe === 'function') {
+          ch.unsubscribe()
+        }
+      })
       _realtimeChannels = []
 
       const ordersChannel = subscribeToOrders(
