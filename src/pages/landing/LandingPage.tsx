@@ -1019,9 +1019,6 @@ export default function LandingPage() {
               className="flex items-center gap-2 bg-white text-gray-950 font-semibold px-8 py-3.5 rounded-xl hover:bg-gray-100 shadow-lg hover:shadow-xl text-sm">
               Start Free Trial <ArrowRight size={16} />
             </MagneticLink>
-            <Link to="/login" className="flex items-center gap-2 text-white/50 hover:text-white/80 transition-colors text-sm">
-              Explore demo →
-            </Link>
           </div>
         </AnimateIn>
       </section>
