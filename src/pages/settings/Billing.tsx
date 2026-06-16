@@ -1,4 +1,4 @@
-﻿import { useState } from 'react'
+import { useState } from 'react'
 import { CheckCircle } from 'lucide-react'
 import { useAppStore } from '../../stores/appStore'
 import { Card, Button } from '../../components/ui'
@@ -148,7 +148,7 @@ export default function Billing() {
                   <span className="text-xl font-bold text-gray-900">Custom</span>
                 ) : (
                   <>
-                    <span className="text-2xl font-bold text-gray-900">â‚¹{plan.price.toLocaleString('en-IN')}</span>
+                    <span className="text-2xl font-bold text-gray-900">₹{plan.price.toLocaleString('en-IN')}</span>
                     <span className="text-sm text-gray-500">{plan.period}</span>
                   </>
                 )}
@@ -204,7 +204,7 @@ export default function Billing() {
       <Card className="p-5 max-w-2xl">
         <h2 className="text-sm font-semibold text-gray-900 mb-3">Invoice History</h2>
         <div className="text-sm text-gray-400 text-center py-6">
-          No invoices yet â€” billing starts when you upgrade to a paid plan.
+          No invoices yet — billing starts when you upgrade to a paid plan.
         </div>
       </Card>
     </div>
