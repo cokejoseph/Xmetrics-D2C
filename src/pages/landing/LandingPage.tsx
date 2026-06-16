@@ -166,7 +166,7 @@ function ParticleField() {
     resize()
     window.addEventListener('resize', resize)
 
-    const N = 90
+    const N = 68
     const pts = Array.from({ length: N }, () => ({
       x: Math.random() * canvas.width,
       y: Math.random() * canvas.height,
@@ -232,7 +232,7 @@ function ParticleFieldLight() {
     resize()
     window.addEventListener('resize', resize)
 
-    const N = 30
+    const N = 22
     const pts = Array.from({ length: N }, () => ({
       x: Math.random() * canvas.width,
       y: Math.random() * canvas.height,

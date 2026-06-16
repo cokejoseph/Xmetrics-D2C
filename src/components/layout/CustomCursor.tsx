@@ -53,13 +53,17 @@ export default function CustomCursor() {
 
   return (
     <div ref={ref} className="cursor-arrow" aria-hidden="true">
-      {/* macOS-style arrow cursor — tip at top-left (0,0) of the SVG */}
-      <svg width="18" height="23" viewBox="0 0 18 23" fill="none" xmlns="http://www.w3.org/2000/svg">
+      {/*
+        macOS arrow cursor — black fill, white 1px border, drop shadow.
+        viewBox 0 0 14 22: matches macOS default cursor proportions (~14×22 CSS px at 1×).
+        Hotspot at SVG origin (0,0) = tip of arrow.
+      */}
+      <svg width="14" height="22" viewBox="0 0 14 22" fill="none" xmlns="http://www.w3.org/2000/svg">
         <path
-          d="M2.5 1.5 L2.5 19.5 L6.8 15.2 L10.2 21.8 L12.8 20.7 L9.4 14.1 L16.5 14.1 Z"
-          fill="white"
-          stroke="#111827"
-          strokeWidth="1.2"
+          d="M1.5 1.5 L1.5 18.5 L5 14.5 L8 20.8 L10.5 19.8 L7.5 13.5 L13.5 13.5 Z"
+          fill="#1a1a1a"
+          stroke="white"
+          strokeWidth="1"
           strokeLinejoin="round"
           strokeLinecap="round"
         />
