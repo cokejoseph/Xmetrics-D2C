@@ -6,14 +6,17 @@ import AppLayout from './components/layout/AppLayout'
 import LandingPage from './pages/landing/LandingPage'
 import CustomCursor from './components/layout/CustomCursor'
 
-// Wrap Routes with location-based key for smooth transitions
-function RouteTransitionWrapper({ children }: { children: React.ReactNode }) {
+// Location listener for route transition fade-in
+function RouteTransitionEffect() {
   const location = useLocation()
-  return (
-    <div key={location.pathname} className="page-enter">
-      {children}
-    </div>
-  )
+  useEffect(() => {
+    // Trigger page-enter animation on route change by adding class to body
+    document.documentElement.style.animation = 'none'
+    // Force reflow to restart animation
+    void document.documentElement.offsetHeight
+    document.documentElement.style.animation = ''
+  }, [location.pathname])
+  return null
 }
 
 // ── Lazy-loaded route pages (code-split per route) ───────────────────────────
@@ -95,45 +98,46 @@ export default function App() {
   return (
     <BrowserRouter>
       <CustomCursor />
-      <Suspense fallback={<PageSpinner />}>
-        <RouteTransitionWrapper>
+      <RouteTransitionEffect />
+      <div className="page-enter">
+        <Suspense fallback={<PageSpinner />}>
           <Routes>
-          {/* Public routes */}
-          <Route path="/" element={<RootRoute />} />
-          <Route path="/login" element={<Login />} />
-          <Route path="/signup" element={<Signup />} />
-          <Route path="/onboarding" element={<Onboarding />} />
+            {/* Public routes */}
+            <Route path="/" element={<RootRoute />} />
+            <Route path="/login" element={<Login />} />
+            <Route path="/signup" element={<Signup />} />
+            <Route path="/onboarding" element={<Onboarding />} />
 
-          {/* Protected app routes — layout wrapper (no path, just wraps) */}
-          <Route
-            element={
-              <AuthGuard>
-                <AppLayout />
-              </AuthGuard>
-            }
-          >
-            <Route path="/dashboard" element={<Dashboard />} />
-            <Route path="/orders" element={<OrderList />} />
-            <Route path="/orders/new" element={<NewOrder />} />
-            <Route path="/orders/:id" element={<OrderDetail />} />
-            <Route path="/fulfillment" element={<Fulfillment />} />
-            <Route path="/payments" element={<Payments />} />
-            <Route path="/exceptions" element={<Exceptions />} />
-            <Route path="/customers" element={<CustomerList />} />
-            <Route path="/customers/:id" element={<CustomerDetail />} />
-            <Route path="/products" element={<Products />} />
-            <Route path="/analytics" element={<Analytics />} />
-            <Route path="/briefs" element={<DailyBrief />} />
-            <Route path="/briefs/history" element={<BriefHistory />} />
-            <Route path="/settings/brand" element={<BrandSettings />} />
-            <Route path="/settings/integrations" element={<IntegrationsSettings />} />
-            <Route path="/settings/warehouses" element={<WarehousesSettings />} />
-            <Route path="/settings/team" element={<TeamSettings />} />
-            <Route path="/settings/billing" element={<BillingSettings />} />
-          </Route>
-        </Routes>
-        </RouteTransitionWrapper>
-      </Suspense>
+            {/* Protected app routes — layout wrapper (no path, just wraps) */}
+            <Route
+              element={
+                <AuthGuard>
+                  <AppLayout />
+                </AuthGuard>
+              }
+            >
+              <Route path="/dashboard" element={<Dashboard />} />
+              <Route path="/orders" element={<OrderList />} />
+              <Route path="/orders/new" element={<NewOrder />} />
+              <Route path="/orders/:id" element={<OrderDetail />} />
+              <Route path="/fulfillment" element={<Fulfillment />} />
+              <Route path="/payments" element={<Payments />} />
+              <Route path="/exceptions" element={<Exceptions />} />
+              <Route path="/customers" element={<CustomerList />} />
+              <Route path="/customers/:id" element={<CustomerDetail />} />
+              <Route path="/products" element={<Products />} />
+              <Route path="/analytics" element={<Analytics />} />
+              <Route path="/briefs" element={<DailyBrief />} />
+              <Route path="/briefs/history" element={<BriefHistory />} />
+              <Route path="/settings/brand" element={<BrandSettings />} />
+              <Route path="/settings/integrations" element={<IntegrationsSettings />} />
+              <Route path="/settings/warehouses" element={<WarehousesSettings />} />
+              <Route path="/settings/team" element={<TeamSettings />} />
+              <Route path="/settings/billing" element={<BillingSettings />} />
+            </Route>
+          </Routes>
+        </Suspense>
+      </div>
     </BrowserRouter>
   )
 }
