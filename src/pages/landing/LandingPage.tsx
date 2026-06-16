@@ -828,7 +828,7 @@ export default function LandingPage() {
           { value: '35%',    label: 'Avg RTO reduction' },
           { value: '₹2.4L',  label: 'Saved per 1,000 orders' },
           { value: '99.9%',  label: 'Platform uptime' },
-          { value: '7',      label: 'Modules live — built & tested' },
+          { value: '7',      label: 'Built & tested' },
           { value: '1',      label: 'Dashboard — instead of 5' },
           { value: '10 min', label: 'Order to label — vs 6 hours manual' },
         ]
