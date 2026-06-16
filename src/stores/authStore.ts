@@ -2,17 +2,6 @@ import { create } from 'zustand'
 import { DEMO_MODE, supabase } from '../lib/supabase'
 import type { AuthUser } from '../types'
 
-// ─── Preview accounts ────────────────────────────────────────────────────────
-// Passwords come from env vars — never hardcoded in the bundle.
-// Set VITE_DEMO_PASS and VITE_SHOPIFY_PASS in Vercel environment variables.
-const _dp = import.meta.env.VITE_DEMO_PASS as string | undefined
-const _sp = import.meta.env.VITE_SHOPIFY_PASS as string | undefined
-
-const PREVIEW_ACCOUNTS: Record<string, { id: string; password: string } | undefined> = {
-  'demo@xmetrics.app':    _dp ? { id: 'user-demo-001', password: _dp } : undefined,
-  'shopify@xmetrics.app': _sp ? { id: 'user-demo-001', password: _sp } : undefined,
-}
-
 const SESSION_KEY = 'xmetrics-session'
 
 interface AuthState {
@@ -29,7 +18,7 @@ export const useAuthStore = create<AuthState>((set) => ({
   isLoading: true,
 
   initialize: () => {
-    // Restore a persisted preview-account session (survives page reload, clears on tab close)
+    // Restore persisted session (survives page reload, clears on tab close)
     try {
       const raw = sessionStorage.getItem(SESSION_KEY)
       if (raw) {
@@ -39,7 +28,6 @@ export const useAuthStore = create<AuthState>((set) => ({
     } catch {}
 
     if (DEMO_MODE) {
-      // No Supabase — just show login, no auto-login
       set({ isLoading: false })
       return
     }
@@ -54,20 +42,17 @@ export const useAuthStore = create<AuthState>((set) => ({
   },
 
   signIn: async (email, password) => {
-    // Preview accounts — only active when env vars are set
-    const account = PREVIEW_ACCOUNTS[email.toLowerCase()]
-    if (account && password === account.password) {
-      const user: AuthUser = { id: account.id, email: email.toLowerCase() }
-      try { sessionStorage.setItem(SESSION_KEY, JSON.stringify(user)) } catch {}
-      set({ user })
-      return { error: null }
-    }
-
     if (DEMO_MODE) {
       return { error: 'Invalid email or password.' }
     }
-
-    const { error } = await supabase!.auth.signInWithPassword({ email, password })
+    const { data, error } = await supabase!.auth.signInWithPassword({ email, password })
+    if (!error && data.user) {
+      const user: AuthUser = { id: data.user.id, email: data.user.email! }
+      // Persist @xmetrics.app demo sessions across reloads
+      if (email.endsWith('@xmetrics.app')) {
+        try { sessionStorage.setItem(SESSION_KEY, JSON.stringify(user)) } catch {}
+      }
+    }
     return { error: error?.message ?? null }
   },
 

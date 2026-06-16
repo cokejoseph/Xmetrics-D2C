@@ -78,7 +78,7 @@ export default function App() {
   }, [initialize])
 
   useEffect(() => {
-    if (user) bootstrap(user.id)
+    if (user) bootstrap(user.id, user.email)
   }, [user, bootstrap])
 
   return (

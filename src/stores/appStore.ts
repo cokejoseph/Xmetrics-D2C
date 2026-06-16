@@ -63,7 +63,7 @@ interface AppState {
   isLoading: boolean
   bootstrapError: string | null
 
-  bootstrap: (userId: string) => Promise<void>
+  bootstrap: (userId: string, email?: string) => Promise<void>
   cleanup: () => void
 
   updateOrder: (id: string, changes: Partial<Order>) => void
@@ -109,9 +109,9 @@ export const useAppStore = create<AppState>((set, get) => ({
 
   // ─── Bootstrap ─────────────────────────────────────────────────────────────
 
-  bootstrap: async (userId: string) => {
-    // Demo mode: env-var flag OR the special demo user ID (used by "Try Demo" button)
-    if (DEMO_MODE || userId === 'user-demo-001') {
+  bootstrap: async (userId: string, email?: string) => {
+    // Demo mode: no Supabase configured OR user is a demo account (@xmetrics.app)
+    if (DEMO_MODE || email?.endsWith('@xmetrics.app')) {
       set({
         currentBrand: DEMO_BRAND,
         currentWarehouse: DEMO_WAREHOUSES[0],
