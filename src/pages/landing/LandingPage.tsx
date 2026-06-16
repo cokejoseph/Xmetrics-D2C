@@ -1093,6 +1093,7 @@ export default function LandingPage() {
 
       {/* ── FINAL CTA ──────────────────────────────────────────────────── */}
       <section className="py-24 bg-brand-gradient text-white relative overflow-hidden">
+        <ParticleField />
         <div className="absolute -top-24 left-1/4 w-[400px] h-[400px] bg-brand-500/25 rounded-full blur-3xl animate-aurora" />
         <div className="absolute -bottom-32 right-1/4 w-[420px] h-[420px] bg-sky-500/20 rounded-full blur-3xl animate-aurora-2" />
         <div
