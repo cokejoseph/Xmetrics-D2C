@@ -1,5 +1,3 @@
-import { useState } from 'react'
-
 interface ConfirmOptions {
   title: string
   message: string
