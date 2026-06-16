@@ -494,25 +494,6 @@ function AnnouncementBar({ onDismiss }: { onDismiss: () => void }) {
   )
 }
 
-// ─── Trust logos bar ──────────────────────────────────────────────────────────
-const TRUST_BRANDS = ['Kasa Living', 'FluxWear', 'Verdant Foods', 'Prana Wellness', 'Orbis Naturals', 'Bolt Apparel', 'Auric Blends', 'Zestify']
-
-function TrustBar() {
-  return (
-    <section className="py-14 bg-white border-b border-gray-50">
-      <div className="max-w-5xl mx-auto px-6 text-center">
-        <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-gray-300 mb-8">
-          Trusted by fast-growing Indian D2C brands
-        </p>
-        <div className="flex flex-wrap items-center justify-center gap-x-10 gap-y-5">
-          {TRUST_BRANDS.map(b => (
-            <span key={b} className="trust-logo text-gray-400">{b}</span>
-          ))}
-        </div>
-      </div>
-    </section>
-  )
-}
 
 // ─── Testimonials ─────────────────────────────────────────────────────────────
 const TESTIMONIALS = [
@@ -1023,9 +1004,6 @@ export default function LandingPage() {
           </section>
         )
       })()}
-
-      {/* ── TRUST LOGOS ────────────────────────────────────────────────── */}
-      <TrustBar />
 
       {/* ── INTEGRATION FLOW ───────────────────────────────────────────── */}
       <section className="py-14 bg-white border-b border-gray-50">
