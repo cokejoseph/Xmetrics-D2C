@@ -129,35 +129,10 @@ function ParticleField() {
     }))
     const LINK = 150 * dpr
 
-    // Click handler: scatter particles away from click point
-    const handleClick = (e: MouseEvent) => {
-      const rect = canvas.getBoundingClientRect()
-      const clickX = (e.clientX - rect.left) * dpr
-      const clickY = (e.clientY - rect.top) * dpr
-      const repelRadius = 150 * dpr
-
-      for (const p of pts) {
-        const dx = p.x - clickX
-        const dy = p.y - clickY
-        const dist = Math.hypot(dx, dy)
-        if (dist < repelRadius && dist > 0) {
-          const force = (1 - dist / repelRadius) * 4
-          const angle = Math.atan2(dy, dx)
-          p.vx += Math.cos(angle) * force * dpr
-          p.vy += Math.sin(angle) * force * dpr
-        }
-      }
-    }
-
-    canvas.addEventListener('click', handleClick)
-
     let raf = 0
     const tick = () => {
       ctx.clearRect(0, 0, canvas.width, canvas.height)
       for (const p of pts) {
-        // Damping: particles slow down over time
-        p.vx *= 0.98
-        p.vy *= 0.98
         p.x += p.vx; p.y += p.vy
         if (p.x < 0 || p.x > canvas.width) p.vx *= -1
         if (p.y < 0 || p.y > canvas.height) p.vy *= -1
@@ -186,14 +161,10 @@ function ParticleField() {
       raf = requestAnimationFrame(tick)
     }
     raf = requestAnimationFrame(tick)
-    return () => {
-      cancelAnimationFrame(raf)
-      window.removeEventListener('resize', resize)
-      canvas.removeEventListener('click', handleClick)
-    }
+    return () => { cancelAnimationFrame(raf); window.removeEventListener('resize', resize) }
   }, [])
 
-  return <canvas ref={canvasRef} className="absolute inset-0 w-full h-full opacity-80 pointer-events-auto cursor-pointer" />
+  return <canvas ref={canvasRef} className="absolute inset-0 w-full h-full opacity-80 pointer-events-none" />
 }
 
 function ParticleFieldLight() {
