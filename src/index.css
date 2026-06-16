@@ -367,7 +367,7 @@
 .animate-aurora-2 { animation: auroraShift 18s ease-in-out infinite reverse; }
 
 /* ══════════════════════════════════════════════
-   CUSTOM CURSOR — premium dot + lagging ring
+   CUSTOM CURSOR — macOS-style arrow
 ══════════════════════════════════════════════ */
 html.has-custom-cursor *,
 html.has-custom-cursor *::before,
@@ -375,53 +375,23 @@ html.has-custom-cursor *::after {
   cursor: none !important;
 }
 
-.cursor-dot {
+.cursor-arrow {
   position: fixed;
-  top: -3px;
-  left: -3px;
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  background: #fff;
+  top: 0;
+  left: 0;
   pointer-events: none;
   z-index: 99999;
-  mix-blend-mode: difference;
   will-change: transform;
-  transition: transform 0.04s linear;
+  filter: drop-shadow(0 1px 3px rgba(0, 0, 0, 0.55));
 }
 
-.cursor-dot--hover {
-  top: -5px;
-  left: -5px;
-  width: 10px;
-  height: 10px;
-  transition: width 0.15s ease, height 0.15s ease, top 0.15s ease, left 0.15s ease;
+.cursor-arrow svg {
+  display: block;
+  transition: transform 0.18s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
-.cursor-ring {
-  position: fixed;
-  top: -18px;
-  left: -18px;
-  width: 36px;
-  height: 36px;
-  border-radius: 50%;
-  border: 1.5px solid rgba(147, 197, 253, 0.65);
-  pointer-events: none;
-  z-index: 99998;
-  will-change: transform;
-  transition: width 0.22s ease, height 0.22s ease,
-              top 0.22s ease, left 0.22s ease,
-              border-color 0.22s ease, box-shadow 0.22s ease,
-              opacity 0.2s ease;
-}
-
-.cursor-ring--hover {
-  top: -26px;
-  left: -26px;
-  width: 52px;
-  height: 52px;
-  border-color: rgba(59, 130, 246, 0.75);
-  box-shadow: 0 0 18px rgba(59, 130, 246, 0.28), inset 0 0 8px rgba(59, 130, 246, 0.08);
+.cursor-arrow--hover svg {
+  transform: scale(1.15);
 }
 
 /* ══════════════════════════════════════════════
@@ -439,6 +409,8 @@ html.has-custom-cursor *::after {
   display: inline-block;
   overflow: hidden;
   vertical-align: bottom;
+  padding-bottom: 0.2em;
+  margin-bottom: -0.2em;
 }
 /* Gradient-text variant: no overflow clip (bg-clip-text needs unclipped paint area) */
 @keyframes wordUpFade {
@@ -456,7 +428,7 @@ html.has-custom-cursor *::after {
   .animate-draw-line, .animate-chart-fill, .animate-shimmer-text,
   .animate-bell-ring, .animate-border-pan, .stagger-rows tr,
   .btn-shine::after, .flow-line, .animate-tick-flash,
-  .word-reveal, .cursor-dot, .cursor-ring {
+  .word-reveal, .cursor-arrow svg {
     animation: none;
   }
   .animate-draw-line { stroke-dashoffset: 0; }

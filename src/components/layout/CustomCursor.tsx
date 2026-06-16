@@ -1,8 +1,7 @@
 import { useEffect, useRef } from 'react'
 
 export default function CustomCursor() {
-  const dotRef = useRef<HTMLDivElement>(null)
-  const ringRef = useRef<HTMLDivElement>(null)
+  const ref = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     if (!window.matchMedia('(hover: hover) and (pointer: fine)').matches) return
@@ -10,7 +9,6 @@ export default function CustomCursor() {
     document.documentElement.classList.add('has-custom-cursor')
 
     let mx = -200, my = -200
-    let rx = -200, ry = -200
     let raf = 0
 
     const onMove = (e: MouseEvent) => {
@@ -18,31 +16,24 @@ export default function CustomCursor() {
       my = e.clientY
     }
 
-    const onOver = (e: MouseEvent) => {
-      const t = e.target as Element
-      if (t.closest('a, button, [role="button"], input, textarea, select, label, [tabindex]')) {
-        ringRef.current?.classList.add('cursor-ring--hover')
-        dotRef.current?.classList.add('cursor-dot--hover')
-      }
+    const setHover = (on: boolean) => {
+      ref.current?.classList.toggle('cursor-arrow--hover', on)
     }
 
+    const onOver = (e: MouseEvent) => {
+      if ((e.target as Element)?.closest('a, button, [role="button"], label, input, select, textarea')) {
+        setHover(true)
+      }
+    }
     const onOut = (e: MouseEvent) => {
-      const t = e.relatedTarget as Element | null
-      if (!t?.closest('a, button, [role="button"], input, textarea, select, label, [tabindex]')) {
-        ringRef.current?.classList.remove('cursor-ring--hover')
-        dotRef.current?.classList.remove('cursor-dot--hover')
+      const to = e.relatedTarget as Element | null
+      if (!to?.closest('a, button, [role="button"], label, input, select, textarea')) {
+        setHover(false)
       }
     }
 
     const tick = () => {
-      const dot = dotRef.current
-      const ring = ringRef.current
-      if (dot) dot.style.transform = `translate(${mx}px, ${my}px)`
-      if (ring) {
-        rx += (mx - rx) * 0.12
-        ry += (my - ry) * 0.12
-        ring.style.transform = `translate(${rx}px, ${ry}px)`
-      }
+      if (ref.current) ref.current.style.transform = `translate(${mx}px, ${my}px)`
       raf = requestAnimationFrame(tick)
     }
     raf = requestAnimationFrame(tick)
@@ -61,9 +52,18 @@ export default function CustomCursor() {
   }, [])
 
   return (
-    <>
-      <div ref={dotRef} className="cursor-dot" aria-hidden="true" />
-      <div ref={ringRef} className="cursor-ring" aria-hidden="true" />
-    </>
+    <div ref={ref} className="cursor-arrow" aria-hidden="true">
+      {/* macOS-style arrow cursor — tip at top-left (0,0) of the SVG */}
+      <svg width="18" height="23" viewBox="0 0 18 23" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path
+          d="M2.5 1.5 L2.5 19.5 L6.8 15.2 L10.2 21.8 L12.8 20.7 L9.4 14.1 L16.5 14.1 Z"
+          fill="white"
+          stroke="#111827"
+          strokeWidth="1.2"
+          strokeLinejoin="round"
+          strokeLinecap="round"
+        />
+      </svg>
+    </div>
   )
 }
