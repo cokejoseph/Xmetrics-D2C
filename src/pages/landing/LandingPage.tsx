@@ -866,6 +866,14 @@ const PLANS = [
 // ─── Main Landing Page ────────────────────────────────────────────────────────
 export default function LandingPage() {
   const [showAnnouncement, setShowAnnouncement] = useState(true)
+  const [scrolled, setScrolled] = useState(false)
+
+  useEffect(() => {
+    const onScroll = () => setScrolled(window.scrollY > 72)
+    window.addEventListener('scroll', onScroll, { passive: true })
+    onScroll()
+    return () => window.removeEventListener('scroll', onScroll)
+  }, [])
 
   useEffect(() => {
     const html = document.documentElement
@@ -874,34 +882,58 @@ export default function LandingPage() {
     return () => { if (wasDark) html.classList.add('dark') }
   }, [])
 
+  const annHeight = showAnnouncement ? 36 : 0
+
   return (
     <div className="min-h-screen bg-white font-sans">
 
-      {/* ── ANNOUNCEMENT BAR ─────────────────────────────────────────── */}
-      {showAnnouncement && <AnnouncementBar onDismiss={() => setShowAnnouncement(false)} />}
+      {/* ── ANNOUNCEMENT BAR — fixed at very top ─────────────────────── */}
+      {showAnnouncement && (
+        <div className="fixed top-0 inset-x-0 z-[61]">
+          <AnnouncementBar onDismiss={() => setShowAnnouncement(false)} />
+        </div>
+      )}
 
-      {/* ── NAVBAR ─────────────────────────────────────────────────────── */}
-      <nav className={`fixed inset-x-0 z-50 bg-white/90 backdrop-blur border-b border-gray-100/80 animate-fade-in transition-all duration-300 ${showAnnouncement ? 'top-9' : 'top-0'}`}>
-        <ScrollProgress />
-        <div className="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
+      {/* ── NAVBAR — transparent → frosted glass on scroll ─────────────── */}
+      <nav
+        className={`fixed inset-x-0 z-50 h-16 transition-all duration-300 ${
+          scrolled
+            ? 'bg-white/95 backdrop-blur-md border-b border-gray-100/80 shadow-[0_1px_12px_rgba(0,0,0,0.06)]'
+            : 'bg-transparent border-b border-transparent'
+        }`}
+        style={{ top: annHeight }}
+      >
+        {scrolled && <ScrollProgress />}
+        <div className="max-w-6xl mx-auto px-6 h-full flex items-center justify-between">
           <div className="flex items-center gap-2.5">
             <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-brand-500 to-brand-700 flex items-center justify-center shadow-sm">
               <span className="text-white font-bold text-sm">x</span>
             </div>
-            <span className="font-semibold text-gray-900 text-lg">Xmetrics</span>
+            <span className={`font-semibold text-lg transition-colors duration-300 ${scrolled ? 'text-gray-900' : 'text-white'}`}>
+              Xmetrics
+            </span>
           </div>
-          <div className="hidden md:flex items-center gap-8 text-sm text-gray-500">
-            <a href="#features" className="hover:text-gray-900 transition-colors">Features</a>
-            <a href="#pricing" className="hover:text-gray-900 transition-colors">Pricing</a>
-            <a href="#faq" className="hover:text-gray-900 transition-colors">FAQ</a>
-            <Link to="/login" className="hover:text-gray-900 transition-colors">Sign In</Link>
+          <div className={`hidden md:flex items-center gap-8 text-sm transition-colors duration-300 ${scrolled ? 'text-gray-500' : 'text-white/75'}`}>
+            {['#features', '#pricing', '#faq'].map((href, i) => (
+              <a key={href} href={href}
+                className={`transition-colors ${scrolled ? 'hover:text-gray-900' : 'hover:text-white'}`}>
+                {['Features', 'Pricing', 'FAQ'][i]}
+              </a>
+            ))}
+            <Link to="/login" className={`transition-colors ${scrolled ? 'hover:text-gray-900' : 'hover:text-white'}`}>
+              Sign In
+            </Link>
           </div>
           <div className="flex items-center gap-3">
-            <Link to="/login" className="md:hidden text-sm font-medium text-gray-600 hover:text-gray-900 transition-colors">
+            <Link to="/login" className={`md:hidden text-sm font-medium transition-colors ${scrolled ? 'text-gray-600 hover:text-gray-900' : 'text-white/80 hover:text-white'}`}>
               Sign In
             </Link>
             <Link to="/signup"
-              className="text-sm font-semibold bg-gray-950 text-white px-4 py-2 rounded-xl hover:bg-gray-800 transition-all shadow-sm hover:shadow-md hover:-translate-y-px">
+              className={`text-sm font-semibold px-4 py-2 rounded-xl transition-all duration-200 hover:-translate-y-px ${
+                scrolled
+                  ? 'bg-gray-950 text-white hover:bg-gray-800 shadow-sm'
+                  : 'bg-white/15 text-white border border-white/30 hover:bg-white/25 backdrop-blur-sm'
+              }`}>
               Get Started →
             </Link>
           </div>
@@ -910,7 +942,8 @@ export default function LandingPage() {
 
       {/* ── HERO ───────────────────────────────────────────────────────── */}
       <section
-        className={`pb-20 bg-brand-gradient text-white relative overflow-hidden ${showAnnouncement ? 'pt-40' : 'pt-32'}`}
+        className="pb-20 bg-brand-gradient text-white relative overflow-hidden"
+        style={{ paddingTop: `${annHeight + 96}px` }}
         onMouseMove={e => {
           const r = e.currentTarget.getBoundingClientRect()
           e.currentTarget.style.setProperty('--hx', `${e.clientX - r.left}px`)
