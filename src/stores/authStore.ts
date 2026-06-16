@@ -2,11 +2,15 @@ import { create } from 'zustand'
 import { DEMO_MODE, supabase } from '../lib/supabase'
 import type { AuthUser } from '../types'
 
-// ─── Hardcoded preview accounts ────────────────────────────────────────────
-// These work in both demo mode and live mode (checked before Supabase auth).
-const PREVIEW_ACCOUNTS: Record<string, { id: string; password: string }> = {
-  'demo@xmetrics.app':    { id: 'user-demo-001', password: 'demo123' },
-  'shopify@xmetrics.app': { id: 'user-demo-001', password: 'shopify123' },
+// ─── Preview accounts ────────────────────────────────────────────────────────
+// Passwords come from env vars — never hardcoded in the bundle.
+// Set VITE_DEMO_PASS and VITE_SHOPIFY_PASS in Vercel environment variables.
+const _dp = import.meta.env.VITE_DEMO_PASS as string | undefined
+const _sp = import.meta.env.VITE_SHOPIFY_PASS as string | undefined
+
+const PREVIEW_ACCOUNTS: Record<string, { id: string; password: string } | undefined> = {
+  'demo@xmetrics.app':    _dp ? { id: 'user-demo-001', password: _dp } : undefined,
+  'shopify@xmetrics.app': _sp ? { id: 'user-demo-001', password: _sp } : undefined,
 }
 
 const SESSION_KEY = 'xmetrics-session'
@@ -50,7 +54,7 @@ export const useAuthStore = create<AuthState>((set) => ({
   },
 
   signIn: async (email, password) => {
-    // Preview accounts — work in both demo and live mode
+    // Preview accounts — only active when env vars are set
     const account = PREVIEW_ACCOUNTS[email.toLowerCase()]
     if (account && password === account.password) {
       const user: AuthUser = { id: account.id, email: email.toLowerCase() }
