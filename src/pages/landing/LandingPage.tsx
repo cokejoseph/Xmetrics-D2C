@@ -828,9 +828,9 @@ export default function LandingPage() {
           { value: '35%',    label: 'Avg RTO reduction' },
           { value: '₹2.4L',  label: 'Saved per 1,000 orders' },
           { value: '99.9%',  label: 'Platform uptime' },
-          { value: '7',      label: 'Built & tested' },
-          { value: '1',      label: 'Dashboard — instead of 5' },
-          { value: '10 min', label: 'Order to label — vs 6 hours manual' },
+          { value: '7',      label: 'Modules' },
+          { value: '10 min', label: 'Order to Shipping\nrather than 8 hours' },
+          { value: '1',      label: 'Dashboard\ninstead of 5 tools' },
         ]
         return (
           <section className="relative bg-gray-950 text-white py-10 overflow-hidden">
