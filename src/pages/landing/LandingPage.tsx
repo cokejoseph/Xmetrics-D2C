@@ -509,72 +509,8 @@ function FeaturesSection() {
         {/* Bento grid */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
 
-          {/* Large card — hero feature */}
-          <AnimateIn className="md:col-span-2" delay={0}>
-            <SpotlightCard className="bento-glow bg-gradient-to-br from-brand-50 to-sky-50 border border-brand-100 rounded-2xl p-7 h-full transition-all duration-200 hover:-translate-y-1 hover:shadow-card-hover">
-              <div className="w-11 h-11 rounded-xl bg-brand-600 flex items-center justify-center mb-5 shadow-[0_4px_14px_rgba(37,99,235,0.35)]">
-                <Shield size={22} className="text-white" />
-              </div>
-              <h3 className="font-bold text-gray-900 text-lg mb-2">RTO Intelligence Engine</h3>
-              <p className="text-gray-600 text-sm leading-relaxed mb-5">
-                Every order scored 0–100 in real time using pincode data, customer history, address
-                quality, and COD patterns. Ship, Verify, or Hold — automatically, before you dispatch.
-              </p>
-              <div className="flex gap-2 flex-wrap">
-                {['Pincode scoring', 'COD risk model', 'Customer track record', 'Auto-hold rules'].map(tag => (
-                  <span key={tag} className="text-[10px] font-semibold bg-white border border-brand-100 text-brand-700 px-2.5 py-1 rounded-full">
-                    {tag}
-                  </span>
-                ))}
-              </div>
-            </SpotlightCard>
-          </AnimateIn>
-
-          {/* Tall card */}
-          <AnimateIn delay={80}>
-            <SpotlightCard className="bento-glow bg-white border border-gray-100 rounded-2xl p-6 h-full shadow-card transition-all duration-200 hover:-translate-y-1 hover:shadow-card-hover">
-              <div className="w-10 h-10 rounded-xl bg-brand-50 flex items-center justify-center mb-4">
-                <Bell size={20} className="text-brand-600" />
-              </div>
-              <h3 className="font-semibold text-gray-900 mb-2">Exception Management</h3>
-              <p className="text-gray-500 text-sm leading-relaxed">
-                Stuck shipments, payment failures, NDR escalations — detected, categorised, and surfaced
-                before your customer notices. 8 exception types, real-time alerts.
-              </p>
-            </SpotlightCard>
-          </AnimateIn>
-
-          {/* Middle row — 3 equal cards */}
-          {[
-            {
-              icon: <Package size={20} className="text-brand-600" />,
-              title: 'Order Command Centre',
-              desc: 'Unified order view across all channels. Bulk approve, hold, label generation, and review queues.',
-            },
-            {
-              icon: <MessageSquare size={20} className="text-brand-600" />,
-              title: 'Daily Ops Brief',
-              desc: 'An 8-minute WhatsApp-ready summary — revenue, exceptions, fulfillment, RTO — auto-generated at 7 AM.',
-            },
-            {
-              icon: <BarChart3 size={20} className="text-brand-600" />,
-              title: 'Demand Forecast',
-              desc: 'Know which SKUs to reorder before you stock out. 90-day velocity model per SKU.',
-            },
-          ].map((f, i) => (
-            <AnimateIn key={f.title} delay={160 + i * 70}>
-              <SpotlightCard className="bento-glow bg-white border border-gray-100 rounded-2xl p-6 h-full shadow-card transition-all duration-200 hover:-translate-y-1 hover:shadow-card-hover">
-                <div className="w-10 h-10 rounded-xl bg-brand-50 flex items-center justify-center mb-4">
-                  {f.icon}
-                </div>
-                <h3 className="font-semibold text-gray-900 mb-2">{f.title}</h3>
-                <p className="text-gray-500 text-sm leading-relaxed">{f.desc}</p>
-              </SpotlightCard>
-            </AnimateIn>
-          ))}
-
           {/* Wide bottom card */}
-          <AnimateIn className="md:col-span-3" delay={360}>
+          <AnimateIn className="md:col-span-3" delay={0}>
             <SpotlightCard className="bento-glow bg-gray-950 text-white border border-white/5 rounded-2xl p-7 transition-all duration-200 hover:-translate-y-1">
               <div className="flex flex-col md:flex-row md:items-center gap-6">
                 <div className="flex-1">
