@@ -4,7 +4,6 @@ import {
   TrendingDown, Package, Zap, BarChart3, Bell, MessageSquare,
   Check, ChevronDown, ArrowRight, Shield, Clock, X as XIcon,
   Truck, ShoppingCart, AlertTriangle, BarChart2, Users,
-  Terminal, Globe, Cpu, Star, Database, Activity,
 } from 'lucide-react'
 
 // ─── Scroll-triggered fade-in wrapper ────────────────────────────────────────
@@ -495,161 +494,6 @@ function AnnouncementBar({ onDismiss }: { onDismiss: () => void }) {
 }
 
 
-// ─── Testimonials ─────────────────────────────────────────────────────────────
-const TESTIMONIALS = [
-  {
-    quote: "Reduced our RTO from 28% to 11% in 3 months. The scoring model is frighteningly accurate — it caught patterns we'd never have found manually.",
-    name: 'Arjun Mehta', role: 'Founder & CEO', company: 'FluxWear',
-    avatar: 'AM', color: 'from-blue-600 to-blue-800', metric: '17% RTO drop',
-  },
-  {
-    quote: "We used to spend 3 hours every morning understanding what happened the day before. Now it's 8 minutes with the daily brief. Our ops team is half the size.",
-    name: 'Priya Nair', role: 'Head of Operations', company: 'Verdant Foods',
-    avatar: 'PN', color: 'from-emerald-600 to-emerald-800', metric: '3h → 8 min',
-  },
-  {
-    quote: "The exception management alone pays for the subscription 10x. We catch stuck shipments before customers do — that's a brand experience game changer.",
-    name: 'Rishi Kapoor', role: 'COO', company: 'Prana Wellness',
-    avatar: 'RK', color: 'from-purple-600 to-purple-800', metric: '10× ROI on exceptions',
-  },
-]
-
-function TestimonialsSection() {
-  return (
-    <section className="py-24 bg-gray-50">
-      <div className="max-w-5xl mx-auto px-6">
-        <AnimateIn className="text-center mb-14">
-          <div className="flex items-center justify-center gap-1 mb-4">
-            {Array.from({ length: 5 }).map((_, i) => (
-              <Star key={i} size={16} className="text-amber-400 fill-amber-400" />
-            ))}
-          </div>
-          <h2 className="text-3xl font-bold text-gray-900 mb-3">Ops teams love it</h2>
-          <p className="text-gray-500 max-w-md mx-auto">
-            Real results from brands that swapped 6-tab chaos for one command centre.
-          </p>
-        </AnimateIn>
-
-        <div className="grid md:grid-cols-3 gap-6">
-          {TESTIMONIALS.map((t, i) => (
-            <AnimateIn key={t.name} delay={i * 100}>
-              <div className="testimonial-card bg-white rounded-2xl border border-gray-100 p-6 flex flex-col h-full transition-all duration-300 shadow-card">
-                {/* Quote */}
-                <p className="text-gray-600 text-sm leading-relaxed flex-1 mb-6">
-                  "{t.quote}"
-                </p>
-                {/* Metric pill */}
-                <div className="mb-5">
-                  <span className="inline-flex items-center gap-1.5 bg-brand-50 text-brand-700 text-xs font-semibold px-3 py-1 rounded-full">
-                    <Activity size={11} />
-                    {t.metric}
-                  </span>
-                </div>
-                {/* Author */}
-                <div className="flex items-center gap-3">
-                  <div className={`w-9 h-9 rounded-full bg-gradient-to-br ${t.color} flex items-center justify-center text-white text-xs font-bold shrink-0`}>
-                    {t.avatar}
-                  </div>
-                  <div>
-                    <p className="text-sm font-semibold text-gray-900">{t.name}</p>
-                    <p className="text-xs text-gray-400">{t.role}, {t.company}</p>
-                  </div>
-                </div>
-              </div>
-            </AnimateIn>
-          ))}
-        </div>
-      </div>
-    </section>
-  )
-}
-
-// ─── Dark tech section (Vercel-style) ─────────────────────────────────────────
-function DarkTechSection() {
-  return (
-    <section className="py-28 bg-[#060610] relative overflow-hidden">
-      {/* grid lines */}
-      <div className="absolute inset-0 dark-grid-bg opacity-100" />
-      {/* radial glow */}
-      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[700px] h-[500px] bg-brand-600/8 rounded-full blur-3xl pointer-events-none" />
-      <div className="absolute top-0 right-1/4 w-[400px] h-[300px] bg-sky-500/5 rounded-full blur-3xl pointer-events-none" />
-
-      <div className="relative max-w-5xl mx-auto px-6">
-        <AnimateIn className="text-center mb-16">
-          <div className="inline-flex items-center gap-2 border border-white/10 bg-white/[0.03] rounded-full px-4 py-1.5 text-xs font-mono text-white/40 mb-6">
-            <Terminal size={11} className="text-brand-400" />
-            <span>Built for scale from day one</span>
-          </div>
-          <h2 className="text-3xl sm:text-4xl font-bold text-white mb-4 leading-tight">
-            Enterprise infrastructure.<br />
-            <span className="bg-gradient-to-r from-brand-400 to-sky-400 bg-clip-text text-transparent">
-              Startup-simple to set up.
-            </span>
-          </h2>
-          <p className="text-white/40 max-w-xl mx-auto leading-relaxed">
-            Row-level security, real-time WebSocket subscriptions, and edge-computed RTO
-            models — behind a UI your ops team will actually open every morning.
-          </p>
-        </AnimateIn>
-
-        {/* 3 glass cards */}
-        <div className="grid md:grid-cols-3 gap-5 mb-8">
-          {[
-            {
-              icon: <Globe size={18} className="text-sky-400" />,
-              title: 'Real-time everything',
-              desc: 'Every order, exception, and fulfillment event pushed live via WebSockets. Sub-second latency. No polling.',
-              tag: '< 1s latency',
-            },
-            {
-              icon: <Cpu size={18} className="text-brand-400" />,
-              title: 'Edge-computed scores',
-              desc: 'RTO models run at the edge — scores are ready before the order hits your dashboard. Zero wait.',
-              tag: 'Instant scoring',
-            },
-            {
-              icon: <Database size={18} className="text-emerald-400" />,
-              title: 'Row-level security',
-              desc: "Each brand's data is cryptographically isolated. Your queries never touch another brand's rows.",
-              tag: 'SOC 2 in progress',
-            },
-          ].map((item, i) => (
-            <AnimateIn key={item.title} delay={i * 100}>
-              <div className="glass-dark-card bento-glow rounded-2xl p-6 h-full transition-all duration-300">
-                <div className="w-9 h-9 rounded-xl border border-white/10 flex items-center justify-center mb-4 bg-white/5">
-                  {item.icon}
-                </div>
-                <h3 className="text-white font-semibold mb-2 text-sm">{item.title}</h3>
-                <p className="text-white/35 text-sm leading-relaxed mb-4">{item.desc}</p>
-                <span className="inline-block text-[10px] font-mono font-semibold text-brand-400 border border-brand-500/25 bg-brand-500/8 px-2 py-0.5 rounded">
-                  {item.tag}
-                </span>
-              </div>
-            </AnimateIn>
-          ))}
-        </div>
-
-        {/* Infrastructure metrics bar */}
-        <AnimateIn delay={300}>
-          <div className="glass-dark-card rounded-2xl p-6 grid grid-cols-2 md:grid-cols-4 gap-6 text-center">
-            {[
-              { label: 'Uptime SLA', value: '99.9%' },
-              { label: 'P95 API latency', value: '< 120ms' },
-              { label: 'Data residency', value: 'AWS Mumbai' },
-              { label: 'Encryption', value: 'TLS 1.3 + AES-256' },
-            ].map(m => (
-              <div key={m.label}>
-                <p className="text-xl font-bold text-white mb-1">{m.value}</p>
-                <p className="text-xs text-white/30 font-medium">{m.label}</p>
-              </div>
-            ))}
-          </div>
-        </AnimateIn>
-      </div>
-    </section>
-  )
-}
-
 // ─── Features — bento grid ────────────────────────────────────────────────────
 function FeaturesSection() {
   return (
@@ -1108,12 +952,6 @@ export default function LandingPage() {
           <AnimateIn delay={150}><RtoDemo /></AnimateIn>
         </div>
       </section>
-
-      {/* ── TESTIMONIALS ───────────────────────────────────────────────── */}
-      <TestimonialsSection />
-
-      {/* ── DARK TECH SECTION ──────────────────────────────────────────── */}
-      <DarkTechSection />
 
       {/* ── FEATURES BENTO ─────────────────────────────────────────────── */}
       <FeaturesSection />
