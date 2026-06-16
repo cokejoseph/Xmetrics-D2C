@@ -308,8 +308,8 @@ export const useAppStore = create<AppState>((set, get) => ({
       if (!DEMO_MODE && srIntegration) {
         const payload: ShipmentPayload = {
           order_number: o.order_number,
-          billing_customer_name: o.shipping_address.name,
-          billing_phone: o.shipping_address.phone,
+          billing_customer_name: o.shipping_address.name ?? '',
+          billing_phone: o.shipping_address.phone ?? '',
           billing_address: o.shipping_address.address,
           billing_city: o.shipping_address.city,
           billing_pincode: o.shipping_address.pincode,

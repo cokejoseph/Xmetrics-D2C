@@ -158,10 +158,12 @@ export type FulfillmentStatus =
   | 'RTO_INITIATED'
   | 'CANCELLED'
 
-export type RTOReviewStatus = 'PENDING' | 'APPROVED' | 'HELD' | 'FLAGGED'
+export type RTOReviewStatus = 'PENDING' | 'APPROVED' | 'HELD' | 'FLAGGED' | 'NOT_REQUIRED'
 export type RTORiskLevel = 'LOW' | 'MEDIUM' | 'HIGH'
 
 export interface ShippingAddress {
+  name?: string
+  phone?: string
   address: string
   city: string
   state: string
