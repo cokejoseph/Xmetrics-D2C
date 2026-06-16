@@ -827,8 +827,10 @@ export default function LandingPage() {
         const stats = [
           { value: '35%',    label: 'Avg RTO reduction' },
           { value: '₹2.4L',  label: 'Saved per 1,000 orders' },
-          { value: '8 min',  label: 'Daily ops review' },
           { value: '99.9%',  label: 'Platform uptime' },
+          { value: '7',      label: 'Modules live — built & tested' },
+          { value: '1',      label: 'Dashboard — instead of 5' },
+          { value: '10 min', label: 'Order to label — vs 6 hours manual' },
         ]
         return (
           <section className="relative bg-gray-950 text-white py-10 overflow-hidden">
