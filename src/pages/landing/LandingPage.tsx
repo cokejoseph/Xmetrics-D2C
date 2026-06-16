@@ -131,6 +131,22 @@ function CountUp({
   )
 }
 
+// ─── Per-word slide-up reveal for the hero headline ─────────────────────────
+function RevealWords({ text, baseDelay = 0 }: { text: string; baseDelay?: number }) {
+  const words = text.split(' ')
+  return (
+    <>
+      {words.map((word, i) => (
+        <span key={i} className="word-reveal-wrap" style={{ marginRight: i < words.length - 1 ? '0.28em' : 0 }}>
+          <span className="word-reveal" style={{ animationDelay: `${baseDelay + i * 75}ms` }}>
+            {word}
+          </span>
+        </span>
+      ))}
+    </>
+  )
+}
+
 // ─── Particle network — drifting nodes linked by faint lines (hero backdrop) ─
 function ParticleField() {
   const canvasRef = useRef<HTMLCanvasElement>(null)
@@ -797,13 +813,13 @@ export default function LandingPage() {
           </div>
 
           {/* Headline */}
-          <h1
-            className="text-4xl sm:text-5xl md:text-6xl font-bold leading-tight tracking-tight mb-6 animate-fade-in-up"
-            style={{ animationDelay: '80ms' }}
-          >
-            Every order. Every rupee.
+          <h1 className="text-4xl sm:text-5xl md:text-6xl font-bold leading-[1.15] tracking-tight mb-6">
+            <RevealWords text="Every order. Every rupee." baseDelay={80} />
             <br />
-            <span className="bg-gradient-to-r from-brand-300 via-white to-sky-300 bg-clip-text text-transparent animate-shimmer-text">
+            <span
+              className="bg-gradient-to-r from-brand-300 via-white to-sky-300 bg-clip-text text-transparent animate-shimmer-text animate-fade-in-up"
+              style={{ animationDelay: '400ms' }}
+            >
               One command centre.
             </span>
           </h1>

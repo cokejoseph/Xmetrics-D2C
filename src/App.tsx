@@ -4,6 +4,7 @@ import { useAuthStore } from './stores/authStore'
 import { useAppStore } from './stores/appStore'
 import AppLayout from './components/layout/AppLayout'
 import LandingPage from './pages/landing/LandingPage'
+import CustomCursor from './components/layout/CustomCursor'
 
 // ── Lazy-loaded route pages (code-split per route) ───────────────────────────
 const Login = lazy(() => import('./pages/auth/Login'))
@@ -83,6 +84,7 @@ export default function App() {
 
   return (
     <BrowserRouter>
+      <CustomCursor />
       <Suspense fallback={<PageSpinner />}>
         <Routes>
           {/* Public routes */}

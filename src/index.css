@@ -366,13 +366,100 @@
 .animate-aurora   { animation: auroraShift 14s ease-in-out infinite; }
 .animate-aurora-2 { animation: auroraShift 18s ease-in-out infinite reverse; }
 
+/* ══════════════════════════════════════════════
+   CUSTOM CURSOR — premium dot + lagging ring
+══════════════════════════════════════════════ */
+html.has-custom-cursor *,
+html.has-custom-cursor *::before,
+html.has-custom-cursor *::after {
+  cursor: none !important;
+}
+
+.cursor-dot {
+  position: fixed;
+  top: -3px;
+  left: -3px;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #fff;
+  pointer-events: none;
+  z-index: 99999;
+  mix-blend-mode: difference;
+  will-change: transform;
+  transition: transform 0.04s linear;
+}
+
+.cursor-dot--hover {
+  top: -5px;
+  left: -5px;
+  width: 10px;
+  height: 10px;
+  transition: width 0.15s ease, height 0.15s ease, top 0.15s ease, left 0.15s ease;
+}
+
+.cursor-ring {
+  position: fixed;
+  top: -18px;
+  left: -18px;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: 1.5px solid rgba(147, 197, 253, 0.65);
+  pointer-events: none;
+  z-index: 99998;
+  will-change: transform;
+  transition: width 0.22s ease, height 0.22s ease,
+              top 0.22s ease, left 0.22s ease,
+              border-color 0.22s ease, box-shadow 0.22s ease,
+              opacity 0.2s ease;
+}
+
+.cursor-ring--hover {
+  top: -26px;
+  left: -26px;
+  width: 52px;
+  height: 52px;
+  border-color: rgba(59, 130, 246, 0.75);
+  box-shadow: 0 0 18px rgba(59, 130, 246, 0.28), inset 0 0 8px rgba(59, 130, 246, 0.08);
+}
+
+/* ══════════════════════════════════════════════
+   WORD REVEAL — hero headline per-word slide-up
+══════════════════════════════════════════════ */
+@keyframes wordUp {
+  from { transform: translateY(110%); opacity: 0; }
+  to   { transform: translateY(0);    opacity: 1; }
+}
+.word-reveal {
+  display: inline-block;
+  animation: wordUp 0.65s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+.word-reveal-wrap {
+  display: inline-block;
+  overflow: hidden;
+  vertical-align: bottom;
+}
+/* Gradient-text variant: no overflow clip (bg-clip-text needs unclipped paint area) */
+@keyframes wordUpFade {
+  from { transform: translateY(18px); opacity: 0; }
+  to   { transform: translateY(0);    opacity: 1; }
+}
+.word-reveal-noclip {
+  display: inline-block;
+  animation: wordUpFade 0.65s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .animate-float, .animate-float-slow,
   .animate-aurora, .animate-aurora-2, .animate-pulse-dot,
   .animate-draw-line, .animate-chart-fill, .animate-shimmer-text,
   .animate-bell-ring, .animate-border-pan, .stagger-rows tr,
-  .btn-shine::after, .flow-line, .animate-tick-flash {
+  .btn-shine::after, .flow-line, .animate-tick-flash,
+  .word-reveal, .cursor-dot, .cursor-ring {
     animation: none;
   }
   .animate-draw-line { stroke-dashoffset: 0; }
+  .word-reveal { transform: translateY(0); opacity: 1; }
+  .word-reveal-noclip { transform: translateY(0); opacity: 1; }
 }
