@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { Link } from 'react-router-dom'
 import {
-  TrendingDown, Package, Zap, BarChart3, Bell, MessageSquare,
+  TrendingDown, Zap, MessageSquare,
   Check, ChevronDown, ArrowRight, Shield, Clock, X as XIcon,
   Truck, ShoppingCart, AlertTriangle, BarChart2, Users,
 } from 'lucide-react'
