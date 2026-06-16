@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react'
 import { Link } from 'react-router-dom'
 import {
   TrendingDown, Package, Zap, BarChart3, Bell, MessageSquare,
-  Check, ChevronDown, ChevronUp, ArrowRight, Shield, Clock,
+  Check, ChevronDown, ArrowRight, Shield, Clock,
   Truck, ShoppingCart, AlertTriangle, BarChart2, Users,
 } from 'lucide-react'
 
@@ -81,53 +81,6 @@ function SpotlightCard({
     <div className={`spotlight-card ${className}`} onMouseMove={handleMove}>
       {children}
     </div>
-  )
-}
-
-// ─── Count-up number (triggers when scrolled into view) ─────────────────────
-function CountUp({
-  end,
-  prefix = '',
-  suffix = '',
-  decimals = 0,
-  duration = 1600,
-}: {
-  end: number
-  prefix?: string
-  suffix?: string
-  decimals?: number
-  duration?: number
-}) {
-  const ref = useRef<HTMLSpanElement>(null)
-  const [value, setValue] = useState(0)
-
-  useEffect(() => {
-    const el = ref.current
-    if (!el) return
-    const obs = new IntersectionObserver(
-      ([entry]) => {
-        if (!entry.isIntersecting) return
-        obs.disconnect()
-        const start = performance.now()
-        const tick = (now: number) => {
-          const t = Math.min((now - start) / duration, 1)
-          // ease-out cubic
-          const eased = 1 - Math.pow(1 - t, 3)
-          setValue(end * eased)
-          if (t < 1) requestAnimationFrame(tick)
-        }
-        requestAnimationFrame(tick)
-      },
-      { threshold: 0.4 }
-    )
-    obs.observe(el)
-    return () => obs.disconnect()
-  }, [end, duration])
-
-  return (
-    <span ref={ref}>
-      {prefix}{value.toFixed(decimals)}{suffix}
-    </span>
   )
 }
 
