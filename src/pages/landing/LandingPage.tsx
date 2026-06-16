@@ -198,6 +198,72 @@ function ParticleField() {
   return <canvas ref={canvasRef} className="absolute inset-0 w-full h-full opacity-60 pointer-events-none" />
 }
 
+function ParticleFieldLight() {
+  const canvasRef = useRef<HTMLCanvasElement>(null)
+
+  useEffect(() => {
+    const canvas = canvasRef.current
+    if (!canvas) return
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return
+    const ctx = canvas.getContext('2d')
+    if (!ctx) return
+
+    const dpr = Math.min(window.devicePixelRatio || 1, 2)
+    const resize = () => {
+      canvas.width = canvas.offsetWidth * dpr
+      canvas.height = canvas.offsetHeight * dpr
+    }
+    resize()
+    window.addEventListener('resize', resize)
+
+    const N = 30
+    const pts = Array.from({ length: N }, () => ({
+      x: Math.random() * canvas.width,
+      y: Math.random() * canvas.height,
+      vx: (Math.random() - 0.5) * 0.12 * dpr,
+      vy: (Math.random() - 0.5) * 0.12 * dpr,
+      r: (Math.random() * 1.1 + 0.4) * dpr,
+    }))
+    const LINK = 110 * dpr
+
+    let raf = 0
+    const tick = () => {
+      ctx.clearRect(0, 0, canvas.width, canvas.height)
+      for (const p of pts) {
+        p.x += p.vx; p.y += p.vy
+        if (p.x < 0 || p.x > canvas.width) p.vx *= -1
+        if (p.y < 0 || p.y > canvas.height) p.vy *= -1
+      }
+      for (let i = 0; i < N; i++) {
+        for (let j = i + 1; j < N; j++) {
+          const dx = pts[i].x - pts[j].x
+          const dy = pts[i].y - pts[j].y
+          const d = Math.hypot(dx, dy)
+          if (d < LINK) {
+            ctx.strokeStyle = `rgba(37,99,235,${(1 - d / LINK) * 0.08})`
+            ctx.lineWidth = 0.5 * dpr
+            ctx.beginPath()
+            ctx.moveTo(pts[i].x, pts[i].y)
+            ctx.lineTo(pts[j].x, pts[j].y)
+            ctx.stroke()
+          }
+        }
+      }
+      ctx.fillStyle = 'rgba(37,99,235,0.18)'
+      for (const p of pts) {
+        ctx.beginPath()
+        ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2)
+        ctx.fill()
+      }
+      raf = requestAnimationFrame(tick)
+    }
+    raf = requestAnimationFrame(tick)
+    return () => { cancelAnimationFrame(raf); window.removeEventListener('resize', resize) }
+  }, [])
+
+  return <canvas ref={canvasRef} className="absolute inset-0 w-full h-full opacity-40 pointer-events-none" />
+}
+
 // ─── Magnetic CTA — pulls gently toward the cursor while hovered ────────────
 function MagneticLink({
   to, className = '', children,
@@ -1004,7 +1070,8 @@ export default function LandingPage() {
       </section>
 
       {/* ── PRICING ────────────────────────────────────────────────────── */}
-      <section id="pricing" className="py-24 bg-gray-50">
+      <section id="pricing" className="py-24 bg-gray-50 relative overflow-hidden">
+        <ParticleFieldLight />
         <div className="max-w-5xl mx-auto px-6">
           <AnimateIn className="text-center mb-16">
             <h2 className="text-3xl font-bold text-gray-900 mb-4">Simple, transparent pricing</h2>
@@ -1072,7 +1139,8 @@ export default function LandingPage() {
       </section>
 
       {/* ── FAQ ────────────────────────────────────────────────────────── */}
-      <section id="faq" className="py-24 bg-white">
+      <section id="faq" className="py-24 bg-white relative overflow-hidden">
+        <ParticleFieldLight />
         <div className="max-w-2xl mx-auto px-6">
           <AnimateIn className="text-center mb-12">
             <h2 className="text-3xl font-bold text-gray-900 mb-4">Frequently asked questions</h2>
