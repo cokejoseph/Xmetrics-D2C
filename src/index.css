@@ -331,6 +331,18 @@
   90%, 100%  { left: 145%; }
 }
 
+/* Stats ticker — infinite left scroll */
+@keyframes ticker {
+  from { transform: translateX(0); }
+  to   { transform: translateX(-50%); }
+}
+.animate-ticker {
+  animation: ticker 22s linear infinite;
+  display: flex;
+  width: max-content;
+}
+.animate-ticker:hover { animation-play-state: paused; }
+
 /* Integration flow — dashes stream along the connector paths */
 .flow-line {
   stroke-dasharray: 5 9;

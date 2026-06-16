@@ -865,25 +865,37 @@ export default function LandingPage() {
         <div className="absolute bottom-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-sky-400/50 to-transparent" />
       </section>
 
-      {/* ── STATS BAR ──────────────────────────────────────────────────── */}
-      <section className="relative bg-gray-950 text-white py-12">
-        <div className="absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-brand-500/60 to-transparent" />
-        <div className="max-w-5xl mx-auto px-6 grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
-          {[
-            { end: 35, suffix: '%', label: 'Avg RTO reduction' },
-            { end: 2.4, prefix: '₹', suffix: 'L', decimals: 1, label: 'Saved per 1,000 orders' },
-            { end: 8, suffix: ' min', label: 'Daily ops review' },
-            { end: 99.9, suffix: '%', decimals: 1, label: 'Platform uptime' },
-          ].map((s, i) => (
-            <AnimateIn key={s.label} delay={i * 80}>
-              <p className="text-3xl font-bold text-brand-400 mb-1">
-                <CountUp end={s.end} prefix={s.prefix} suffix={s.suffix} decimals={s.decimals ?? 0} />
-              </p>
-              <p className="text-sm text-gray-400">{s.label}</p>
-            </AnimateIn>
-          ))}
-        </div>
-      </section>
+      {/* ── STATS TICKER ───────────────────────────────────────────────── */}
+      {(() => {
+        const stats = [
+          { value: '35%',    label: 'Avg RTO reduction' },
+          { value: '₹2.4L',  label: 'Saved per 1,000 orders' },
+          { value: '8 min',  label: 'Daily ops review' },
+          { value: '99.9%',  label: 'Platform uptime' },
+        ]
+        return (
+          <section className="relative bg-gray-950 text-white py-10 overflow-hidden">
+            <div className="absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-brand-500/60 to-transparent" />
+            {/* left + right fade masks */}
+            <div className="absolute left-0 inset-y-0 w-28 bg-gradient-to-r from-gray-950 to-transparent z-10 pointer-events-none" />
+            <div className="absolute right-0 inset-y-0 w-28 bg-gradient-to-l from-gray-950 to-transparent z-10 pointer-events-none" />
+
+            <div className="animate-ticker">
+              {[...stats, ...stats].map((s, i) => (
+                <div key={i} className="flex items-center shrink-0">
+                  <div className="px-16 text-center">
+                    <p className="text-3xl font-bold text-brand-400 mb-1 tracking-tight">{s.value}</p>
+                    <p className="text-sm text-gray-400">{s.label}</p>
+                  </div>
+                  <div className="w-px h-10 bg-white/10 shrink-0" />
+                </div>
+              ))}
+            </div>
+
+            <div className="absolute bottom-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-brand-500/30 to-transparent" />
+          </section>
+        )
+      })()}
 
       {/* ── INTEGRATION FLOW ───────────────────────────────────────────── */}
       <section className="py-14 bg-white border-b border-gray-50">
