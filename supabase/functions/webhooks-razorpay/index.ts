@@ -1,6 +1,14 @@
 import { serve } from 'https://deno.land/std@0.177.0/http/server.ts'
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
-import { hmac } from 'https://deno.land/x/hmac@v2.0.1/mod.ts'
+
+async function hmacSha256Hex(secret: string, message: string): Promise<string> {
+  const enc = new TextEncoder()
+  const key = await crypto.subtle.importKey(
+    'raw', enc.encode(secret), { name: 'HMAC', hash: 'SHA-256' }, false, ['sign']
+  )
+  const sig = await crypto.subtle.sign('HMAC', key, enc.encode(message))
+  return Array.from(new Uint8Array(sig)).map(b => b.toString(16).padStart(2, '0')).join('')
+}
 
 const CORS_HEADERS = {
   'Access-Control-Allow-Origin': '*',
@@ -29,7 +37,7 @@ serve(async (req) => {
 
     // Verify HMAC-SHA256 signature
     if (signature) {
-      const expectedSignature = await hmac('sha256', secret, body, 'utf8', 'hex')
+      const expectedSignature = await hmacSha256Hex(secret, body)
       if (signature !== expectedSignature) {
         return new Response(JSON.stringify({ error: 'Invalid signature' }), {
           status: 400, headers: { ...CORS_HEADERS, 'Content-Type': 'application/json' },
