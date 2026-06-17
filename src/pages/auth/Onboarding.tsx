@@ -23,13 +23,19 @@ export default function Onboarding() {
 
   const handleFinish = async () => {
     const pendingPlan = sessionStorage.getItem('xmetrics-pending-plan')
+    const founding = sessionStorage.getItem('xmetrics-founding')
+    const billingParams = [
+      pendingPlan && `plan=${pendingPlan}`,
+      founding && `founding=true`,
+    ].filter(Boolean).join('&')
     const afterNav = pendingPlan
-      ? `/settings/billing?plan=${pendingPlan}`
+      ? `/settings/billing?${billingParams}`
       : '/dashboard'
 
     if (DEMO_MODE) {
       bootstrap('user-demo-001')
       sessionStorage.removeItem('xmetrics-pending-plan')
+      sessionStorage.removeItem('xmetrics-founding')
       navigate(afterNav)
       return
     }
@@ -86,6 +92,7 @@ export default function Onboarding() {
     // Bootstrap the app state from Supabase
     await bootstrap(currentUser.id)
     sessionStorage.removeItem('xmetrics-pending-plan')
+    sessionStorage.removeItem('xmetrics-founding')
     navigate(afterNav)
   }
 

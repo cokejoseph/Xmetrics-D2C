@@ -477,10 +477,11 @@ function AnnouncementBar({ onDismiss }: { onDismiss: () => void }) {
       <span className="w-1.5 h-1.5 rounded-full bg-amber-400 shrink-0 announce-dot" />
       <span className="text-white/80">
         <span className="font-semibold text-white">Founding access open</span>
-        {' — '}Get Growth plan at <span className="font-semibold text-amber-300">₹2,499/mo for life</span>
-        <a href="#pricing" className="ml-2 underline underline-offset-2 font-semibold text-brand-300 hover:text-white transition-colors">
+        {' — '}Get Growth plan at <span className="font-semibold text-amber-300">₹2,999/mo for life</span>
+        {' · '}Only 45 founder spots
+        <Link to="/signup?plan=GROWTH&founding=true" className="ml-2 underline underline-offset-2 font-semibold text-brand-300 hover:text-white transition-colors">
           Claim spot →
-        </a>
+        </Link>
       </span>
       <button
         onClick={onDismiss}

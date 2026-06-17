@@ -1,4 +1,5 @@
 import { useEffect, useRef } from 'react'
+import { Link } from 'react-router-dom'
 
 function ParticleField() {
   const canvasRef = useRef<HTMLCanvasElement>(null)
@@ -99,6 +100,13 @@ export default function AuthShell({
           <div className="relative bg-white rounded-2xl p-8 shadow-2xl border border-white/20">
             {children}
           </div>
+        </div>
+
+        {/* Back to website */}
+        <div className="mt-6 text-center animate-fade-in-up" style={{ animationDelay: '200ms' }}>
+          <Link to="/" className="text-white/60 hover:text-white text-sm transition-colors">
+            ← Back to website
+          </Link>
         </div>
       </div>
     </div>

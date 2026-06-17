@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { CheckCircle } from 'lucide-react'
+import { CheckCircle, Zap } from 'lucide-react'
 import { useAppStore } from '../../stores/appStore'
 import { Card, Button } from '../../components/ui'
 import { RazorpayCheckout } from '../../components/shared/RazorpayCheckout'
@@ -85,6 +85,7 @@ export default function Billing() {
   const { currentPlan } = useAppStore()
   const [searchParams] = useSearchParams()
   const planFromUrl = searchParams.get('plan')?.toUpperCase() as PlanType | null
+  const isFoundingAccess = searchParams.get('founding') === 'true'
   const defaultSelected = (planFromUrl && PLANS.find(p => p.key === planFromUrl) ? planFromUrl : null) ?? currentPlan ?? 'GROWTH'
   const [selected, setSelected] = useState<PlanType>(defaultSelected)
   const [payStatus, setPayStatus] = useState<{ ok: boolean; message: string } | null>(null)
@@ -93,11 +94,24 @@ export default function Billing() {
   const planLimit = PLANS.find(p => p.key === currentPlan)?.orders ?? 500
   const usagePct = Math.min(100, (usageOrders / planLimit) * 100)
 
+  const FOUNDING_PRICE = 2999
   const selectedPlan = PLANS.find(p => p.key === selected)!
+  const checkoutPrice = (isFoundingAccess && selected === 'GROWTH') ? FOUNDING_PRICE : selectedPlan.price
 
   return (
     <div className="space-y-6">
       <h1 className="text-xl font-semibold text-gray-900">Billing & Plans</h1>
+
+      {/* Founding access banner */}
+      {isFoundingAccess && (
+        <div className="flex items-center gap-3 px-4 py-3 bg-amber-50 border border-amber-200 rounded-xl">
+          <Zap size={16} className="text-amber-600 shrink-0" />
+          <div>
+            <p className="text-sm font-semibold text-amber-900">Founding Access — Growth plan at ₹2,999/mo for life</p>
+            <p className="text-xs text-amber-700 mt-0.5">Exclusive founder pricing locked in permanently. Regular price is ₹4,999/mo.</p>
+          </div>
+        </div>
+      )}
 
       {/* Current usage */}
       <Card className="p-5 max-w-md">
@@ -150,6 +164,17 @@ export default function Billing() {
               <div className="mb-4">
                 {plan.price === 0 ? (
                   <span className="text-xl font-bold text-gray-900">Custom</span>
+                ) : isFoundingAccess && plan.key === 'GROWTH' ? (
+                  <div>
+                    <div className="flex items-end gap-1.5">
+                      <span className="text-2xl font-bold text-amber-600">₹{FOUNDING_PRICE.toLocaleString('en-IN')}</span>
+                      <span className="text-sm text-gray-500">/mo</span>
+                    </div>
+                    <div className="flex items-center gap-1.5 mt-0.5">
+                      <span className="text-xs text-gray-400 line-through">₹{plan.price.toLocaleString('en-IN')}/mo</span>
+                      <span className="text-[10px] font-semibold text-amber-700 bg-amber-100 px-1.5 py-0.5 rounded">FOUNDER</span>
+                    </div>
+                  </div>
                 ) : (
                   <>
                     <span className="text-2xl font-bold text-gray-900">₹{plan.price.toLocaleString('en-IN')}</span>
@@ -191,8 +216,8 @@ export default function Billing() {
             </Button>
           ) : (
             <RazorpayCheckout
-              planName={selectedPlan.name}
-              amountInRupees={selectedPlan.price}
+              planName={isFoundingAccess && selected === 'GROWTH' ? 'Growth (Founding)' : selectedPlan.name}
+              amountInRupees={checkoutPrice}
               onSuccess={(paymentId) =>
                 setPayStatus({ ok: true, message: `Payment successful! ID: ${paymentId}` })
               }

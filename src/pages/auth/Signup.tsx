@@ -19,6 +19,9 @@ export default function Signup() {
     setLoading(true)
     const plan = searchParams.get('plan')
     if (plan) sessionStorage.setItem('xmetrics-pending-plan', plan)
+    const founding = searchParams.get('founding')
+    if (founding) sessionStorage.setItem('xmetrics-founding', 'true')
+    else sessionStorage.removeItem('xmetrics-founding')
     const { error: err } = await signUp(email, password)
     setLoading(false)
     if (err) {
