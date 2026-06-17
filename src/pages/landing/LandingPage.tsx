@@ -274,8 +274,7 @@ function IntegrationFlow() {
       <circle cx="400" cy="140" r="46" fill="rgba(37,99,235,0.07)">
         <animate attributeName="r" values="46;56;46" dur="3.2s" repeatCount="indefinite" />
       </circle>
-      <rect x="368" y="108" width="64" height="64" rx="18" fill="white" stroke="#E5E7EB" strokeWidth="1.5" />
-      <image href="/logo.svg" x="374" y="114" width="52" height="52" />
+      <image href="/logo.svg" x="368" y="108" width="64" height="64" />
       {FLOW_NODES.map(n => (
         <g key={n.label}>
           <rect x={n.x - 55} y={n.y - 18} width="110" height="36" rx="18" fill="white" stroke="#E5E7EB" />
