@@ -541,7 +541,7 @@ function FeaturesSection() {
 }
 
 // ─── Comparison table ─────────────────────────────────────────────────────────
-const COMPARE_ROWS = [
+const COMPARE_ROWS: { feature: string; legacy: string | false; xm: string | true }[] = [
   { feature: 'Unified order view',        legacy: false,              xm: true },
   { feature: 'Real-time RTO scoring',     legacy: false,              xm: true },
   { feature: 'Exception detection',       legacy: 'Manual',           xm: true },
@@ -555,7 +555,7 @@ const COMPARE_ROWS = [
 
 function ComparisonTable() {
   return (
-    <section className="py-24 bg-white">
+    <section className="py-24 bg-gray-50">
       <div className="max-w-3xl mx-auto px-6">
         <AnimateIn className="text-center mb-12">
           <h2 className="text-3xl font-bold text-gray-900 mb-4">Your current stack vs Xmetrics</h2>
@@ -563,34 +563,67 @@ function ComparisonTable() {
         </AnimateIn>
 
         <AnimateIn delay={100}>
-          <div className="rounded-2xl border border-gray-100 overflow-hidden shadow-card">
+          <div className="rounded-2xl overflow-hidden shadow-[0_4px_24px_rgba(0,0,0,0.08)] border border-gray-200">
             {/* Header */}
-            <div className="grid grid-cols-3 bg-gray-950 px-6 py-4">
-              <span className="text-xs font-semibold text-white/40 uppercase tracking-widest">Feature</span>
-              <span className="text-xs font-semibold text-white/40 uppercase tracking-widest text-center">6-tab mess</span>
-              <span className="text-xs font-bold text-brand-400 uppercase tracking-widest text-center">Xmetrics</span>
+            <div className="grid grid-cols-3 bg-gray-950">
+              <div className="px-6 py-5">
+                <span className="text-[11px] font-semibold text-white/35 uppercase tracking-widest">Feature</span>
+              </div>
+              <div className="px-4 py-5 border-l border-white/[0.06] text-center">
+                <span className="text-[11px] font-semibold text-white/35 uppercase tracking-widest">Your current stack</span>
+              </div>
+              <div className="px-4 py-5 border-l border-white/[0.06] text-center bg-brand-600/20">
+                <span className="text-[11px] font-bold text-brand-300 uppercase tracking-widest">Xmetrics</span>
+              </div>
             </div>
+
             {/* Rows */}
             {COMPARE_ROWS.map((row, i) => (
               <div key={row.feature}
-                className={`compare-row grid grid-cols-3 px-6 py-3.5 items-center ${i < COMPARE_ROWS.length - 1 ? 'border-b border-gray-50' : ''}`}>
-                <span className="text-sm text-gray-700 font-medium">{row.feature}</span>
-                <div className="text-center">
-                  {row.legacy === false
-                    ? <span className="text-gray-200 font-bold text-base">✗</span>
-                    : <span className="text-xs text-gray-400 bg-gray-100 rounded-full px-2.5 py-0.5 font-medium">{row.legacy}</span>
-                  }
+                className={`grid grid-cols-3 items-center bg-white ${i < COMPARE_ROWS.length - 1 ? 'border-b border-gray-100' : ''} hover:bg-gray-50/70 transition-colors`}>
+                {/* Feature */}
+                <div className="px-6 py-4 border-r border-gray-100">
+                  <span className="text-sm font-semibold text-gray-800">{row.feature}</span>
                 </div>
-                <div className="text-center">
-                  {row.xm === true
-                    ? <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-green-100">
-                        <Check size={11} className="text-green-600" />
-                      </span>
-                    : <span className="text-xs text-brand-600 bg-brand-50 rounded-full px-2.5 py-0.5 font-semibold">{row.xm}</span>
-                  }
+                {/* Legacy column */}
+                <div className="px-4 py-4 border-r border-gray-100 flex items-center justify-center">
+                  {row.legacy === false ? (
+                    <span className="inline-flex items-center justify-center w-7 h-7 rounded-full bg-red-50 border border-red-100">
+                      <XIcon size={13} className="text-red-500" strokeWidth={2.5} />
+                    </span>
+                  ) : (
+                    <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-amber-700 bg-amber-50 border border-amber-100 rounded-full px-3 py-1">
+                      {row.legacy}
+                    </span>
+                  )}
+                </div>
+                {/* Xmetrics column */}
+                <div className="px-4 py-4 flex items-center justify-center bg-green-50/40">
+                  {row.xm === true ? (
+                    <span className="inline-flex items-center justify-center w-7 h-7 rounded-full bg-green-100 border border-green-200">
+                      <Check size={13} className="text-green-600" strokeWidth={2.5} />
+                    </span>
+                  ) : (
+                    <span className="inline-flex items-center text-xs font-bold text-green-700 bg-green-100 border border-green-200 rounded-full px-3 py-1">
+                      {row.xm}
+                    </span>
+                  )}
                 </div>
               </div>
             ))}
+
+            {/* Footer CTA row */}
+            <div className="grid grid-cols-3 bg-gray-50 border-t border-gray-100">
+              <div className="px-6 py-4" />
+              <div className="px-4 py-4 border-l border-gray-100 flex items-center justify-center">
+                <span className="text-xs text-gray-400 font-medium">Multiple tools</span>
+              </div>
+              <div className="px-4 py-4 border-l border-gray-100 flex items-center justify-center bg-green-50/60">
+                <Link to="/signup" className="text-xs font-bold text-brand-600 hover:text-brand-700 transition-colors">
+                  Get started →
+                </Link>
+              </div>
+            </div>
           </div>
         </AnimateIn>
       </div>
