@@ -141,26 +141,38 @@ export default function Billing() {
             <div
               key={plan.key}
               onClick={() => !isCurrent && setSelected(plan.key)}
-              className={`relative rounded-2xl border p-5 cursor-pointer transition-all ${
-                plan.highlight
-                  ? 'border-brand-600 bg-brand-50'
+              className={`relative rounded-2xl border-2 p-5 cursor-pointer transition-all ${
+                isCurrent
+                  ? 'border-green-500 bg-green-50/40'
                   : isSelected
-                    ? 'border-brand-400 bg-white'
-                    : 'border-gray-100 bg-white hover:border-gray-200'
+                    ? 'border-brand-600 bg-brand-50 shadow-[0_0_0_3px_rgba(37,99,235,0.12)]'
+                    : 'border-gray-200 bg-white hover:border-gray-300'
               }`}
             >
-              {plan.highlight && (
-                <div className="absolute -top-2.5 left-1/2 -translate-x-1/2 px-2.5 py-0.5 bg-brand-600 text-white text-[10px] font-semibold rounded-full">
-                  MOST POPULAR
-                </div>
-              )}
-              {isCurrent && (
-                <div className="absolute -top-2.5 right-3 px-2.5 py-0.5 bg-green-600 text-white text-[10px] font-semibold rounded-full">
-                  CURRENT
+              {/* Selected checkmark */}
+              {isSelected && !isCurrent && (
+                <div className="absolute top-3 right-3 w-5 h-5 rounded-full bg-brand-600 flex items-center justify-center">
+                  <CheckCircle size={12} className="text-white" />
                 </div>
               )}
 
-              <h3 className="text-sm font-bold text-gray-900 mb-1">{plan.name}</h3>
+              {plan.highlight && !isSelected && !isCurrent && (
+                <div className="absolute -top-2.5 left-1/2 -translate-x-1/2 px-2.5 py-0.5 bg-brand-600 text-white text-[10px] font-semibold rounded-full whitespace-nowrap">
+                  MOST POPULAR
+                </div>
+              )}
+              {isSelected && !isCurrent && (
+                <div className="absolute -top-2.5 left-1/2 -translate-x-1/2 px-2.5 py-0.5 bg-brand-600 text-white text-[10px] font-semibold rounded-full whitespace-nowrap">
+                  SELECTED
+                </div>
+              )}
+              {isCurrent && (
+                <div className="absolute -top-2.5 left-1/2 -translate-x-1/2 px-2.5 py-0.5 bg-green-600 text-white text-[10px] font-semibold rounded-full whitespace-nowrap">
+                  CURRENT PLAN
+                </div>
+              )}
+
+              <h3 className="text-sm font-bold text-gray-900 mb-1 mt-1">{plan.name}</h3>
               <div className="mb-4">
                 {plan.price === 0 ? (
                   <span className="text-xl font-bold text-gray-900">Custom</span>
@@ -183,20 +195,14 @@ export default function Billing() {
                 )}
               </div>
 
-              <ul className="space-y-1.5 mb-4">
+              <ul className="space-y-1.5 mb-2">
                 {plan.features.map((f, i) => (
                   <li key={i} className="flex items-start gap-2 text-xs text-gray-600">
-                    <CheckCircle size={12} className={`mt-0.5 shrink-0 ${plan.highlight ? 'text-brand-600' : 'text-green-500'}`} />
+                    <CheckCircle size={12} className={`mt-0.5 shrink-0 ${isCurrent ? 'text-green-500' : isSelected ? 'text-brand-600' : 'text-green-500'}`} />
                     {f}
                   </li>
                 ))}
               </ul>
-
-              {!isCurrent && (
-                <div className={`w-3.5 h-3.5 rounded-full border-2 mt-auto ${
-                  isSelected ? 'border-brand-600 bg-brand-600' : 'border-gray-300'
-                }`} />
-              )}
             </div>
           )
         })}
