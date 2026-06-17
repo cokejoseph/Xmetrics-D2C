@@ -400,24 +400,6 @@ export interface ForecastSummary {
   total_skus: number
 }
 
-// ─── Reorder / Churn ───────────────────────────────────────────────────────
-
-export type ChurnLevel = 'ACTIVE' | 'AT_RISK' | 'CHURNING' | 'LOST'
-
-export interface ReorderNudge {
-  customer_id: string
-  customer_name: string
-  customer_phone: string
-  last_product_name: string
-  last_product_sku: string
-  days_since_last_order: number
-  avg_order_cycle: number
-  churn_level: ChurnLevel
-  churn_probability: number
-  delivery_success_rate: number
-  suggested_message: string
-}
-
 // ─── RTO Score ─────────────────────────────────────────────────────────────
 
 export interface RTOScoreResult {

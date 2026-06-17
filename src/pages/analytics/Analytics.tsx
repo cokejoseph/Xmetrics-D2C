@@ -1,30 +1,22 @@
 import { useState, useMemo } from 'react'
-import { ChevronUp, ChevronDown, Search, MessageCircle } from 'lucide-react'
+import { ChevronUp, ChevronDown, Search } from 'lucide-react'
 import { useAppStore } from '../../stores/appStore'
 import { buildSKUForecast } from '../../lib/forecastEngine'
-import { buildReorderNudgeList } from '../../lib/reorderEngine'
 import { Card, Input } from '../../components/ui'
 import { RevenueAreaChart, OrdersBarChart, StatusDonut, ChannelBarChart } from '../../components/charts'
-import type { ForecastStatus, ChurnLevel } from '../../types'
+import type { ForecastStatus } from '../../types'
 
 const FORECAST_STATUS_STYLE: Record<ForecastStatus, { label: string; cls: string }> = {
-  OUT_OF_STOCK: { label: 'Out of Stock', cls: 'bg-red-100 text-red-700' },
-  REORDER_NOW: { label: 'Reorder Now', cls: 'bg-orange-100 text-orange-700' },
-  REORDER_SOON: { label: 'Reorder Soon', cls: 'bg-amber-100 text-amber-700' },
-  IN_STOCK: { label: 'In Stock', cls: 'bg-green-100 text-green-700' },
-  DEAD_STOCK: { label: 'Dead Stock', cls: 'bg-gray-100 text-gray-500' },
-  INSUFFICIENT_DATA: { label: 'Insufficient Data', cls: 'bg-blue-100 text-blue-700' },
-  UNPREDICTABLE: { label: 'Unpredictable', cls: 'bg-purple-100 text-purple-700' },
+  OUT_OF_STOCK:      { label: 'Out of Stock',       cls: 'bg-red-100 text-red-700' },
+  REORDER_NOW:       { label: 'Reorder Now',         cls: 'bg-orange-100 text-orange-700' },
+  REORDER_SOON:      { label: 'Reorder Soon',        cls: 'bg-amber-100 text-amber-700' },
+  IN_STOCK:          { label: 'In Stock',             cls: 'bg-green-100 text-green-700' },
+  DEAD_STOCK:        { label: 'Dead Stock',           cls: 'bg-gray-100 text-gray-500' },
+  INSUFFICIENT_DATA: { label: 'Insufficient Data',   cls: 'bg-blue-100 text-blue-700' },
+  UNPREDICTABLE:     { label: 'Unpredictable',       cls: 'bg-purple-100 text-purple-700' },
 }
 
-type TabType = 'overview' | 'reorder' | 'forecast' | 'pincode'
-
-const CHURN_STYLE: Record<ChurnLevel, { label: string; cls: string; dot: string }> = {
-  ACTIVE:   { label: 'Active',    cls: 'bg-green-100 text-green-700',  dot: 'bg-green-500' },
-  AT_RISK:  { label: 'At Risk',   cls: 'bg-amber-100 text-amber-700',  dot: 'bg-amber-500' },
-  CHURNING: { label: 'Churning',  cls: 'bg-orange-100 text-orange-700', dot: 'bg-orange-500' },
-  LOST:     { label: 'Lost',      cls: 'bg-red-100 text-red-700',      dot: 'bg-red-500' },
-}
+type TabType = 'overview' | 'forecast' | 'pincode'
 type PincodeSortKey = 'orders' | 'revenue' | 'aov' | 'rto_rate'
 
 export default function Analytics() {
@@ -32,12 +24,10 @@ export default function Analytics() {
   const [pincodeSearch, setPincodeSearch] = useState('')
   const [pincodeSort, setPincodeSort] = useState<PincodeSortKey>('orders')
   const [pincodeSortAsc, setPincodeSortAsc] = useState(false)
-  const { orders, products, customers } = useAppStore()
+  const { orders, products } = useAppStore()
 
   const { forecasts, summary } = useMemo(() => buildSKUForecast(products, orders), [products, orders])
-  const nudgeList = useMemo(() => buildReorderNudgeList(customers, orders), [customers, orders])
 
-  // Overview KPIs
   const totalRevenue = orders.filter(o => o.payment_status === 'PAID').reduce((s, o) => s + o.gross_amount - o.discount_amount, 0)
   const rtoOrders = orders.filter(o => o.fulfillment_status === 'RTO_INITIATED')
   const deliveredOrders = orders.filter(o => o.fulfillment_status === 'DELIVERED')
@@ -71,19 +61,14 @@ export default function Analytics() {
       if (!pin) continue
       const e = map.get(pin) ?? { city: o.shipping_address.city, state: o.shipping_address.state, orders: 0, revenue: 0, rto: 0 }
       map.set(pin, {
-        city: e.city,
-        state: e.state,
+        city: e.city, state: e.state,
         orders: e.orders + 1,
         revenue: e.revenue + o.gross_amount - o.discount_amount,
         rto: e.rto + (o.fulfillment_status === 'RTO_INITIATED' ? 1 : 0),
       })
     }
     return Array.from(map.entries()).map(([pincode, d]) => ({
-      pincode,
-      city: d.city,
-      state: d.state,
-      orders: d.orders,
-      revenue: d.revenue,
+      pincode, city: d.city, state: d.state, orders: d.orders, revenue: d.revenue,
       aov: d.orders > 0 ? Math.round(d.revenue / d.orders) : 0,
       rto_count: d.rto,
       rto_rate: d.orders > 0 ? (d.rto / d.orders) * 100 : 0,
@@ -96,10 +81,7 @@ export default function Analytics() {
       const q = pincodeSearch.toLowerCase()
       list = list.filter(p => p.pincode.includes(q) || p.city.toLowerCase().includes(q) || p.state.toLowerCase().includes(q))
     }
-    return [...list].sort((a, b) => {
-      const dir = pincodeSortAsc ? 1 : -1
-      return (a[pincodeSort] - b[pincodeSort]) * dir
-    })
+    return [...list].sort((a, b) => (a[pincodeSort] - b[pincodeSort]) * (pincodeSortAsc ? 1 : -1))
   }, [pincodeData, pincodeSearch, pincodeSort, pincodeSortAsc])
 
   const pincodeSummary = useMemo(() => ({
@@ -125,25 +107,27 @@ export default function Analytics() {
       }
     })
   }, [orders])
+
   const dailyOrders = revenueChartData.map(r => ({ label: r.label, orders: r.orders }))
+
   const statusCounts = useMemo(() => {
     const map = new Map<string, number>()
     for (const o of orders) map.set(o.fulfillment_status, (map.get(o.fulfillment_status) ?? 0) + 1)
     return Array.from(map.entries()).map(([name, value]) => ({ name, value }))
   }, [orders])
 
+  const TABS: { key: TabType; label: string }[] = [
+    { key: 'overview', label: 'Overview' },
+    { key: 'forecast', label: 'Demand Forecast' },
+    { key: 'pincode', label: 'Pincode Intelligence' },
+  ]
+
   return (
     <div className="space-y-4">
       <h1 className="text-xl font-semibold text-gray-900">Analytics</h1>
 
-      {/* Tabs */}
       <div className="flex gap-1 bg-gray-100 p-1 rounded-xl w-fit">
-        {([
-          { key: 'overview', label: 'Overview' },
-          { key: 'reorder', label: 'Reorder Engine' },
-          { key: 'forecast', label: 'Demand Forecast' },
-          { key: 'pincode', label: 'Pincode Intelligence' },
-        ] as { key: TabType; label: string }[]).map(t => (
+        {TABS.map(t => (
           <button
             key={t.key}
             onClick={() => setTab(t.key)}
@@ -158,7 +142,6 @@ export default function Analytics() {
 
       {tab === 'overview' && (
         <div className="space-y-4">
-          {/* KPIs */}
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
             <Card className="p-4"><p className="text-xs text-gray-500 mb-1">Total Revenue</p><p className="text-2xl font-bold text-gray-900">₹{Math.round(totalRevenue / 1000)}k</p></Card>
             <Card className="p-4"><p className="text-xs text-gray-500 mb-1">Total Orders</p><p className="text-2xl font-bold text-gray-900">{orders.length}</p></Card>
@@ -166,7 +149,6 @@ export default function Analytics() {
             <Card className="p-4"><p className="text-xs text-gray-500 mb-1">RTO Loss</p><p className="text-2xl font-bold text-orange-600">₹{Math.round(rtoLoss).toLocaleString('en-IN')}</p></Card>
           </div>
 
-          {/* Charts */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
             <Card className="p-5">
               <h3 className="text-sm font-semibold text-gray-900 mb-4">Revenue Trend (14 days)</h3>
@@ -186,7 +168,6 @@ export default function Analytics() {
             </Card>
           </div>
 
-          {/* Channel table */}
           <Card>
             <div className="px-4 py-3 border-b border-gray-100">
               <h3 className="text-sm font-semibold text-gray-900">Channel Breakdown</h3>
@@ -217,136 +198,13 @@ export default function Analytics() {
         </div>
       )}
 
-      {tab === 'reorder' && (
-        <div className="space-y-4">
-          {/* Summary */}
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-            {(['ACTIVE', 'AT_RISK', 'CHURNING', 'LOST'] as ChurnLevel[]).map(lvl => {
-              const count = nudgeList.filter(n => n.churn_level === lvl).length
-              const s = CHURN_STYLE[lvl]
-              return (
-                <Card key={lvl} className="p-4 flex items-center gap-3">
-                  <span className={`w-3 h-3 rounded-full shrink-0 ${s.dot}`} />
-                  <div>
-                    <p className={`text-2xl font-bold ${s.cls.split(' ')[1]}`}>{count}</p>
-                    <p className="text-xs text-gray-500 mt-0.5">{s.label}</p>
-                  </div>
-                </Card>
-              )
-            })}
-          </div>
-
-          <Card>
-            <div className="px-4 py-3 border-b border-gray-100">
-              <h3 className="text-sm font-semibold text-gray-900">Customer Reorder Intelligence</h3>
-              <p className="text-xs text-gray-400 mt-0.5">Sorted by churn risk — send personalised WhatsApp nudges to win back customers</p>
-            </div>
-            <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead>
-                  <tr className="border-b border-gray-100">
-                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">Customer</th>
-                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide hidden sm:table-cell">Last Product</th>
-                    <th className="px-4 py-3 text-right text-xs font-semibold text-gray-500 uppercase tracking-wide">Days Since Order</th>
-                    <th className="px-4 py-3 text-right text-xs font-semibold text-gray-500 uppercase tracking-wide hidden md:table-cell">Avg Cycle</th>
-                    <th className="px-4 py-3 text-center text-xs font-semibold text-gray-500 uppercase tracking-wide">Status</th>
-                    <th className="px-4 py-3 text-right text-xs font-semibold text-gray-500 uppercase tracking-wide hidden lg:table-cell">Churn %</th>
-                    <th className="px-4 py-3 text-right text-xs font-semibold text-gray-500 uppercase tracking-wide hidden lg:table-cell">Delivery Rate</th>
-                    <th className="px-4 py-3 text-center text-xs font-semibold text-gray-500 uppercase tracking-wide">Action</th>
-                  </tr>
-                </thead>
-                <tbody className="stagger-rows">
-                  {nudgeList.map(n => {
-                    const s = CHURN_STYLE[n.churn_level]
-                    const waUrl = `https://wa.me/91${n.customer_phone.replace(/\D/g, '')}?text=${encodeURIComponent(n.suggested_message)}`
-                    return (
-                      <tr key={n.customer_id} className="border-b border-gray-50 hover:bg-gray-50/50">
-                        <td className="px-4 py-3">
-                          <p className="text-sm font-medium text-gray-900">{n.customer_name}</p>
-                          <p className="text-xs text-gray-400">{n.customer_phone}</p>
-                        </td>
-                        <td className="px-4 py-3 hidden sm:table-cell">
-                          <p className="text-sm text-gray-700">{n.last_product_name}</p>
-                          <p className="text-xs text-gray-400">{n.last_product_sku}</p>
-                        </td>
-                        <td className="px-4 py-3 text-right">
-                          <span className={`text-sm font-semibold ${n.days_since_last_order > n.avg_order_cycle ? 'text-red-600' : 'text-gray-700'}`}>
-                            {n.days_since_last_order}d
-                          </span>
-                        </td>
-                        <td className="px-4 py-3 text-right text-sm text-gray-500 hidden md:table-cell">
-                          {n.avg_order_cycle}d
-                        </td>
-                        <td className="px-4 py-3 text-center">
-                          <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold ${s.cls}`}>
-                            {s.label}
-                          </span>
-                        </td>
-                        <td className="px-4 py-3 text-right text-sm hidden lg:table-cell">
-                          <span className={n.churn_probability >= 60 ? 'text-red-600 font-semibold' : n.churn_probability >= 25 ? 'text-amber-600' : 'text-gray-700'}>
-                            {n.churn_probability}%
-                          </span>
-                        </td>
-                        <td className="px-4 py-3 text-right text-sm hidden lg:table-cell">
-                          <span className={n.delivery_success_rate < 80 ? 'text-red-600' : 'text-gray-700'}>
-                            {n.delivery_success_rate}%
-                          </span>
-                        </td>
-                        <td className="px-4 py-3 text-center">
-                          <a
-                            href={waUrl}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            title={n.suggested_message}
-                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-green-50 text-green-700 text-xs font-medium hover:bg-green-100 transition-colors"
-                          >
-                            <MessageCircle size={12} />
-                            Nudge
-                          </a>
-                        </td>
-                      </tr>
-                    )
-                  })}
-                  {nudgeList.length === 0 && (
-                    <tr>
-                      <td colSpan={8} className="px-4 py-10 text-center text-sm text-gray-500">
-                        No customer order history yet
-                      </td>
-                    </tr>
-                  )}
-                </tbody>
-              </table>
-            </div>
-            <div className="px-4 py-3 border-t border-gray-100 text-xs text-gray-500">
-              {nudgeList.length} customers with order history
-            </div>
-          </Card>
-        </div>
-      )}
-
       {tab === 'pincode' && (
         <div className="space-y-4">
-          {/* Summary cards */}
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-            <Card className="p-4">
-              <p className="text-xs text-gray-500 mb-1">Pincodes Reached</p>
-              <p className="text-2xl font-bold text-gray-900">{pincodeSummary.total}</p>
-            </Card>
-            <Card className="p-4">
-              <p className="text-xs text-gray-500 mb-1">High RTO Zones</p>
-              <p className="text-2xl font-bold text-red-600">{pincodeSummary.high_rto}</p>
-              <p className="text-[10px] text-gray-400">≥30% RTO rate</p>
-            </Card>
-            <Card className="p-4">
-              <p className="text-xs text-gray-500 mb-1">Zero RTO Zones</p>
-              <p className="text-2xl font-bold text-green-600">{pincodeSummary.zero_rto}</p>
-              <p className="text-[10px] text-gray-400">2+ orders, 0% RTO</p>
-            </Card>
-            <Card className="p-4">
-              <p className="text-xs text-gray-500 mb-1">Top Revenue Zone</p>
-              <p className="text-xl font-bold text-gray-900">{pincodeSummary.top_revenue?.pincode ?? '—'}</p>
-              <p className="text-[10px] text-gray-400">{pincodeSummary.top_revenue?.city}</p>
-            </Card>
+            <Card className="p-4"><p className="text-xs text-gray-500 mb-1">Pincodes Reached</p><p className="text-2xl font-bold text-gray-900">{pincodeSummary.total}</p></Card>
+            <Card className="p-4"><p className="text-xs text-gray-500 mb-1">High RTO Zones</p><p className="text-2xl font-bold text-red-600">{pincodeSummary.high_rto}</p><p className="text-[10px] text-gray-400">≥30% RTO rate</p></Card>
+            <Card className="p-4"><p className="text-xs text-gray-500 mb-1">Zero RTO Zones</p><p className="text-2xl font-bold text-green-600">{pincodeSummary.zero_rto}</p><p className="text-[10px] text-gray-400">2+ orders, 0% RTO</p></Card>
+            <Card className="p-4"><p className="text-xs text-gray-500 mb-1">Top Revenue Zone</p><p className="text-xl font-bold text-gray-900">{pincodeSummary.top_revenue?.pincode ?? '—'}</p><p className="text-[10px] text-gray-400">{pincodeSummary.top_revenue?.city}</p></Card>
           </div>
 
           <Card>
@@ -354,12 +212,7 @@ export default function Analytics() {
               <h3 className="text-sm font-semibold text-gray-900 flex-1">Pincode Performance</h3>
               <div className="relative w-56">
                 <Search size={12} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-400" />
-                <Input
-                  value={pincodeSearch}
-                  onChange={e => setPincodeSearch(e.target.value)}
-                  placeholder="Search pincode or city…"
-                  className="pl-7 py-1.5 text-xs h-8"
-                />
+                <Input value={pincodeSearch} onChange={e => setPincodeSearch(e.target.value)} placeholder="Search pincode or city…" className="pl-7 py-1.5 text-xs h-8" />
               </div>
             </div>
             <div className="overflow-x-auto">
@@ -377,56 +230,33 @@ export default function Analytics() {
                 </thead>
                 <tbody className="stagger-rows">
                   {filteredPincodes.map(p => {
-                    const riskColor = p.rto_rate >= 30
-                      ? 'bg-red-100 text-red-700'
-                      : p.rto_rate >= 15
-                        ? 'bg-amber-100 text-amber-700'
-                        : 'bg-green-100 text-green-700'
+                    const riskColor = p.rto_rate >= 30 ? 'bg-red-100 text-red-700' : p.rto_rate >= 15 ? 'bg-amber-100 text-amber-700' : 'bg-green-100 text-green-700'
                     const riskLabel = p.rto_rate >= 30 ? 'High' : p.rto_rate >= 15 ? 'Medium' : 'Low'
                     return (
                       <tr key={p.pincode} className="border-b border-gray-50 hover:bg-gray-50/50">
-                        <td className="px-4 py-3">
-                          <span className="text-sm font-mono font-semibold text-gray-900">{p.pincode}</span>
-                        </td>
-                        <td className="px-4 py-3 hidden sm:table-cell">
-                          <p className="text-sm text-gray-700">{p.city}</p>
-                          <p className="text-xs text-gray-400">{p.state}</p>
-                        </td>
+                        <td className="px-4 py-3"><span className="text-sm font-mono font-semibold text-gray-900">{p.pincode}</span></td>
+                        <td className="px-4 py-3 hidden sm:table-cell"><p className="text-sm text-gray-700">{p.city}</p><p className="text-xs text-gray-400">{p.state}</p></td>
                         <td className="px-4 py-3 text-right text-sm text-gray-700">{p.orders}</td>
                         <td className="px-4 py-3 text-right text-sm text-gray-700">₹{p.revenue.toLocaleString('en-IN')}</td>
                         <td className="px-4 py-3 text-right text-sm text-gray-700">₹{p.aov.toLocaleString('en-IN')}</td>
-                        <td className="px-4 py-3 text-right">
-                          <span className="text-sm text-gray-700">{p.rto_rate.toFixed(0)}%</span>
-                          {p.rto_count > 0 && <span className="text-[10px] text-gray-400 ml-1">({p.rto_count})</span>}
-                        </td>
-                        <td className="px-4 py-3">
-                          <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold ${riskColor}`}>
-                            {riskLabel}
-                          </span>
-                        </td>
+                        <td className="px-4 py-3 text-right"><span className="text-sm text-gray-700">{p.rto_rate.toFixed(0)}%</span>{p.rto_count > 0 && <span className="text-[10px] text-gray-400 ml-1">({p.rto_count})</span>}</td>
+                        <td className="px-4 py-3"><span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold ${riskColor}`}>{riskLabel}</span></td>
                       </tr>
                     )
                   })}
                   {filteredPincodes.length === 0 && (
-                    <tr>
-                      <td colSpan={7} className="px-4 py-10 text-center text-sm text-gray-500">
-                        No pincodes match your search
-                      </td>
-                    </tr>
+                    <tr><td colSpan={7} className="px-4 py-10 text-center text-sm text-gray-500">No pincodes match your search</td></tr>
                   )}
                 </tbody>
               </table>
             </div>
-            <div className="px-4 py-3 border-t border-gray-100 text-xs text-gray-500">
-              {filteredPincodes.length} of {pincodeData.length} pincodes
-            </div>
+            <div className="px-4 py-3 border-t border-gray-100 text-xs text-gray-500">{filteredPincodes.length} of {pincodeData.length} pincodes</div>
           </Card>
         </div>
       )}
 
       {tab === 'forecast' && (
         <div className="space-y-4">
-          {/* Summary */}
           <div className="grid grid-cols-2 lg:grid-cols-5 gap-3">
             <SumCard label="Out of Stock" value={summary.out_of_stock_count} cls="text-red-600" />
             <SumCard label="Reorder Now" value={summary.reorder_now_count} cls="text-orange-600" />
@@ -457,26 +287,13 @@ export default function Analytics() {
                     const s = FORECAST_STATUS_STYLE[f.status]
                     return (
                       <tr key={f.product_id} className="border-b border-gray-50 hover:bg-gray-50/50">
-                        <td className="px-4 py-3">
-                          <p className="text-sm font-medium text-gray-900">{f.name}</p>
-                          <p className="text-xs text-gray-400">{f.sku}</p>
-                        </td>
+                        <td className="px-4 py-3"><p className="text-sm font-medium text-gray-900">{f.name}</p><p className="text-xs text-gray-400">{f.sku}</p></td>
                         <td className="px-4 py-3 text-right text-sm font-medium text-gray-900">{f.inventory_count}</td>
                         <td className="px-4 py-3 text-right text-sm text-gray-700 hidden sm:table-cell">{f.avg_daily_demand}/day</td>
-                        <td className="px-4 py-3 text-right text-sm text-gray-700 hidden md:table-cell">
-                          {f.days_of_stock >= 999 ? '∞' : f.days_of_stock}
-                        </td>
-                        <td className="px-4 py-3 text-xs text-gray-500 hidden md:table-cell">
-                          {f.predicted_stockout_date ?? '—'}
-                        </td>
-                        <td className="px-4 py-3">
-                          <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold ${s.cls}`}>
-                            {s.label}
-                          </span>
-                        </td>
-                        <td className="px-4 py-3 text-right text-sm text-gray-700 hidden lg:table-cell">
-                          {f.reorder_quantity > 0 ? f.reorder_quantity : '—'}
-                        </td>
+                        <td className="px-4 py-3 text-right text-sm text-gray-700 hidden md:table-cell">{f.days_of_stock >= 999 ? '∞' : f.days_of_stock}</td>
+                        <td className="px-4 py-3 text-xs text-gray-500 hidden md:table-cell">{f.predicted_stockout_date ?? '—'}</td>
+                        <td className="px-4 py-3"><span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold ${s.cls}`}>{s.label}</span></td>
+                        <td className="px-4 py-3 text-right text-sm text-gray-700 hidden lg:table-cell">{f.reorder_quantity > 0 ? f.reorder_quantity : '—'}</td>
                       </tr>
                     )
                   })}
@@ -499,27 +316,13 @@ function SumCard({ label, value, cls }: { label: string; value: number; cls: str
   )
 }
 
-function SortTh({
-  label, col, sort, asc, onSort,
-}: {
-  label: string
-  col: PincodeSortKey
-  sort: PincodeSortKey
-  asc: boolean
-  onSort: (k: PincodeSortKey) => void
-}) {
+function SortTh({ label, col, sort, asc, onSort }: { label: string; col: PincodeSortKey; sort: PincodeSortKey; asc: boolean; onSort: (k: PincodeSortKey) => void }) {
   const active = sort === col
   return (
-    <th
-      className="px-4 py-3 text-right text-xs font-semibold text-gray-500 uppercase tracking-wide cursor-pointer select-none hover:text-gray-700"
-      onClick={() => onSort(col)}
-    >
+    <th className="px-4 py-3 text-right text-xs font-semibold text-gray-500 uppercase tracking-wide cursor-pointer select-none hover:text-gray-700" onClick={() => onSort(col)}>
       <span className="inline-flex items-center gap-0.5 justify-end">
         {label}
-        {active
-          ? asc ? <ChevronUp size={11} /> : <ChevronDown size={11} />
-          : <ChevronDown size={11} className="opacity-30" />
-        }
+        {active ? asc ? <ChevronUp size={11} /> : <ChevronDown size={11} /> : <ChevronDown size={11} className="opacity-30" />}
       </span>
     </th>
   )
