@@ -34,9 +34,7 @@ export default function Sidebar() {
       {/* Logo */}
       <div className="px-4 py-5 border-b border-white/5">
         <div className="flex items-center gap-2">
-          <div className="w-8 h-8 rounded-xl bg-white flex items-center justify-center shadow-sm overflow-hidden p-0.5">
-            <img src="/logo.svg" alt="Xmetrics" className="w-full h-full object-contain" />
-          </div>
+          <img src="/logo-light.svg" alt="Xmetrics" className="w-8 h-8 object-contain" />
           <span className="text-white font-semibold text-base tracking-tight">Xmetrics</span>
         </div>
       </div>
