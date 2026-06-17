@@ -22,10 +22,15 @@ export default function Onboarding() {
   const { user } = useAuthStore()
 
   const handleFinish = async () => {
+    const pendingPlan = sessionStorage.getItem('xmetrics-pending-plan')
+    const afterNav = pendingPlan
+      ? `/settings/billing?plan=${pendingPlan}`
+      : '/dashboard'
+
     if (DEMO_MODE) {
-      // Demo mode: skip DB, load seed data directly
       bootstrap('user-demo-001')
-      navigate('/dashboard')
+      sessionStorage.removeItem('xmetrics-pending-plan')
+      navigate(afterNav)
       return
     }
 
@@ -80,7 +85,8 @@ export default function Onboarding() {
 
     // Bootstrap the app state from Supabase
     await bootstrap(currentUser.id)
-    navigate('/dashboard')
+    sessionStorage.removeItem('xmetrics-pending-plan')
+    navigate(afterNav)
   }
 
   return (

@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { useAuthStore } from '../../stores/authStore'
 import { Button, Input } from '../../components/ui'
 import AuthShell from './AuthShell'
@@ -11,11 +11,14 @@ export default function Signup() {
   const [loading, setLoading] = useState(false)
   const { signUp } = useAuthStore()
   const navigate = useNavigate()
+  const [searchParams] = useSearchParams()
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setError('')
     setLoading(true)
+    const plan = searchParams.get('plan')
+    if (plan) sessionStorage.setItem('xmetrics-pending-plan', plan)
     const { error: err } = await signUp(email, password)
     setLoading(false)
     if (err) {

@@ -4,6 +4,7 @@ import { useAppStore } from '../../stores/appStore'
 import { Card, Button } from '../../components/ui'
 import { RazorpayCheckout } from '../../components/shared/RazorpayCheckout'
 import type { PlanType } from '../../types'
+import { useSearchParams } from 'react-router-dom'
 
 const PLANS: {
   key: PlanType
@@ -17,16 +18,16 @@ const PLANS: {
   {
     key: 'STARTER',
     name: 'Starter',
-    price: 999,
+    price: 2499,
     period: '/mo',
-    orders: 500,
+    orders: 1000,
     features: [
-      'Up to 500 orders/month',
+      'Up to 1,000 orders/month',
       '1 warehouse',
-      '2 team members',
-      'Order management',
-      'Basic analytics',
-      'Email support',
+      '3 team members',
+      'All integrations',
+      'RTO scoring',
+      'Daily briefs',
     ],
   },
   {
@@ -82,7 +83,10 @@ const PLANS: {
 
 export default function Billing() {
   const { currentPlan } = useAppStore()
-  const [selected, setSelected] = useState<PlanType>(currentPlan ?? 'GROWTH')
+  const [searchParams] = useSearchParams()
+  const planFromUrl = searchParams.get('plan')?.toUpperCase() as PlanType | null
+  const defaultSelected = (planFromUrl && PLANS.find(p => p.key === planFromUrl) ? planFromUrl : null) ?? currentPlan ?? 'GROWTH'
+  const [selected, setSelected] = useState<PlanType>(defaultSelected)
   const [payStatus, setPayStatus] = useState<{ ok: boolean; message: string } | null>(null)
 
   const usageOrders = 287
