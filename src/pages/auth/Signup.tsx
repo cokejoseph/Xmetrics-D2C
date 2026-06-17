@@ -5,13 +5,13 @@ import { Button, Input } from '../../components/ui'
 import AuthShell from './AuthShell'
 
 export default function Signup() {
-  const [email, setEmail] = useState('')
+  const [searchParams] = useSearchParams()
+  const [email, setEmail] = useState(searchParams.get('email') ?? '')
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
   const { signUp } = useAuthStore()
   const navigate = useNavigate()
-  const [searchParams] = useSearchParams()
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()

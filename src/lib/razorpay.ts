@@ -138,7 +138,7 @@ function delay(ms: number) {
 }
 
 // ─── Standard Checkout (subscription billing) ──────────────────────────────
-// Used by RazorpayCheckout component to collect plan payments.
+// Used by RazorpayCheckout component and FoundingAccess page.
 
 export interface RazorpayCheckoutOptions {
   key: string
@@ -166,7 +166,8 @@ export interface RazorpayCheckoutInstance {
 
 declare global {
   interface Window {
-    Razorpay: new (options: RazorpayCheckoutOptions) => RazorpayCheckoutInstance
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    Razorpay: new (options: Record<string, any>) => RazorpayCheckoutInstance
   }
 }
 
