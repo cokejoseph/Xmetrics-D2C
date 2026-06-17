@@ -720,8 +720,8 @@ export default function LandingPage() {
         {scrolled && <ScrollProgress />}
         <div className="max-w-6xl mx-auto px-6 h-full flex items-center justify-between">
           <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-brand-500 to-brand-700 flex items-center justify-center shadow-sm">
-              <span className="text-white font-bold text-sm">x</span>
+            <div className="w-8 h-8 rounded-lg bg-white flex items-center justify-center shadow-sm overflow-hidden p-0.5">
+              <img src="/logo.svg" alt="Xmetrics" className="w-full h-full object-contain" />
             </div>
             <span className={`font-semibold text-lg transition-colors duration-300 ${scrolled ? 'text-gray-900' : 'text-white'}`}>
               Xmetrics
@@ -1059,8 +1059,8 @@ export default function LandingPage() {
           <div className="flex flex-col md:flex-row items-start justify-between gap-10 mb-10">
             <div className="max-w-xs">
               <div className="flex items-center gap-2.5 mb-3">
-                <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-brand-500 to-brand-700 flex items-center justify-center">
-                  <span className="text-white font-bold text-xs">x</span>
+                <div className="w-7 h-7 rounded-lg bg-white flex items-center justify-center shadow-sm overflow-hidden p-0.5">
+                  <img src="/logo.svg" alt="Xmetrics" className="w-full h-full object-contain" />
                 </div>
                 <span className="font-semibold text-white">Xmetrics</span>
               </div>

@@ -92,8 +92,8 @@ export default function FoundingAccess() {
       <div className="border-b border-gray-100">
         <div className="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between">
           <Link to="/" className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-brand-500 to-brand-700 flex items-center justify-center">
-              <span className="text-white font-bold text-sm">x</span>
+            <div className="w-8 h-8 rounded-lg bg-white flex items-center justify-center shadow-sm overflow-hidden p-0.5">
+              <img src="/logo.svg" alt="Xmetrics" className="w-full h-full object-contain" />
             </div>
             <span className="font-semibold text-gray-900 text-lg">Xmetrics</span>
           </Link>
