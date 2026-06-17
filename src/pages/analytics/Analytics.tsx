@@ -1,10 +1,11 @@
 import { useState, useMemo } from 'react'
-import { ChevronUp, ChevronDown, Search } from 'lucide-react'
+import { ChevronUp, ChevronDown, Search, MessageCircle } from 'lucide-react'
 import { useAppStore } from '../../stores/appStore'
 import { buildSKUForecast } from '../../lib/forecastEngine'
+import { buildReorderNudgeList } from '../../lib/reorderEngine'
 import { Card, Input } from '../../components/ui'
 import { RevenueAreaChart, OrdersBarChart, StatusDonut, ChannelBarChart } from '../../components/charts'
-import type { ForecastStatus } from '../../types'
+import type { ForecastStatus, ChurnLevel } from '../../types'
 
 const FORECAST_STATUS_STYLE: Record<ForecastStatus, { label: string; cls: string }> = {
   OUT_OF_STOCK: { label: 'Out of Stock', cls: 'bg-red-100 text-red-700' },
@@ -16,7 +17,14 @@ const FORECAST_STATUS_STYLE: Record<ForecastStatus, { label: string; cls: string
   UNPREDICTABLE: { label: 'Unpredictable', cls: 'bg-purple-100 text-purple-700' },
 }
 
-type TabType = 'overview' | 'forecast' | 'pincode'
+type TabType = 'overview' | 'reorder' | 'forecast' | 'pincode'
+
+const CHURN_STYLE: Record<ChurnLevel, { label: string; cls: string; dot: string }> = {
+  ACTIVE:   { label: 'Active',    cls: 'bg-green-100 text-green-700',  dot: 'bg-green-500' },
+  AT_RISK:  { label: 'At Risk',   cls: 'bg-amber-100 text-amber-700',  dot: 'bg-amber-500' },
+  CHURNING: { label: 'Churning',  cls: 'bg-orange-100 text-orange-700', dot: 'bg-orange-500' },
+  LOST:     { label: 'Lost',      cls: 'bg-red-100 text-red-700',      dot: 'bg-red-500' },
+}
 type PincodeSortKey = 'orders' | 'revenue' | 'aov' | 'rto_rate'
 
 export default function Analytics() {
@@ -24,9 +32,10 @@ export default function Analytics() {
   const [pincodeSearch, setPincodeSearch] = useState('')
   const [pincodeSort, setPincodeSort] = useState<PincodeSortKey>('orders')
   const [pincodeSortAsc, setPincodeSortAsc] = useState(false)
-  const { orders, products } = useAppStore()
+  const { orders, products, customers } = useAppStore()
 
   const { forecasts, summary } = useMemo(() => buildSKUForecast(products, orders), [products, orders])
+  const nudgeList = useMemo(() => buildReorderNudgeList(customers, orders), [customers, orders])
 
   // Overview KPIs
   const totalRevenue = orders.filter(o => o.payment_status === 'PAID').reduce((s, o) => s + o.gross_amount - o.discount_amount, 0)
@@ -131,6 +140,7 @@ export default function Analytics() {
       <div className="flex gap-1 bg-gray-100 p-1 rounded-xl w-fit">
         {([
           { key: 'overview', label: 'Overview' },
+          { key: 'reorder', label: 'Reorder Engine' },
           { key: 'forecast', label: 'Demand Forecast' },
           { key: 'pincode', label: 'Pincode Intelligence' },
         ] as { key: TabType; label: string }[]).map(t => (
@@ -202,6 +212,113 @@ export default function Analytics() {
                   ))}
                 </tbody>
               </table>
+            </div>
+          </Card>
+        </div>
+      )}
+
+      {tab === 'reorder' && (
+        <div className="space-y-4">
+          {/* Summary */}
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+            {(['ACTIVE', 'AT_RISK', 'CHURNING', 'LOST'] as ChurnLevel[]).map(lvl => {
+              const count = nudgeList.filter(n => n.churn_level === lvl).length
+              const s = CHURN_STYLE[lvl]
+              return (
+                <Card key={lvl} className="p-4 flex items-center gap-3">
+                  <span className={`w-3 h-3 rounded-full shrink-0 ${s.dot}`} />
+                  <div>
+                    <p className={`text-2xl font-bold ${s.cls.split(' ')[1]}`}>{count}</p>
+                    <p className="text-xs text-gray-500 mt-0.5">{s.label}</p>
+                  </div>
+                </Card>
+              )
+            })}
+          </div>
+
+          <Card>
+            <div className="px-4 py-3 border-b border-gray-100">
+              <h3 className="text-sm font-semibold text-gray-900">Customer Reorder Intelligence</h3>
+              <p className="text-xs text-gray-400 mt-0.5">Sorted by churn risk — send personalised WhatsApp nudges to win back customers</p>
+            </div>
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead>
+                  <tr className="border-b border-gray-100">
+                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">Customer</th>
+                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide hidden sm:table-cell">Last Product</th>
+                    <th className="px-4 py-3 text-right text-xs font-semibold text-gray-500 uppercase tracking-wide">Days Since Order</th>
+                    <th className="px-4 py-3 text-right text-xs font-semibold text-gray-500 uppercase tracking-wide hidden md:table-cell">Avg Cycle</th>
+                    <th className="px-4 py-3 text-center text-xs font-semibold text-gray-500 uppercase tracking-wide">Status</th>
+                    <th className="px-4 py-3 text-right text-xs font-semibold text-gray-500 uppercase tracking-wide hidden lg:table-cell">Churn %</th>
+                    <th className="px-4 py-3 text-right text-xs font-semibold text-gray-500 uppercase tracking-wide hidden lg:table-cell">Delivery Rate</th>
+                    <th className="px-4 py-3 text-center text-xs font-semibold text-gray-500 uppercase tracking-wide">Action</th>
+                  </tr>
+                </thead>
+                <tbody className="stagger-rows">
+                  {nudgeList.map(n => {
+                    const s = CHURN_STYLE[n.churn_level]
+                    const waUrl = `https://wa.me/91${n.customer_phone.replace(/\D/g, '')}?text=${encodeURIComponent(n.suggested_message)}`
+                    return (
+                      <tr key={n.customer_id} className="border-b border-gray-50 hover:bg-gray-50/50">
+                        <td className="px-4 py-3">
+                          <p className="text-sm font-medium text-gray-900">{n.customer_name}</p>
+                          <p className="text-xs text-gray-400">{n.customer_phone}</p>
+                        </td>
+                        <td className="px-4 py-3 hidden sm:table-cell">
+                          <p className="text-sm text-gray-700">{n.last_product_name}</p>
+                          <p className="text-xs text-gray-400">{n.last_product_sku}</p>
+                        </td>
+                        <td className="px-4 py-3 text-right">
+                          <span className={`text-sm font-semibold ${n.days_since_last_order > n.avg_order_cycle ? 'text-red-600' : 'text-gray-700'}`}>
+                            {n.days_since_last_order}d
+                          </span>
+                        </td>
+                        <td className="px-4 py-3 text-right text-sm text-gray-500 hidden md:table-cell">
+                          {n.avg_order_cycle}d
+                        </td>
+                        <td className="px-4 py-3 text-center">
+                          <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold ${s.cls}`}>
+                            {s.label}
+                          </span>
+                        </td>
+                        <td className="px-4 py-3 text-right text-sm hidden lg:table-cell">
+                          <span className={n.churn_probability >= 60 ? 'text-red-600 font-semibold' : n.churn_probability >= 25 ? 'text-amber-600' : 'text-gray-700'}>
+                            {n.churn_probability}%
+                          </span>
+                        </td>
+                        <td className="px-4 py-3 text-right text-sm hidden lg:table-cell">
+                          <span className={n.delivery_success_rate < 80 ? 'text-red-600' : 'text-gray-700'}>
+                            {n.delivery_success_rate}%
+                          </span>
+                        </td>
+                        <td className="px-4 py-3 text-center">
+                          <a
+                            href={waUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            title={n.suggested_message}
+                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-green-50 text-green-700 text-xs font-medium hover:bg-green-100 transition-colors"
+                          >
+                            <MessageCircle size={12} />
+                            Nudge
+                          </a>
+                        </td>
+                      </tr>
+                    )
+                  })}
+                  {nudgeList.length === 0 && (
+                    <tr>
+                      <td colSpan={8} className="px-4 py-10 text-center text-sm text-gray-500">
+                        No customer order history yet
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+            <div className="px-4 py-3 border-t border-gray-100 text-xs text-gray-500">
+              {nudgeList.length} customers with order history
             </div>
           </Card>
         </div>
