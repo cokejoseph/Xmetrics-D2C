@@ -43,7 +43,10 @@ export const useAuthStore = create<AuthState>((set) => ({
 
   signIn: async (email, password) => {
     if (DEMO_MODE) {
-      return { error: 'Invalid email or password.' }
+      const user: AuthUser = { id: 'demo-user', email: email || 'demo@xmetrics.app' }
+      try { sessionStorage.setItem(SESSION_KEY, JSON.stringify(user)) } catch {}
+      set({ user })
+      return { error: null }
     }
     const { data, error } = await supabase!.auth.signInWithPassword({ email, password })
     if (!error && data.user) {
