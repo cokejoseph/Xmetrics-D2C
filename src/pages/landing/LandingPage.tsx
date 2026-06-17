@@ -956,7 +956,7 @@ export default function LandingPage() {
                       </li>
                     ))}
                   </ul>
-                  <Link to={`/signup?plan=${plan.name.toUpperCase()}`} className={`block text-center text-sm font-semibold py-2.5 rounded-xl transition-colors ${
+                  <Link to={`/checkout?plan=${plan.name.toUpperCase()}`} className={`block text-center text-sm font-semibold py-2.5 rounded-xl transition-colors ${
                     plan.highlight ? 'bg-white text-brand-600 hover:bg-brand-50' : 'bg-brand-50 text-brand-600 hover:bg-brand-100'
                   }`}>
                     Get Started

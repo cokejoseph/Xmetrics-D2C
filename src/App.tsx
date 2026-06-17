@@ -46,6 +46,7 @@ const WarehousesSettings = lazy(() => import('./pages/settings/Warehouses'))
 const TeamSettings = lazy(() => import('./pages/settings/Team'))
 const BillingSettings = lazy(() => import('./pages/settings/Billing'))
 const FoundingAccess = lazy(() => import('./pages/landing/FoundingAccess'))
+const Checkout = lazy(() => import('./pages/landing/Checkout'))
 
 // ── Shared loading spinner ───────────────────────────────────────────────────
 function PageSpinner() {
@@ -116,6 +117,7 @@ export default function App() {
               <Route path="/signup" element={<Signup />} />
               <Route path="/onboarding" element={<Onboarding />} />
               <Route path="/founding" element={<FoundingAccess />} />
+              <Route path="/checkout" element={<Checkout />} />
 
               {/* Protected app routes — layout wrapper (no path, just wraps) */}
               <Route
