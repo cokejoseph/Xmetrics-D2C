@@ -1150,10 +1150,21 @@ export default function LandingPage() {
       </section>
 
       {/* ── FINAL CTA ──────────────────────────────────────────────────── */}
-      <section className="py-28 bg-[#060610] text-white relative overflow-hidden">
-        <div className="absolute dark-grid-bg inset-0 opacity-60" />
+      <section
+        className="py-28 bg-brand-gradient text-white relative overflow-hidden"
+        onMouseMove={e => {
+          const r = e.currentTarget.getBoundingClientRect()
+          e.currentTarget.style.setProperty('--hx', `${e.clientX - r.left}px`)
+          e.currentTarget.style.setProperty('--hy', `${e.clientY - r.top}px`)
+        }}
+      >
+        <div className="absolute -top-32 -left-32 w-[480px] h-[480px] bg-brand-500/30 rounded-full blur-3xl animate-aurora" />
+        <div className="absolute top-1/3 -right-40 w-[520px] h-[520px] bg-sky-500/25 rounded-full blur-3xl animate-aurora-2" />
+        <div className="absolute inset-0 opacity-[0.04]"
+          style={{ backgroundImage: 'radial-gradient(circle, white 1px, transparent 1px)', backgroundSize: '32px 32px' }} />
         <ParticleField />
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[400px] bg-brand-600/10 rounded-full blur-3xl pointer-events-none" />
+        <div className="pointer-events-none absolute inset-0"
+          style={{ background: 'radial-gradient(620px circle at var(--hx, 50%) var(--hy, 35%), rgba(96,165,250,0.14), transparent 65%)' }} />
         <AnimateIn className="relative max-w-2xl mx-auto px-6 text-center">
           <div className="inline-flex items-center gap-2 border border-white/10 bg-white/[0.03] rounded-full px-4 py-1.5 text-xs text-white/40 mb-8">
             <span className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse-dot" />
