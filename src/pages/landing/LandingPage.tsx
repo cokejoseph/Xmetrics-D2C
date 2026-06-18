@@ -4,7 +4,7 @@ import {
   TrendingDown, Zap, MessageSquare,
   Check, ChevronDown, ArrowRight, Shield, Clock, X as XIcon,
   Truck, ShoppingCart, AlertTriangle, BarChart2, Users,
-  RotateCcw, Sparkles, TrendingUp,
+  RotateCcw, TrendingUp,
 } from 'lucide-react'
 
 // ─── Scroll-triggered fade-in wrapper ────────────────────────────────────────
@@ -241,50 +241,6 @@ function MagneticLink({ to, className = '', children }: { to: string; className?
   )
 }
 
-// ─── Integration flow SVG ─────────────────────────────────────────────────────
-const FLOW_NODES = [
-  { x: 95,  y: 64,  label: 'Shopify' },
-  { x: 95,  y: 216, label: 'Razorpay' },
-  { x: 705, y: 64,  label: 'Shiprocket' },
-  { x: 705, y: 216, label: 'WhatsApp' },
-]
-const FLOW_PATHS = [
-  'M150,64 C260,64 290,140 384,140',
-  'M150,216 C260,216 290,140 384,140',
-  'M650,64 C540,64 510,140 416,140',
-  'M650,216 C540,216 510,140 416,140',
-]
-
-function IntegrationFlow() {
-  return (
-    <svg viewBox="0 0 800 280" className="w-full max-w-3xl mx-auto" aria-label="Shopify, Razorpay, Shiprocket and WhatsApp feeding into Xmetrics">
-      <defs>
-        <linearGradient id="coreGrad" x1="0" y1="0" x2="1" y2="1">
-          <stop offset="0%" stopColor="#3B82F6" /><stop offset="100%" stopColor="#1D4ED8" />
-        </linearGradient>
-      </defs>
-      {FLOW_PATHS.map((d, i) => (
-        <g key={i}>
-          <path d={d} fill="none" stroke="#DBEAFE" strokeWidth="1.5" />
-          <path d={d} fill="none" stroke="#3B82F6" strokeWidth="1.5" opacity="0.65" className="flow-line" />
-          <circle r="3.5" fill="#2563EB">
-            <animateMotion dur={`${2.4 + i * 0.5}s`} repeatCount="indefinite" path={d} />
-          </circle>
-        </g>
-      ))}
-      <circle cx="400" cy="140" r="46" fill="rgba(37,99,235,0.07)">
-        <animate attributeName="r" values="46;56;46" dur="3.2s" repeatCount="indefinite" />
-      </circle>
-      <image href="/logo.svg" x="368" y="108" width="64" height="64" />
-      {FLOW_NODES.map(n => (
-        <g key={n.label}>
-          <rect x={n.x - 55} y={n.y - 18} width="110" height="36" rx="18" fill="white" stroke="#E5E7EB" />
-          <text x={n.x} y={n.y + 4.5} textAnchor="middle" fontSize="13" fontWeight="600" fill="#374151" fontFamily="Inter, sans-serif">{n.label}</text>
-        </g>
-      ))}
-    </svg>
-  )
-}
 
 // ─── Hero dashboard mockup ────────────────────────────────────────────────────
 const ORDER_POOL = [
@@ -833,24 +789,6 @@ function FaqItem({ q, a }: { q: string; a: string }) {
   )
 }
 
-// ─── Pricing plans ────────────────────────────────────────────────────────────
-const PLANS = [
-  {
-    name: 'Starter', price: '₹2,499', period: '/mo', orders: 'Up to 1,000 orders/mo', highlight: false,
-    badge: null,
-    features: ['Up to 1,000 orders / month', '1 warehouse', '3 team members', 'All integrations', 'RTO scoring', 'Daily briefs'],
-  },
-  {
-    name: 'Growth', price: '₹4,999', period: '/mo', orders: 'Up to 3,000 orders/mo', highlight: true,
-    badge: 'MOST POPULAR',
-    features: ['Up to 3,000 orders / month', '1 warehouse', '5 team members', 'Demand forecast', 'Pincode intelligence', 'Priority support'],
-  },
-  {
-    name: 'Scale', price: '₹9,999', period: '/mo', orders: 'Up to 10,000 orders/mo', highlight: false,
-    badge: null,
-    features: ['Up to 10,000 orders / month', 'Unlimited warehouses', '15 team members', 'Custom RTO rules', 'API access', 'Dedicated CSM'],
-  },
-]
 
 // ─── Main Landing Page ────────────────────────────────────────────────────────
 export default function LandingPage() {
