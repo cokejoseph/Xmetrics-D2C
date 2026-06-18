@@ -43,8 +43,8 @@ export type IntegrationPlatform =
   | 'WHATSAPP'
   | 'SHIPROCKET'
   | 'RAZORPAY'
-  | 'SHIPPO'
-  | 'EASYPOST'
+  | 'ECOMEXPRESS'
+  | 'UNICOMMERCE'
 
 export type IntegrationStatus =
   | 'CONNECTED'

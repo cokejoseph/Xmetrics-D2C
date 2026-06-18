@@ -4,34 +4,17 @@ import { Check, Shield, Lock, Zap, Package } from 'lucide-react'
 import { loadRazorpayScript } from '../../lib/razorpay'
 import { callEdgeFunction, DEMO_MODE } from '../../lib/supabase'
 
+type BillingCycle = 'MONTHLY' | 'YEARLY'
+
 const PLAN_DATA: Record<string, {
   name: string
-  price: number
-  priceDisplay: string
-  period: string
+  monthlyPrice: number
   badge: string | null
   features: string[]
-  color: string
 }> = {
-  TEST: {
-    name: 'Test',
-    price: 10,
-    priceDisplay: '₹10',
-    period: '/one-time',
-    badge: 'PAYMENT TESTING',
-    features: [
-      '₹10 test charge — refundable',
-      'Verifies Razorpay integration end-to-end',
-      'Confirms webhook delivery',
-      'For internal testing only',
-    ],
-    color: 'brand',
-  },
   STARTER: {
     name: 'Starter',
-    price: 2499,
-    priceDisplay: '₹2,499',
-    period: '/mo',
+    monthlyPrice: 2499,
     badge: null,
     features: [
       'Up to 1,000 orders / month',
@@ -41,13 +24,10 @@ const PLAN_DATA: Record<string, {
       'RTO scoring & review queue',
       'Daily ops briefs',
     ],
-    color: 'brand',
   },
   GROWTH: {
     name: 'Growth',
-    price: 4999,
-    priceDisplay: '₹4,999',
-    period: '/mo',
+    monthlyPrice: 4999,
     badge: 'MOST POPULAR',
     features: [
       'Up to 3,000 orders / month',
@@ -59,13 +39,10 @@ const PLAN_DATA: Record<string, {
       'Daily ops briefs (WhatsApp export)',
       'Priority support',
     ],
-    color: 'brand',
   },
   SCALE: {
     name: 'Scale',
-    price: 9999,
-    priceDisplay: '₹9,999',
-    period: '/mo',
+    monthlyPrice: 9999,
     badge: null,
     features: [
       'Up to 10,000 orders / month',
@@ -78,8 +55,11 @@ const PLAN_DATA: Record<string, {
       'Dedicated Customer Success Manager',
       'SLA support',
     ],
-    color: 'brand',
   },
+}
+
+function formatINR(amount: number) {
+  return '₹' + amount.toLocaleString('en-IN')
 }
 
 export default function Checkout() {
@@ -87,12 +67,22 @@ export default function Checkout() {
   const planKey = (searchParams.get('plan') ?? 'GROWTH').toUpperCase()
   const plan = PLAN_DATA[planKey] ?? PLAN_DATA.GROWTH
 
+  const [billing, setBilling] = useState<BillingCycle>('MONTHLY')
   const [name, setName] = useState('')
   const [email, setEmail] = useState(searchParams.get('email') ?? '')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [done, setDone] = useState(false)
   const navigate = useNavigate()
+
+  const monthlyPrice = plan.monthlyPrice
+  const yearlyPrice  = plan.monthlyPrice * 10   // 2 months free
+  const yearlyMonthly = Math.round(yearlyPrice / 12)
+  const yearlySaving  = plan.monthlyPrice * 12 - yearlyPrice
+
+  const activePrice    = billing === 'MONTHLY' ? monthlyPrice : yearlyPrice
+  const priceDisplay   = formatINR(activePrice)
+  const periodLabel    = billing === 'MONTHLY' ? '/mo' : '/yr'
 
   const handlePay = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -118,11 +108,12 @@ export default function Checkout() {
       if (!loaded) { setError('Could not load payment gateway. Check your internet connection.'); setLoading(false); return }
 
       const order = await callEdgeFunction('razorpay-create-order', {
-        amount: plan.price * 100,
+        amount: activePrice * 100,
         currency: 'INR',
-        receipt: `${planKey.toLowerCase()}_${Date.now()}`,
+        receipt: `${planKey.toLowerCase()}_${billing.toLowerCase()}_${Date.now()}`,
         email: email.trim(),
         plan: planKey,
+        billing_cycle: billing,
       })
 
       const rzp = new window.Razorpay({
@@ -130,7 +121,7 @@ export default function Checkout() {
         amount: order.amount,
         currency: order.currency,
         name: 'Xmetrics',
-        description: `${plan.name} Plan — Monthly`,
+        description: `${plan.name} Plan — ${billing === 'MONTHLY' ? 'Monthly' : 'Yearly (2 months free)'}`,
         order_id: order.order_id,
         prefill: { name: name.trim() || undefined, email: email.trim() },
         theme: { color: '#2563EB' },
@@ -139,7 +130,7 @@ export default function Checkout() {
           setLoading(false)
           setDone(true)
           setTimeout(() => {
-            navigate(`/signup?plan=${planKey}&email=${encodeURIComponent(email.trim())}`)
+            navigate(`/signup?plan=${planKey}&billing=${billing}&email=${encodeURIComponent(email.trim())}`)
           }, 2000)
         },
       })
@@ -187,17 +178,55 @@ export default function Checkout() {
               {plan.name} Plan
             </h1>
             <p className="text-lg text-gray-500 mb-8 leading-relaxed">
-              Get full access to Xmetrics on the {plan.name} plan. Pay now and create your account immediately after — no trial limits, no waiting.
+              Get full access to Xmetrics on the {plan.name} plan. Pay now and create your account immediately after. No trial limits, no waiting.
             </p>
+
+            {/* Billing toggle */}
+            <div className="mb-8">
+              <div className="inline-flex items-center bg-gray-100 rounded-xl p-1 gap-1">
+                <button
+                  onClick={() => setBilling('MONTHLY')}
+                  className={`px-5 py-2 rounded-lg text-sm font-semibold transition-all ${
+                    billing === 'MONTHLY'
+                      ? 'bg-white text-gray-900 shadow-sm'
+                      : 'text-gray-500 hover:text-gray-700'
+                  }`}
+                >
+                  Monthly
+                </button>
+                <button
+                  onClick={() => setBilling('YEARLY')}
+                  className={`px-5 py-2 rounded-lg text-sm font-semibold transition-all flex items-center gap-2 ${
+                    billing === 'YEARLY'
+                      ? 'bg-white text-gray-900 shadow-sm'
+                      : 'text-gray-500 hover:text-gray-700'
+                  }`}
+                >
+                  Yearly
+                  <span className="text-[10px] font-bold bg-green-500 text-white px-2 py-0.5 rounded-full">
+                    2 MONTHS FREE
+                  </span>
+                </button>
+              </div>
+            </div>
 
             {/* Price */}
             <div className="mb-8">
-              <p className="text-sm text-gray-400 mb-1">Monthly price</p>
+              <p className="text-sm text-gray-400 mb-1">{billing === 'MONTHLY' ? 'Monthly price' : 'Yearly price'}</p>
               <div className="flex items-end gap-2">
-                <span className="text-5xl font-bold text-gray-900">{plan.priceDisplay}</span>
-                <span className="text-lg text-gray-500 mb-1">{plan.period}</span>
+                <span className="text-5xl font-bold text-gray-900">{priceDisplay}</span>
+                <span className="text-lg text-gray-500 mb-1">{periodLabel}</span>
               </div>
-              <p className="text-sm text-gray-400 mt-1">Billed monthly · Cancel anytime</p>
+              {billing === 'YEARLY' ? (
+                <div className="mt-2 space-y-0.5">
+                  <p className="text-sm text-green-600 font-medium">You save {formatINR(yearlySaving)} vs monthly billing</p>
+                  <p className="text-xs text-gray-400">Equivalent to {formatINR(yearlyMonthly)}/mo billed annually</p>
+                </div>
+              ) : (
+                <p className="text-sm text-gray-400 mt-1">
+                  Switch to yearly and save {formatINR(yearlySaving)} — 2 months free
+                </p>
+              )}
             </div>
 
             {/* Features */}
@@ -222,21 +251,28 @@ export default function Checkout() {
 
             {/* Plan switcher */}
             <div className="mt-8 pt-8 border-t border-gray-100">
-              <p className="text-xs text-gray-400 mb-3">Wrong plan? Switch:</p>
-              <div className="flex gap-2 flex-wrap">
-                {Object.entries(PLAN_DATA).map(([key, p]) => (
-                  <Link
-                    key={key}
-                    to={`/checkout?plan=${key}`}
-                    className={`px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors ${
-                      key === planKey
-                        ? 'bg-brand-600 text-white border-brand-600'
-                        : 'text-gray-600 border-gray-200 hover:border-brand-300 hover:text-brand-600'
-                    }`}
-                  >
-                    {p.name} — {p.priceDisplay}/mo
-                  </Link>
-                ))}
+              <p className="text-sm font-medium text-gray-500 mb-4">Wrong plan? Switch:</p>
+              <div className="grid grid-cols-3 gap-3">
+                {Object.entries(PLAN_DATA).map(([key, p]) => {
+                  const isActive = key === planKey
+                  const price = billing === 'MONTHLY' ? p.monthlyPrice : p.monthlyPrice * 10
+                  return (
+                    <Link
+                      key={key}
+                      to={`/checkout?plan=${key}`}
+                      className={`flex flex-col items-center px-4 py-3 rounded-xl border-2 transition-all text-center ${
+                        isActive
+                          ? 'border-brand-600 bg-brand-50 text-brand-700'
+                          : 'border-gray-200 hover:border-brand-300 text-gray-600 hover:text-brand-600'
+                      }`}
+                    >
+                      <span className="text-sm font-bold">{p.name}</span>
+                      <span className="text-xs mt-0.5 opacity-75">
+                        {formatINR(price)}{billing === 'MONTHLY' ? '/mo' : '/yr'}
+                      </span>
+                    </Link>
+                  )
+                })}
               </div>
             </div>
           </div>
@@ -265,9 +301,14 @@ export default function Checkout() {
                   {/* Price pill */}
                   <div className="bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 mb-6 flex items-center justify-between">
                     <div>
-                      <p className="text-xs text-gray-500 font-medium">{plan.name} Plan · Monthly</p>
+                      <p className="text-xs text-gray-500 font-medium">
+                        {plan.name} Plan · {billing === 'MONTHLY' ? 'Monthly' : 'Yearly'}
+                        {billing === 'YEARLY' && (
+                          <span className="ml-2 text-green-600 font-semibold">2 months free</span>
+                        )}
+                      </p>
                       <p className="text-2xl font-bold text-gray-900 mt-0.5">
-                        {plan.priceDisplay}<span className="text-sm font-normal text-gray-500">/mo</span>
+                        {priceDisplay}<span className="text-sm font-normal text-gray-500">{periodLabel}</span>
                       </p>
                     </div>
                     <div className="text-right">
@@ -316,7 +357,7 @@ export default function Checkout() {
                       ) : (
                         <>
                           <Package size={15} />
-                          Pay {plan.priceDisplay} &amp; get access
+                          Pay {priceDisplay} &amp; get access
                         </>
                       )}
                     </button>
@@ -327,7 +368,6 @@ export default function Checkout() {
                     <span>Secured by Razorpay · UPI, Cards, Netbanking accepted</span>
                   </div>
 
-                  {/* Alternative: try demo first */}
                   <div className="mt-5 pt-4 border-t border-gray-100 text-center">
                     <p className="text-xs text-gray-400 mb-2">Not ready to pay yet?</p>
                     <Link

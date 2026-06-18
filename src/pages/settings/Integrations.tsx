@@ -58,20 +58,25 @@ const PLATFORM_META: Record<IntegrationPlatform, {
       { key: 'api_token', label: 'System User Token', placeholder: 'EAAxxxxxxx', type: 'password' },
     ],
   },
-  SHIPPO: {
-    name: 'Shippo',
-    description: 'Multi-carrier shipping rates comparison and label generation.',
-    logo: '📦',
+  ECOMEXPRESS: {
+    name: 'Ecom Express',
+    description: 'Book courier pickups and track shipments via Ecom Express across India.',
+    logo: '🚚',
     fields: [
-      { key: 'api_token', label: 'API Token', placeholder: 'shippo_test_XXX', type: 'password' },
+      { key: 'api_key', label: 'API Key', placeholder: 'Your Ecom Express API Key' },
+      { key: 'api_secret', label: 'API Secret', placeholder: '••••••••', type: 'password' },
+      { key: 'awb_count', label: 'AWB Count (optional)', placeholder: '100' },
     ],
   },
-  EASYPOST: {
-    name: 'EasyPost',
-    description: 'Enterprise carrier integrations and address verification.',
-    logo: '📮',
+  UNICOMMERCE: {
+    name: 'Unicommerce',
+    description: 'Sync orders and inventory across channels via Unicommerce OMS.',
+    logo: '🔗',
     fields: [
-      { key: 'api_key', label: 'API Key', placeholder: 'EZTKxxxxxxx', type: 'password' },
+      { key: 'username', label: 'Username', placeholder: 'your-username' },
+      { key: 'password', label: 'Password', placeholder: '••••••••', type: 'password' },
+      { key: 'facility_code', label: 'Facility Code', placeholder: 'e.g. WAREHOUSE_DEL' },
+      { key: 'api_key', label: 'API Key (optional)', placeholder: 'Leave blank if using username/password' },
     ],
   },
 }
@@ -99,7 +104,7 @@ const STATUS_CONFIG: Record<string, { icon: React.ReactNode; label: string; colo
   },
 }
 
-const ALL_PLATFORMS: IntegrationPlatform[] = ['SHOPIFY', 'RAZORPAY', 'SHIPROCKET', 'WHATSAPP', 'SHIPPO', 'EASYPOST']
+const ALL_PLATFORMS: IntegrationPlatform[] = ['SHOPIFY', 'RAZORPAY', 'SHIPROCKET', 'WHATSAPP', 'ECOMEXPRESS', 'UNICOMMERCE']
 
 // ─── Connect modal ──────────────────────────────────────────────────────────
 
@@ -166,10 +171,10 @@ function ConnectModal({
           result = { ok: false, error: testResult.error }
         }
       } else {
-        // SHIPPO / EASYPOST — simple test
+        // ECOMEXPRESS / UNICOMMERCE — test not yet implemented server-side
         addLog(`Testing ${meta.name} connection…`)
         await new Promise(r => setTimeout(r, 800))
-        addLog(`✓ ${meta.name} connected`)
+        addLog(`✓ ${meta.name} credentials saved`)
         result = { ok: true }
       }
 
