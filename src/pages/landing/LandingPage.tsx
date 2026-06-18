@@ -464,12 +464,12 @@ function HeroMockup() {
         </div>
       </div>
 
-      {/* Floating badges — sit below the card, one on each side, so they never overlap content */}
-      <div className="hidden md:flex absolute left-4 -bottom-10 items-center gap-2 bg-white rounded-xl shadow-lg border border-gray-100 px-3 py-2 animate-float">
+      {/* Floating badges — top corners, outside the card on wider viewports */}
+      <div className="hidden lg:flex absolute -left-44 top-14 items-center gap-2 bg-white rounded-xl shadow-lg border border-gray-100 px-3 py-2 animate-float">
         <Shield size={14} className="text-green-500" />
         <span className="text-[11px] font-semibold text-gray-700">RTO blocked — ₹2,899 saved</span>
       </div>
-      <div className="hidden md:flex absolute right-4 -bottom-10 items-center gap-2 bg-white rounded-xl shadow-lg border border-gray-100 px-3 py-2 animate-float" style={{ animationDelay: '1.5s' }}>
+      <div className="hidden lg:flex absolute -right-44 top-24 items-center gap-2 bg-white rounded-xl shadow-lg border border-gray-100 px-3 py-2 animate-float" style={{ animationDelay: '1.5s' }}>
         <MessageSquare size={14} className="text-brand-500" />
         <span className="text-[11px] font-semibold text-gray-700">Daily brief sent · 7:00 AM</span>
       </div>
