@@ -30,6 +30,7 @@ serve(async (req) => {
 
     const secret = Deno.env.get('RAZORPAY_WEBHOOK_SECRET')
     if (!secret) {
+      console.error('RAZORPAY_WEBHOOK_SECRET not set')
       return new Response(JSON.stringify({ error: 'Webhook secret not configured' }), {
         status: 500, headers: { ...CORS_HEADERS, 'Content-Type': 'application/json' },
       })
@@ -46,6 +47,7 @@ serve(async (req) => {
     }
 
     const event = JSON.parse(body)
+    console.log('Webhook event:', event.event)
 
     const supabase = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
@@ -56,102 +58,147 @@ serve(async (req) => {
 
     switch (event.event) {
       case 'payment.captured': {
-        const { razorpay_order_id, id: gateway_txn_id, amount } = entity
-        // Resolve our order by razorpay order ID stored in payment gateway_txn_id
-        const { data: payment } = await supabase
-          .from('payments')
-          .select('id, order_id')
-          .eq('gateway_txn_id', razorpay_order_id)
-          .single()
+        const razorpayOrderId = entity?.order_id
+        const razorpayPaymentId = entity?.id
+        const amount = entity?.amount
+        const email = entity?.email ?? entity?.notes?.email
 
-        if (payment) {
-          await supabase
-            .from('payments')
-            .update({ status: 'PAID', gateway_txn_id, settled_at: new Date().toISOString() })
-            .eq('id', payment.id)
+        console.log('payment.captured — order_id:', razorpayOrderId, 'payment_id:', razorpayPaymentId, 'email:', email)
 
-          if (payment.order_id) {
+        // ── 1. Update subscription row (plan checkout payments) ────────────
+        if (razorpayOrderId) {
+          const { data: sub } = await supabase
+            .from('subscriptions')
+            .select('id')
+            .eq('razorpay_order_id', razorpayOrderId)
+            .single()
+
+          if (sub) {
             await supabase
-              .from('orders')
-              .update({ payment_status: 'PAID' })
-              .eq('id', payment.order_id)
+              .from('subscriptions')
+              .update({
+                status: 'PAID',
+                razorpay_payment_id: razorpayPaymentId,
+                paid_at: new Date().toISOString(),
+              })
+              .eq('id', sub.id)
+            console.log('Subscription marked PAID:', sub.id)
+          } else {
+            // ── 2. Fallback: D2C order payment ─────────────────────────────
+            const { data: payment } = await supabase
+              .from('payments')
+              .select('id, order_id')
+              .eq('gateway_ref', razorpayOrderId)
+              .single()
 
-            await supabase.from('order_timeline').insert({
-              order_id: payment.order_id,
-              event: 'PAYMENT_CAPTURED',
-              actor: 'razorpay',
-              metadata: { gateway_txn_id, amount: amount / 100 },
-            })
+            if (payment) {
+              await supabase
+                .from('payments')
+                .update({ status: 'PAID', gateway_ref: razorpayPaymentId, settled_at: new Date().toISOString() })
+                .eq('id', payment.id)
+
+              if (payment.order_id) {
+                await supabase
+                  .from('orders')
+                  .update({ payment_status: 'PAID', razorpay_payment_id: razorpayPaymentId })
+                  .eq('id', payment.order_id)
+
+                await supabase.from('order_timeline').insert({
+                  order_id: payment.order_id,
+                  event: 'PAYMENT_CAPTURED',
+                  actor: 'razorpay',
+                  metadata: { razorpay_payment_id: razorpayPaymentId, amount: amount ? amount / 100 : null },
+                })
+              }
+            } else {
+              // Neither subscription nor order found — log it
+              console.warn('payment.captured: no matching subscription or order for razorpay_order_id:', razorpayOrderId, 'email:', email)
+            }
           }
         }
         break
       }
 
       case 'payment.failed': {
-        const { razorpay_order_id, error_description } = entity
-        const { data: payment } = await supabase
-          .from('payments')
-          .select('id, order_id, brand_id')
-          .eq('gateway_txn_id', razorpay_order_id)
-          .single()
+        const razorpayOrderId = entity?.order_id
+        const errorDesc = entity?.error_description ?? entity?.error?.description
 
-        if (payment) {
-          await supabase
-            .from('payments')
-            .update({ status: 'FAILED' })
-            .eq('id', payment.id)
+        // Mark subscription as FAILED
+        if (razorpayOrderId) {
+          const { data: sub } = await supabase
+            .from('subscriptions')
+            .select('id')
+            .eq('razorpay_order_id', razorpayOrderId)
+            .single()
 
-          if (payment.order_id) {
-            await supabase
-              .from('orders')
-              .update({ payment_status: 'FAILED' })
-              .eq('id', payment.order_id)
-
-            const { data: order } = await supabase
-              .from('orders')
-              .select('order_number')
-              .eq('id', payment.order_id)
+          if (sub) {
+            await supabase.from('subscriptions').update({ status: 'FAILED' }).eq('id', sub.id)
+          } else {
+            // D2C order payment failed
+            const { data: payment } = await supabase
+              .from('payments')
+              .select('id, order_id, brand_id')
+              .eq('gateway_ref', razorpayOrderId)
               .single()
 
-            await supabase.from('exceptions').insert({
-              brand_id: payment.brand_id,
-              order_id: payment.order_id,
-              type: 'FAILED_PAYMENT',
-              severity: 'HIGH',
-              status: 'UNRESOLVED',
-              title: `Payment failed for order ${order?.order_number ?? payment.order_id}`,
-              description: error_description ?? 'Razorpay payment failure',
-            })
+            if (payment?.order_id) {
+              await supabase.from('payments').update({ status: 'FAILED' }).eq('id', payment.id)
+              await supabase.from('orders').update({ payment_status: 'FAILED' }).eq('id', payment.order_id)
+
+              const { data: order } = await supabase.from('orders').select('order_number').eq('id', payment.order_id).single()
+              await supabase.from('exceptions').insert({
+                brand_id: payment.brand_id,
+                order_id: payment.order_id,
+                type: 'FAILED_PAYMENT',
+                severity: 'HIGH',
+                status: 'UNRESOLVED',
+                title: `Payment failed for order ${order?.order_number ?? payment.order_id}`,
+                description: errorDesc ?? 'Razorpay payment failure',
+              })
+            }
           }
         }
         break
       }
 
       case 'refund.processed': {
-        const { payment_id, amount } = entity
-        const { data: payment } = await supabase
-          .from('payments')
-          .select('id, order_id')
-          .eq('gateway_txn_id', payment_id)
+        const paymentId = entity?.payment_id
+        const amount = entity?.amount
+
+        // Check subscription refund first
+        const { data: sub } = await supabase
+          .from('subscriptions')
+          .select('id')
+          .eq('razorpay_payment_id', paymentId)
           .single()
 
-        if (payment) {
-          await supabase
+        if (sub) {
+          await supabase.from('subscriptions').update({ status: 'REFUNDED' }).eq('id', sub.id)
+        } else {
+          // D2C order refund
+          const { data: payment } = await supabase
             .from('payments')
-            .update({ status: 'REFUNDED' })
-            .eq('id', payment.id)
+            .select('id, order_id')
+            .eq('gateway_ref', paymentId)
+            .single()
 
-          if (payment.order_id) {
-            await supabase.from('order_timeline').insert({
-              order_id: payment.order_id,
-              event: 'REFUND_PROCESSED',
-              actor: 'razorpay',
-              metadata: { amount: amount / 100 },
-            })
+          if (payment) {
+            await supabase.from('payments').update({ status: 'REFUNDED' }).eq('id', payment.id)
+            if (payment.order_id) {
+              await supabase.from('order_timeline').insert({
+                order_id: payment.order_id,
+                event: 'REFUND_PROCESSED',
+                actor: 'razorpay',
+                metadata: { amount: amount ? amount / 100 : null },
+              })
+            }
           }
         }
         break
       }
+
+      default:
+        console.log('Unhandled event type:', event.event)
     }
 
     return new Response(

@@ -1,4 +1,5 @@
 import 'jsr:@supabase/functions-js/edge-runtime.d.ts'
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -11,7 +12,7 @@ Deno.serve(async (req) => {
   }
 
   try {
-    const { amount, currency = 'INR', receipt } = await req.json()
+    const { amount, currency = 'INR', receipt, email, plan } = await req.json()
 
     if (!amount || amount < 100) {
       return new Response(
@@ -41,7 +42,12 @@ Deno.serve(async (req) => {
       body: JSON.stringify({
         amount,
         currency,
-        receipt: receipt ?? `centinal_${Date.now()}`,
+        receipt: receipt ?? `xm_${Date.now()}`,
+        // Attach email + plan in notes so webhook can identify subscription payments
+        notes: {
+          ...(email ? { email } : {}),
+          ...(plan  ? { plan  } : {}),
+        },
       }),
     })
 
@@ -54,6 +60,21 @@ Deno.serve(async (req) => {
     }
 
     const order = await rzpResponse.json()
+
+    // If this is a plan checkout (email + plan provided), pre-create a PENDING subscription row
+    if (email && plan) {
+      const supabase = createClient(
+        Deno.env.get('SUPABASE_URL') ?? '',
+        Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+      )
+      await supabase.from('subscriptions').upsert({
+        email: email.toLowerCase().trim(),
+        plan,
+        razorpay_order_id: order.id,
+        amount: amount / 100,
+        status: 'PENDING',
+      }, { onConflict: 'razorpay_order_id' })
+    }
 
     return new Response(
       JSON.stringify({ order_id: order.id, amount: order.amount, currency: order.currency }),

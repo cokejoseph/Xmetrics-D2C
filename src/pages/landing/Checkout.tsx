@@ -121,6 +121,8 @@ export default function Checkout() {
         amount: plan.price * 100,
         currency: 'INR',
         receipt: `${planKey.toLowerCase()}_${Date.now()}`,
+        email: email.trim(),
+        plan: planKey,
       })
 
       const rzp = new window.Razorpay({
