@@ -868,10 +868,6 @@ export default function LandingPage() {
               className="flex items-center gap-2 bg-white text-brand-700 font-semibold px-8 py-3.5 rounded-xl hover:bg-brand-50 shadow-lg hover:shadow-xl text-sm">
               Start Free Trial <ArrowRight size={16} />
             </MagneticLink>
-            <Link to="/checkout"
-              className="flex items-center gap-2 text-white/70 hover:text-white text-sm font-medium transition-colors border border-white/20 px-6 py-3.5 rounded-xl hover:border-white/40 backdrop-blur-sm">
-              View Pricing →
-            </Link>
           </div>
 
           <p className="mb-14 text-white/35 text-xs animate-fade-in" style={{ animationDelay: '360ms' }}>
