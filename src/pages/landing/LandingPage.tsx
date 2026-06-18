@@ -964,11 +964,18 @@ export default function LandingPage() {
               className="flex items-center gap-2 bg-white text-brand-700 font-semibold px-8 py-3.5 rounded-xl hover:bg-brand-50 shadow-lg hover:shadow-xl text-sm">
               Start Free Trial <ArrowRight size={16} />
             </MagneticLink>
+            <Link to="/login" className="flex items-center gap-1.5 text-white/60 hover:text-white text-sm font-medium transition-colors">
+              Explore demo first <ArrowRight size={13} className="opacity-60" />
+            </Link>
           </div>
 
-          <p className="mb-14 text-white/35 text-xs animate-fade-in" style={{ animationDelay: '360ms' }}>
-            No credit card · Try the live demo · Upgrade when ready
-          </p>
+          <div className="flex flex-wrap items-center justify-center gap-x-5 gap-y-2 mb-14 animate-fade-in" style={{ animationDelay: '360ms' }}>
+            {['No credit card', 'Cancel anytime', 'Live demo available'].map(t => (
+              <span key={t} className="flex items-center gap-1.5 text-white/35 text-xs">
+                <Check size={10} className="text-white/25" />{t}
+              </span>
+            ))}
+          </div>
 
           <div className="animate-fade-in-up" style={{ animationDelay: '320ms' }}>
             <HeroMockup />
@@ -984,8 +991,8 @@ export default function LandingPage() {
           { value: '₹2.4L',  label: 'Saved per 1,000 orders' },
           { value: '99.9%',  label: 'Platform uptime' },
           { value: '7',      label: 'Modules' },
-          { value: '10 min', label: 'Order to Shipping\nrather than 8 hours' },
-          { value: '1',      label: 'Dashboard\ninstead of 5 tools' },
+          { value: '10 min', label: 'Daily ops review' },
+          { value: '1',      label: 'Dashboard for\nyour full ops stack' },
         ]
         return (
           <section className="relative bg-gray-950 text-white py-10 overflow-hidden">

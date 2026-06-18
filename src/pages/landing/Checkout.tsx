@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
-import { Check, Shield, Zap, Package } from 'lucide-react'
+import { Check, Shield, Zap, Lock } from 'lucide-react'
 import { loadRazorpayScript } from '../../lib/razorpay'
 import { callEdgeFunction, DEMO_MODE } from '../../lib/supabase'
 
@@ -295,7 +295,10 @@ export default function Checkout() {
 
           {/* Right — checkout form */}
           <div className="lg:sticky lg:top-8">
-            <div className="bg-white rounded-2xl border border-gray-200 shadow-[0_4px_24px_rgba(0,0,0,0.06)] p-8">
+            <div className="relative bg-white rounded-2xl border border-gray-200 shadow-[0_4px_24px_rgba(0,0,0,0.06)] overflow-hidden">
+              {/* Brand accent stripe */}
+              <div className="h-[3px] bg-gradient-to-r from-brand-500 via-sky-400 to-brand-400" />
+              <div className="p-8">
               {done ? (
                 <div className="text-center py-4">
                   <div className="w-14 h-14 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
@@ -310,6 +313,10 @@ export default function Checkout() {
               ) : (
                 <>
                   <div className="mb-6">
+                    <div className="inline-flex items-center gap-1.5 bg-brand-50 border border-brand-100 text-brand-700 text-[10px] font-bold uppercase tracking-wide px-2.5 py-1 rounded-full mb-3">
+                      <span className="w-1.5 h-1.5 rounded-full bg-brand-500" />
+                      {plan.name} Plan
+                    </div>
                     <h2 className="text-xl font-bold text-gray-900">Get {plan.name} access</h2>
                     <p className="text-sm text-gray-500 mt-1">Pay now, create your account immediately after.</p>
                   </div>
@@ -372,16 +379,19 @@ export default function Checkout() {
                         </>
                       ) : (
                         <>
-                          <Package size={15} />
+                          <Lock size={14} />
                           Pay {priceDisplay} &amp; get access
                         </>
                       )}
                     </button>
                   </form>
 
-                  <div className="mt-4 flex items-center justify-center gap-1.5 text-xs text-gray-400">
-                    <Shield size={11} />
-                    <span>Secured by Razorpay · UPI, Cards, Netbanking accepted</span>
+                  <div className="mt-4 flex items-center justify-center gap-3 text-xs text-gray-400 flex-wrap">
+                    <span className="flex items-center gap-1"><Shield size={10} className="text-green-500" /> Razorpay secured</span>
+                    <span className="text-gray-200">|</span>
+                    <span className="flex items-center gap-1"><Check size={10} className="text-green-500" /> Cancel anytime</span>
+                    <span className="text-gray-200">|</span>
+                    <span className="flex items-center gap-1"><Zap size={10} className="text-amber-400" /> 5-min setup</span>
                   </div>
 
                   <div className="mt-5 pt-4 border-t border-gray-100 text-center">
@@ -395,6 +405,7 @@ export default function Checkout() {
                   </div>
                 </>
               )}
+              </div>
             </div>
 
             <p className="text-xs text-center text-gray-400 mt-4">
