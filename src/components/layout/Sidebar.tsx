@@ -2,7 +2,7 @@ import { NavLink, useNavigate } from 'react-router-dom'
 import {
   LayoutDashboard, ShoppingBag, Truck, CreditCard,
   AlertTriangle, Package, Users, BarChart3, Settings,
-  History, LogOut, ChevronDown, ChevronRight, Sun, Moon,
+  History, LogOut, ChevronDown, ChevronRight, Sun, Moon, RotateCcw,
 } from 'lucide-react'
 import { useState } from 'react'
 import { useAppStore } from '../../stores/appStore'
@@ -58,6 +58,7 @@ export default function Sidebar() {
         <SidebarItem to="/customers" icon={<Users size={16} />} label="Customers" />
         <SidebarItem to="/products" icon={<Package size={16} />} label="Products" />
         <SidebarItem to="/analytics" icon={<BarChart3 size={16} />} label="Analytics" badge={analyticsBadge} />
+        <SidebarItem to="/returns" icon={<RotateCcw size={16} />} label="Returns" />
 
         <div className="pt-4">
           <p className="px-3 py-1.5 text-[10px] font-semibold uppercase tracking-widest text-sidebar-text/40">

@@ -45,6 +45,7 @@ const IntegrationsSettings = lazy(() => import('./pages/settings/Integrations'))
 const WarehousesSettings = lazy(() => import('./pages/settings/Warehouses'))
 const TeamSettings = lazy(() => import('./pages/settings/Team'))
 const BillingSettings = lazy(() => import('./pages/settings/Billing'))
+const Returns = lazy(() => import('./pages/returns/Returns'))
 const FoundingAccess = lazy(() => import('./pages/landing/FoundingAccess'))
 const Checkout = lazy(() => import('./pages/landing/Checkout'))
 
@@ -138,6 +139,7 @@ export default function App() {
                 <Route path="/customers/:id" element={<CustomerDetail />} />
                 <Route path="/products" element={<Products />} />
                 <Route path="/analytics" element={<Analytics />} />
+                <Route path="/returns" element={<Returns />} />
                 <Route path="/briefs" element={<DailyBrief />} />
                 <Route path="/briefs/history" element={<BriefHistory />} />
                 <Route path="/settings/brand" element={<BrandSettings />} />
