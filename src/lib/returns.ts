@@ -49,7 +49,7 @@ export interface ApproveRefundResult {
 
 const delay = (ms: number) => new Promise<void>(r => setTimeout(r, ms))
 
-async function invokeFunction<T>(name: string, body: unknown): Promise<T> {
+async function invokeFunction<T>(name: string, body: Record<string, unknown>): Promise<T> {
   if (!supabase) throw new Error('Supabase client not initialised')
   const { data, error } = await supabase.functions.invoke(name, { body })
   if (error) throw new Error(error.message ?? `Edge function ${name} failed`)
