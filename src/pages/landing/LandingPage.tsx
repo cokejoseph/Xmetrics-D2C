@@ -1084,8 +1084,8 @@ export default function LandingPage() {
           </AnimateIn>
 
           <AnimateIn className="max-w-md mx-auto">
-            <div className="relative rounded-2xl border border-white/[0.07] bg-gradient-to-br from-[#1A1A2E] via-[#16213E] to-[#0F1F45] text-white shadow-[0_24px_64px_rgba(10,15,50,0.55)] p-8 hover:-translate-y-1 transition-transform duration-300">
-              <div className="absolute inset-0 rounded-2xl bg-gradient-to-tr from-brand-500/[0.06] to-transparent pointer-events-none" />
+            <div className="relative rounded-2xl border border-white/[0.12] bg-gradient-to-br from-[#1d4ed8] via-[#2563eb] to-[#1e40af] text-white shadow-[0_24px_64px_rgba(37,99,235,0.45)] p-8 hover:-translate-y-1 transition-transform duration-300">
+              <div className="absolute inset-0 rounded-2xl bg-gradient-to-tr from-white/[0.04] to-transparent pointer-events-none" />
 
               {/* Spot badge */}
               <div className="inline-flex items-center gap-2 bg-amber-400/15 border border-amber-400/25 rounded-full px-3 py-1 mb-7">
