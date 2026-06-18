@@ -122,7 +122,7 @@ Deno.serve(async (req: Request) => {
 
         await supabase.from('payments').upsert({
           brand_id,
-          order_id: orderId ?? payment.order_id ?? '',
+          order_id: orderId ?? payment.order_id ?? null,
           amount: payment.amount / 100,
           method: methodMap[payment.method] ?? 'UPI',
           status: statusMap[payment.status] ?? 'PENDING',

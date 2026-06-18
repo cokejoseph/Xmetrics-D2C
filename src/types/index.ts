@@ -131,6 +131,8 @@ export type OrderChannel =
   | 'MANUAL'
   | 'AMAZON'
   | 'FLIPKART'
+  | 'WOOCOMMERCE'
+  | 'MEESHO'
 
 export type PaymentStatus =
   | 'PENDING'

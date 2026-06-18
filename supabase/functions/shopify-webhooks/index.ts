@@ -255,11 +255,30 @@ async function handleOrder(brandId: string, shopifyOrder: ShopifyOrder, topic: s
 
     if (customer) {
       customerId = customer.id as string
-      // Increment totals
+      // Increment order count and total spend directly
       await supabase.rpc('increment_customer_stats', {
         p_customer_id: customerId,
         p_spend: parseFloat(shopifyOrder.total_price),
-      }).catch(() => null) // RPC might not exist yet — ignore gracefully
+      }).then(({ error }) => {
+        if (error) {
+          // RPC not available — fall back to read-then-write
+          return supabase
+            .from('customers')
+            .select('total_orders, total_spent')
+            .eq('id', customerId!)
+            .single()
+            .then(({ data: c }) => {
+              if (!c) return
+              return supabase
+                .from('customers')
+                .update({
+                  total_orders: (c.total_orders ?? 0) + 1,
+                  total_spent: (c.total_spent ?? 0) + parseFloat(shopifyOrder.total_price),
+                })
+                .eq('id', customerId!)
+            })
+        }
+      }).catch(() => null)
     }
   }
 
@@ -307,10 +326,12 @@ async function handleOrder(brandId: string, shopifyOrder: ShopifyOrder, topic: s
   const orderId = order.id as string
 
   // Upsert order items
+  // Note: Shopify product_id is a numeric ID, not a UUID — leave as null
+  // so the FK constraint doesn't reject it. SKU-based matching handles product lookup.
   if (shopifyOrder.line_items?.length) {
     const items = shopifyOrder.line_items.map(li => ({
       order_id: orderId,
-      product_id: li.product_id ? String(li.product_id) : null,
+      product_id: null,
       sku: li.sku || `shopify_${li.variant_id}`,
       quantity: li.quantity,
       unit_price: parseFloat(li.price),
@@ -408,12 +429,12 @@ async function handleFulfillment(brandId: string, payload: {
 }) {
   if (!payload.tracking_number) return
 
-  // Find the order by Shopify order ID in notes
+  // Find the order by external_ref (set during order upsert)
   const { data: order } = await supabase
     .from('orders')
     .select('id')
     .eq('brand_id', brandId)
-    .ilike('notes', `%Shopify Order ID: ${payload.order_id}%`)
+    .eq('external_ref', `shopify_${payload.order_id}`)
     .single()
 
   if (!order) return

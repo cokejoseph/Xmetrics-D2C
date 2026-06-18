@@ -633,7 +633,6 @@ function FeaturesSection() {
               </div>
               <div className="flex items-center gap-2 mb-2">
                 <h3 className="font-bold text-gray-900 text-lg">Returns &amp; Refunds</h3>
-                <span className="text-[9px] font-bold bg-green-100 text-green-700 px-1.5 py-0.5 rounded-full tracking-wide">NEW</span>
               </div>
               <p className="text-gray-500 text-sm leading-relaxed">
                 Eligibility checks, fraud flags, Shiprocket reverse pickup, and one-click Razorpay

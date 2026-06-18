@@ -52,8 +52,11 @@ export function generateDailyBrief(
     }
   }
 
-  const estimatedShippingCost = dayOrders.length * 60
-  const trueProfit = totalRevenue - cogs - estimatedShippingCost
+  const totalShippingCost = dayOrders.reduce(
+    (sum, o) => sum + (o.shipping_cost ?? o.shipping_charge ?? 60),
+    0
+  )
+  const trueProfit = totalRevenue - cogs - totalShippingCost
   const trueMargin = totalRevenue > 0 ? (trueProfit / totalRevenue) * 100 : 0
 
   // Delivery health

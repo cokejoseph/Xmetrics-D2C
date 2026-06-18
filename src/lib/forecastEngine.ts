@@ -59,11 +59,15 @@ export function buildSKUForecast(products: Product[], orders: Order[]): {
           Math.round(avgDailyDemand * 45 - product.inventory_count)
         )
 
-        const reorderThresholdDays = product.reorder_threshold
+        // reorder_threshold is a unit count — convert to days-of-stock equivalent
+        // so we can compare apples-to-apples with daysOfStock
+        const thresholdDays = avgDailyDemand > 0
+          ? Math.round(product.reorder_threshold / avgDailyDemand)
+          : 14 // fallback: 14 days if no demand data
 
-        if (daysOfStock < reorderThresholdDays) {
+        if (daysOfStock < thresholdDays) {
           status = 'REORDER_NOW'
-        } else if (daysOfStock < reorderThresholdDays * 2) {
+        } else if (daysOfStock < thresholdDays * 2) {
           status = 'REORDER_SOON'
         } else {
           status = 'IN_STOCK'
