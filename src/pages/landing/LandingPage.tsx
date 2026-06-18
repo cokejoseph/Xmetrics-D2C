@@ -4,6 +4,7 @@ import {
   TrendingDown, Zap, MessageSquare,
   Check, ChevronDown, ArrowRight, Shield, Clock, X as XIcon,
   Truck, ShoppingCart, AlertTriangle, BarChart2, Users,
+  RotateCcw, Sparkles, TrendingUp,
 } from 'lucide-react'
 
 // ─── Scroll-triggered fade-in wrapper ────────────────────────────────────────
@@ -562,24 +563,119 @@ function AnnouncementBar({ onDismiss }: { onDismiss: () => void }) {
 // ─── Features — bento grid ────────────────────────────────────────────────────
 function FeaturesSection() {
   return (
-    <section id="features" className="py-24 bg-white">
-      <div className="max-w-5xl mx-auto px-6">
+    <section id="features" className="py-24 bg-white relative overflow-hidden">
+      <ParticleFieldLight />
+      <div className="max-w-5xl mx-auto px-6 relative">
         <AnimateIn className="text-center mb-14">
+          <div className="inline-flex items-center gap-2 bg-brand-50 text-brand-600 rounded-full px-3 py-1 text-xs font-semibold mb-5">
+            <Sparkles size={12} /> One platform, seven modules
+          </div>
           <h2 className="text-3xl font-bold text-gray-900 mb-4">Everything your ops team needs</h2>
           <p className="text-gray-500 max-w-xl mx-auto">
-            One platform that connects your tools and surfaces the right signal at the right time.
+            Xmetrics connects your tools and surfaces the right signal at the right time —
+            from the moment an order lands to the rupee that settles.
           </p>
         </AnimateIn>
 
         {/* Bento grid */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
 
-          {/* Wide bottom card */}
-          <AnimateIn className="md:col-span-3" delay={0}>
-            <SpotlightCard className="bento-glow bg-gray-950 text-white border border-white/5 rounded-2xl p-7 transition-all duration-200 hover:-translate-y-1">
+          {/* RTO Intelligence — large dark hero card spanning 2 cols */}
+          <AnimateIn className="md:col-span-2" delay={0}>
+            <SpotlightCard className="bento-glow group relative h-full bg-gradient-to-br from-gray-950 via-brand-950 to-gray-950 text-white border border-white/5 rounded-2xl p-7 transition-all duration-300 hover:-translate-y-1 overflow-hidden">
+              <div className="absolute -top-16 -right-16 w-56 h-56 bg-brand-500/20 rounded-full blur-3xl group-hover:bg-brand-500/30 transition-colors duration-500" />
+              <div className="relative">
+                <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-brand-400 to-brand-600 flex items-center justify-center mb-4 shadow-lg shadow-brand-600/30">
+                  <Shield size={20} className="text-white" />
+                </div>
+                <h3 className="font-bold text-white text-lg mb-2">Real-time RTO Intelligence</h3>
+                <p className="text-white/50 text-sm leading-relaxed max-w-md mb-5">
+                  Every order scored 0–100 the instant it lands — pincode history, COD patterns,
+                  address quality, and customer track record fused into one Ship / Verify / Hold verdict.
+                </p>
+                <div className="flex items-center gap-3">
+                  {[
+                    { label: 'Ship', color: 'from-green-400 to-green-500', w: 'w-2/3' },
+                    { label: 'Verify', color: 'from-amber-400 to-amber-500', w: 'w-1/3' },
+                    { label: 'Hold', color: 'from-red-400 to-red-500', w: 'w-1/4' },
+                  ].map(b => (
+                    <div key={b.label} className="flex-1">
+                      <div className="h-1.5 rounded-full bg-white/10 overflow-hidden">
+                        <div className={`h-full bg-gradient-to-r ${b.color} ${b.w} rounded-full`} />
+                      </div>
+                      <span className="text-[10px] text-white/40 font-medium mt-1 block">{b.label}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </SpotlightCard>
+          </AnimateIn>
+
+          {/* Daily Brief — accent gradient card */}
+          <AnimateIn delay={80}>
+            <SpotlightCard className="bento-glow group h-full bg-gradient-to-br from-brand-600 to-brand-800 text-white border border-brand-500/30 rounded-2xl p-7 transition-all duration-300 hover:-translate-y-1 shadow-[0_8px_30px_rgba(37,99,235,0.25)] hover:shadow-[0_12px_44px_rgba(37,99,235,0.4)]">
+              <div className="w-11 h-11 rounded-xl bg-white/15 backdrop-blur flex items-center justify-center mb-4">
+                <MessageSquare size={20} className="text-white" />
+              </div>
+              <h3 className="font-bold text-white text-lg mb-2">8-minute Daily Brief</h3>
+              <p className="text-white/70 text-sm leading-relaxed">
+                Revenue, true profit, RTO health, and your action list — delivered to WhatsApp at 7 AM.
+                Two hours of reporting, compressed into eight minutes.
+              </p>
+            </SpotlightCard>
+          </AnimateIn>
+
+          {/* Returns — NEW module, light card */}
+          <AnimateIn delay={120}>
+            <SpotlightCard className="group h-full bg-gray-50 border border-gray-100 rounded-2xl p-7 transition-all duration-300 hover:-translate-y-1 hover:border-brand-200 hover:shadow-card">
+              <div className="w-11 h-11 rounded-xl bg-white border border-gray-100 shadow-sm flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-300">
+                <RotateCcw size={20} className="text-brand-600" />
+              </div>
+              <div className="flex items-center gap-2 mb-2">
+                <h3 className="font-bold text-gray-900 text-lg">Returns &amp; Refunds</h3>
+                <span className="text-[9px] font-bold bg-green-100 text-green-700 px-1.5 py-0.5 rounded-full tracking-wide">NEW</span>
+              </div>
+              <p className="text-gray-500 text-sm leading-relaxed">
+                Eligibility checks, fraud flags, Shiprocket reverse pickup, and one-click Razorpay
+                refunds — the full return lifecycle, automated end to end.
+              </p>
+            </SpotlightCard>
+          </AnimateIn>
+
+          {/* Exceptions — light card */}
+          <AnimateIn delay={160}>
+            <SpotlightCard className="group h-full bg-gray-50 border border-gray-100 rounded-2xl p-7 transition-all duration-300 hover:-translate-y-1 hover:border-amber-200 hover:shadow-card">
+              <div className="w-11 h-11 rounded-xl bg-white border border-gray-100 shadow-sm flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-300">
+                <AlertTriangle size={20} className="text-amber-500" />
+              </div>
+              <h3 className="font-bold text-gray-900 text-lg mb-2">Exception Radar</h3>
+              <p className="text-gray-500 text-sm leading-relaxed">
+                Stuck shipments, failed payments, NDR escalations, low stock — caught and queued
+                before your customer ever notices.
+              </p>
+            </SpotlightCard>
+          </AnimateIn>
+
+          {/* Demand Forecast — light card */}
+          <AnimateIn delay={200}>
+            <SpotlightCard className="group h-full bg-gray-50 border border-gray-100 rounded-2xl p-7 transition-all duration-300 hover:-translate-y-1 hover:border-green-200 hover:shadow-card">
+              <div className="w-11 h-11 rounded-xl bg-white border border-gray-100 shadow-sm flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-300">
+                <TrendingUp size={20} className="text-green-500" />
+              </div>
+              <h3 className="font-bold text-gray-900 text-lg mb-2">Demand Forecast</h3>
+              <p className="text-gray-500 text-sm leading-relaxed">
+                Per-SKU velocity and stockout dates from your last 30 days of sales —
+                reorder before you run dry, never sit on dead stock.
+              </p>
+            </SpotlightCard>
+          </AnimateIn>
+
+          {/* Fulfillment — wide bottom card */}
+          <AnimateIn className="md:col-span-3" delay={240}>
+            <SpotlightCard className="bento-glow bg-gray-950 text-white border border-white/5 rounded-2xl p-7 transition-all duration-300 hover:-translate-y-1">
               <div className="flex flex-col md:flex-row md:items-center gap-6">
                 <div className="flex-1">
-                  <div className="w-10 h-10 rounded-xl bg-white/10 flex items-center justify-center mb-4">
+                  <div className="w-11 h-11 rounded-xl bg-white/10 flex items-center justify-center mb-4">
                     <Truck size={20} className="text-sky-400" />
                   </div>
                   <h3 className="font-bold text-white text-lg mb-2">Fulfillment Workflow — 7 stages</h3>

@@ -6,6 +6,7 @@ export default {
     extend: {
       colors: {
         brand: {
+          950: '#172554',
           900: '#1E3A8A',
           800: '#1E40AF',
           700: '#1D4ED8',
