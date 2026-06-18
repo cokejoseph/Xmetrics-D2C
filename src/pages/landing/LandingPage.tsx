@@ -976,8 +976,8 @@ export default function LandingPage() {
 
           {/* Hero pain card */}
           <AnimateIn className="mb-4">
-            <div className="relative bg-brand-900 rounded-2xl p-8 overflow-hidden hover:-translate-y-0.5 transition-transform duration-300 border border-brand-800/40">
-              <div className="absolute inset-0 bg-gradient-to-br from-brand-800/30 to-transparent pointer-events-none rounded-2xl" />
+            <div className="relative bg-gradient-to-br from-[#1a3a6e] to-[#0d1a3a] rounded-2xl p-8 overflow-hidden hover:-translate-y-1 transition-all duration-300 border border-white/[0.08] shadow-[0_8px_32px_rgba(29,78,216,0.25)] hover:shadow-[0_16px_48px_rgba(29,78,216,0.38)]">
+              <div className="absolute inset-0 bg-gradient-to-tr from-sky-500/[0.07] to-transparent pointer-events-none rounded-2xl" />
               <span className="absolute right-6 top-3 text-[110px] font-black text-white/[0.09] select-none leading-none tracking-tight pointer-events-none">40×</span>
               <span className="text-[10px] font-bold uppercase tracking-widest text-red-400 mb-3 block relative">Tab switching — every day</span>
               <h3 className="text-2xl font-bold text-white mb-3 relative">No unified order view</h3>
@@ -993,7 +993,7 @@ export default function LandingPage() {
               { stat: '∞', label: 'alerts you never see', icon: <AlertTriangle size={15} className="text-red-400" />, title: 'Exceptions arrive too late', desc: 'Stuck shipments, NDR escalations, failed payments — found out after the customer complains.' },
             ].map((item, i) => (
               <AnimateIn key={item.title} delay={100 + i * 80}>
-                <div className="bg-white border border-gray-200 rounded-2xl p-6 h-full hover:border-brand-200 hover:shadow-sm transition-all duration-200">
+                <div className="bg-white border border-gray-200 rounded-2xl p-6 h-full hover:border-brand-200 hover:shadow-md hover:-translate-y-1 transition-all duration-200">
                   <p className="text-3xl font-black text-gray-900 leading-none mb-0.5">{item.stat}</p>
                   <p className="text-[10px] font-semibold uppercase tracking-wide text-gray-400 mb-4">{item.label}</p>
                   <div className="flex items-center gap-1.5 mb-2">
