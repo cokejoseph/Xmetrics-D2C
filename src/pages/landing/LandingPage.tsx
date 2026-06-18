@@ -543,8 +543,7 @@ function AnnouncementBar({ onDismiss }: { onDismiss: () => void }) {
       <span className="text-white/80">
         <span className="font-semibold text-white">Founding access</span>
         {' — '}<span className="font-semibold text-amber-300">₹2,999/mo for life</span>
-        {' · '}37 founders enrolled
-        {' · '}<span className="font-semibold text-white">Only 8 spots left</span>
+        {' · '}<span className="font-semibold text-white">Only 5 spots left</span>
         <Link to="/checkout?plan=GROWTH" className="ml-2 underline underline-offset-2 font-semibold text-brand-300 hover:text-white transition-colors">
           Claim spot →
         </Link>
@@ -567,15 +566,30 @@ function FeaturesSection() {
     <section id="features" className="py-24 bg-white relative overflow-hidden">
       <ParticleFieldLight />
       <div className="max-w-5xl mx-auto px-6 relative">
-        <AnimateIn className="text-center mb-14">
-          <div className="inline-flex items-center gap-2 bg-brand-50 text-brand-600 rounded-full px-3 py-1 text-xs font-semibold mb-5">
-            <Sparkles size={12} /> One platform, seven modules
+        <AnimateIn className="mb-14">
+          <div className="flex flex-col md:flex-row md:items-end justify-between gap-8">
+            <div>
+              <span className="text-[11px] font-bold uppercase tracking-widest text-brand-500">Platform</span>
+              <h2 className="text-4xl font-bold text-gray-900 mt-3 mb-4 max-w-lg leading-tight">Everything your ops team needs</h2>
+              <p className="text-gray-500 max-w-lg text-[15px] leading-relaxed">
+                Seven modules. One dashboard. From the moment an order lands to the rupee that settles.
+              </p>
+            </div>
+            <div className="shrink-0 flex gap-8 md:pb-1">
+              <div>
+                <p className="text-3xl font-black text-gray-900">7</p>
+                <p className="text-[10px] text-gray-400 mt-0.5 uppercase tracking-widest font-semibold">Modules</p>
+              </div>
+              <div>
+                <p className="text-3xl font-black text-gray-900">1</p>
+                <p className="text-[10px] text-gray-400 mt-0.5 uppercase tracking-widest font-semibold">Dashboard</p>
+              </div>
+              <div>
+                <p className="text-3xl font-black text-gray-900">8m</p>
+                <p className="text-[10px] text-gray-400 mt-0.5 uppercase tracking-widest font-semibold">Daily ops</p>
+              </div>
+            </div>
           </div>
-          <h2 className="text-3xl font-bold text-gray-900 mb-4">Everything your ops team needs</h2>
-          <p className="text-gray-500 max-w-xl mx-auto">
-            Xmetrics connects your tools and surfaces the right signal at the right time —
-            from the moment an order lands to the rupee that settles.
-          </p>
         </AnimateIn>
 
         {/* Bento grid */}
@@ -1025,7 +1039,7 @@ export default function LandingPage() {
           {/* Hero pain card */}
           <AnimateIn className="mb-4">
             <div className="relative bg-gray-950 rounded-2xl p-8 overflow-hidden hover:-translate-y-0.5 transition-transform duration-300">
-              <span className="absolute right-6 top-3 text-[110px] font-black text-white/[0.04] select-none leading-none tracking-tight pointer-events-none">40×</span>
+              <span className="absolute right-6 top-3 text-[110px] font-black text-white/[0.11] select-none leading-none tracking-tight pointer-events-none">40×</span>
               <span className="text-[10px] font-bold uppercase tracking-widest text-red-400 mb-3 block">Tab switching — every day</span>
               <h3 className="text-2xl font-bold text-white mb-3">No unified order view</h3>
               <p className="text-white/40 max-w-lg text-sm leading-relaxed">Order status in Shopify. Tracking in Shiprocket. Payment in Razorpay. Your ops team switches context{' '}
@@ -1123,28 +1137,21 @@ export default function LandingPage() {
       <ComparisonTable />
 
       {/* ── PRICING ────────────────────────────────────────────────────── */}
-      <section id="pricing" className="py-24 bg-[#060610] relative overflow-hidden">
-        <ParticleField />
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[700px] h-[400px] bg-brand-600/10 rounded-full blur-3xl pointer-events-none" />
-        <div className="max-w-5xl mx-auto px-6 relative">
+      <section id="pricing" className="py-24 bg-white relative overflow-hidden">
+        <div className="max-w-5xl mx-auto px-6">
           <AnimateIn className="text-center mb-12">
-            <h2 className="text-3xl font-bold text-white mb-4">Simple, transparent pricing</h2>
-            <p className="text-white/40">One plan for growing D2C brands. Additional plans available inside the app.</p>
+            <h2 className="text-3xl font-bold text-gray-900 mb-4">Simple, transparent pricing</h2>
+            <p className="text-gray-500">One plan for growing D2C brands. Additional plans available inside the app.</p>
           </AnimateIn>
 
           <AnimateIn className="max-w-md mx-auto">
-            <div className="relative rounded-2xl border border-brand-500/40 bg-gradient-to-br from-brand-600 to-brand-800 text-white shadow-[0_16px_60px_rgba(37,99,235,0.4)] p-8 hover:-translate-y-1 transition-transform duration-300">
+            <div className="relative rounded-2xl border border-white/[0.07] bg-gradient-to-br from-[#1A1A2E] via-[#16213E] to-[#0F1F45] text-white shadow-[0_24px_64px_rgba(10,15,50,0.55)] p-8 hover:-translate-y-1 transition-transform duration-300">
+              <div className="absolute inset-0 rounded-2xl bg-gradient-to-tr from-brand-500/[0.06] to-transparent pointer-events-none" />
 
-              {/* Spot counter */}
-              <div className="bg-white/10 border border-white/10 rounded-xl p-4 mb-7">
-                <div className="flex items-center justify-between text-xs mb-2">
-                  <span className="text-white/60">Founder spots claimed</span>
-                  <span className="font-bold text-amber-300">Only 8 left</span>
-                </div>
-                <div className="h-2 bg-white/15 rounded-full overflow-hidden">
-                  <div className="h-full bg-gradient-to-r from-amber-400 to-amber-300 rounded-full" style={{ width: '82%' }} />
-                </div>
-                <p className="text-[10px] text-white/40 mt-1.5">37 of 45 founder spots taken</p>
+              {/* Spot badge */}
+              <div className="inline-flex items-center gap-2 bg-amber-400/15 border border-amber-400/25 rounded-full px-3 py-1 mb-7">
+                <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse" />
+                <span className="text-xs font-bold text-amber-300">Only 5 spots left</span>
               </div>
 
               <h3 className="font-bold text-white text-xl mb-1">Growth Plan</h3>
@@ -1220,7 +1227,7 @@ export default function LandingPage() {
             </span>
           </h2>
           <p className="text-white/50 mb-10 text-lg leading-relaxed">
-            Connect your store in 10 minutes.<br />8 founder spots remaining.
+            Connect your store in 10 minutes.<br />5 founder spots remaining.
           </p>
           <div className="flex flex-col sm:flex-row items-center justify-center gap-5">
             <MagneticLink to="/checkout?plan=GROWTH"
