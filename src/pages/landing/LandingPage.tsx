@@ -523,29 +523,11 @@ function FeaturesSection() {
       <ParticleFieldLight />
       <div className="max-w-5xl mx-auto px-6 relative">
         <AnimateIn className="mb-14">
-          <div className="flex flex-col md:flex-row md:items-end justify-between gap-8">
-            <div>
-              <span className="text-[11px] font-bold uppercase tracking-widest text-brand-500">Platform</span>
-              <h2 className="text-4xl font-bold text-gray-900 mt-3 mb-4 max-w-lg leading-tight">Everything your ops team needs</h2>
-              <p className="text-gray-500 max-w-lg text-[15px] leading-relaxed">
-                Seven modules. One dashboard. From the moment an order lands to the rupee that settles.
-              </p>
-            </div>
-            <div className="shrink-0 flex gap-8 md:pb-1">
-              <div>
-                <p className="text-3xl font-black text-gray-900">7</p>
-                <p className="text-[10px] text-gray-400 mt-0.5 uppercase tracking-widest font-semibold">Modules</p>
-              </div>
-              <div>
-                <p className="text-3xl font-black text-gray-900">1</p>
-                <p className="text-[10px] text-gray-400 mt-0.5 uppercase tracking-widest font-semibold">Dashboard</p>
-              </div>
-              <div>
-                <p className="text-3xl font-black text-gray-900">8m</p>
-                <p className="text-[10px] text-gray-400 mt-0.5 uppercase tracking-widest font-semibold">Daily ops</p>
-              </div>
-            </div>
-          </div>
+          <span className="text-[11px] font-bold uppercase tracking-widest text-brand-500">Platform</span>
+          <h2 className="text-4xl font-bold text-gray-900 mt-3 mb-4 max-w-lg leading-tight">Everything your ops team needs</h2>
+          <p className="text-gray-500 max-w-lg text-[15px] leading-relaxed">
+            From the moment an order lands to the rupee that settles — one dashboard, seven modules.
+          </p>
         </AnimateIn>
 
         {/* Bento grid */}
@@ -596,15 +578,13 @@ function FeaturesSection() {
             </SpotlightCard>
           </AnimateIn>
 
-          {/* Returns — NEW module, light card */}
+          {/* Returns — blue tint */}
           <AnimateIn delay={120}>
-            <SpotlightCard className="group h-full bg-gray-50 border border-gray-100 rounded-2xl p-7 transition-all duration-300 hover:-translate-y-1 hover:border-brand-200 hover:shadow-card">
-              <div className="w-11 h-11 rounded-xl bg-white border border-gray-100 shadow-sm flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-300">
+            <SpotlightCard className="group h-full bg-sky-50/60 border border-sky-100 rounded-2xl p-7 transition-all duration-300 hover:-translate-y-1 hover:border-sky-200 hover:bg-sky-50 hover:shadow-card">
+              <div className="w-11 h-11 rounded-xl bg-brand-100 border border-brand-200/60 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-300">
                 <RotateCcw size={20} className="text-brand-600" />
               </div>
-              <div className="flex items-center gap-2 mb-2">
-                <h3 className="font-bold text-gray-900 text-lg">Returns &amp; Refunds</h3>
-              </div>
+              <h3 className="font-bold text-gray-900 text-lg mb-2">Returns &amp; Refunds</h3>
               <p className="text-gray-500 text-sm leading-relaxed">
                 Eligibility checks, fraud flags, Shiprocket reverse pickup, and one-click Razorpay
                 refunds — the full return lifecycle, automated end to end.
@@ -612,11 +592,11 @@ function FeaturesSection() {
             </SpotlightCard>
           </AnimateIn>
 
-          {/* Exceptions — light card */}
+          {/* Exceptions — amber tint */}
           <AnimateIn delay={160}>
-            <SpotlightCard className="group h-full bg-gray-50 border border-gray-100 rounded-2xl p-7 transition-all duration-300 hover:-translate-y-1 hover:border-amber-200 hover:shadow-card">
-              <div className="w-11 h-11 rounded-xl bg-white border border-gray-100 shadow-sm flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-300">
-                <AlertTriangle size={20} className="text-amber-500" />
+            <SpotlightCard className="group h-full bg-amber-50/60 border border-amber-100 rounded-2xl p-7 transition-all duration-300 hover:-translate-y-1 hover:border-amber-200 hover:bg-amber-50 hover:shadow-card">
+              <div className="w-11 h-11 rounded-xl bg-amber-100 border border-amber-200/60 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-300">
+                <AlertTriangle size={20} className="text-amber-600" />
               </div>
               <h3 className="font-bold text-gray-900 text-lg mb-2">Exception Radar</h3>
               <p className="text-gray-500 text-sm leading-relaxed">
@@ -626,11 +606,11 @@ function FeaturesSection() {
             </SpotlightCard>
           </AnimateIn>
 
-          {/* Demand Forecast — light card */}
+          {/* Demand Forecast — green tint */}
           <AnimateIn delay={200}>
-            <SpotlightCard className="group h-full bg-gray-50 border border-gray-100 rounded-2xl p-7 transition-all duration-300 hover:-translate-y-1 hover:border-green-200 hover:shadow-card">
-              <div className="w-11 h-11 rounded-xl bg-white border border-gray-100 shadow-sm flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-300">
-                <TrendingUp size={20} className="text-green-500" />
+            <SpotlightCard className="group h-full bg-green-50/60 border border-green-100 rounded-2xl p-7 transition-all duration-300 hover:-translate-y-1 hover:border-green-200 hover:bg-green-50 hover:shadow-card">
+              <div className="w-11 h-11 rounded-xl bg-green-100 border border-green-200/60 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-300">
+                <TrendingUp size={20} className="text-green-600" />
               </div>
               <h3 className="font-bold text-gray-900 text-lg mb-2">Demand Forecast</h3>
               <p className="text-gray-500 text-sm leading-relaxed">
