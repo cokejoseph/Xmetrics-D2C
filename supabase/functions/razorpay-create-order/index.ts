@@ -12,7 +12,7 @@ Deno.serve(async (req) => {
   }
 
   try {
-    const { amount, currency = 'INR', receipt, email, plan } = await req.json()
+    const { amount, currency = 'INR', receipt, email, plan, billing_cycle } = await req.json()
 
     if (!amount || amount < 100) {
       return new Response(
@@ -45,8 +45,9 @@ Deno.serve(async (req) => {
         receipt: receipt ?? `xm_${Date.now()}`,
         // Attach email + plan in notes so webhook can identify subscription payments
         notes: {
-          ...(email ? { email } : {}),
-          ...(plan  ? { plan  } : {}),
+          ...(email         ? { email }         : {}),
+          ...(plan          ? { plan  }          : {}),
+          ...(billing_cycle ? { billing_cycle }  : {}),
         },
       }),
     })
@@ -68,11 +69,12 @@ Deno.serve(async (req) => {
         Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
       )
       await supabase.from('subscriptions').upsert({
-        email: email.toLowerCase().trim(),
+        email:             email.toLowerCase().trim(),
         plan,
+        billing_cycle:     billing_cycle ?? 'MONTHLY',
         razorpay_order_id: order.id,
-        amount: amount / 100,
-        status: 'PENDING',
+        amount:            amount / 100,
+        status:            'PENDING',
       }, { onConflict: 'razorpay_order_id' })
     }
 

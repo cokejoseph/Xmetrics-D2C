@@ -420,3 +420,59 @@ export interface SearchResult {
   url: string
 }
 
+// ─── Returns ───────────────────────────────────────────────────────────────
+
+export type ReturnReason =
+  | 'damaged'
+  | 'wrong_item'
+  | 'changed_mind'
+  | 'defective'
+  | 'size_issue'
+
+export type ReturnStatus =
+  | 'PENDING_APPROVAL'
+  | 'AUTO_DENIED'
+  | 'APPROVED'
+  | 'LABEL_GENERATED'
+  | 'IN_TRANSIT'
+  | 'RECEIVED'
+  | 'REFUND_INITIATED'
+  | 'COMPLETED'
+  | 'LOST'
+
+export type ReturnCondition = 'GOOD' | 'DAMAGED' | 'DEFECTIVE' | 'LOST'
+
+export interface Return {
+  id: string
+  brand_id: string
+  order_id: string
+  customer_id: string
+  return_reason: ReturnReason
+  customer_comment: string | null
+  status: ReturnStatus
+  denial_reason: string | null
+  return_condition: ReturnCondition | null
+  return_eligible_for_resale: boolean
+  return_window_days: number
+  return_initiation_date: string
+  return_approved_date: string | null
+  return_approved_by: string | null
+  return_approval_notes: string | null
+  shiprocket_awb_number: string | null
+  shiprocket_order_id: string | null
+  shiprocket_label_url: string | null
+  shiprocket_error: string | null
+  expected_return_delivery: string | null
+  actual_return_received_date: string | null
+  refund_amount: number | null
+  refund_method: 'RAZORPAY' | 'COD_REVERSAL' | null
+  razorpay_refund_id: string | null
+  cod_refund_status: 'PENDING' | 'SENT' | 'CONFIRMED' | null
+  inventory_updated_at: string | null
+  created_at: string
+  updated_at: string
+  // populated relations
+  order?: Order
+  customer?: Customer
+}
+

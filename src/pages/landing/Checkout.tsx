@@ -126,7 +126,24 @@ export default function Checkout() {
         prefill: { name: name.trim() || undefined, email: email.trim() },
         theme: { color: '#2563EB' },
         modal: { ondismiss: () => setLoading(false) },
-        handler: async () => {
+        handler: async (response: {
+          razorpay_payment_id: string
+          razorpay_order_id: string
+          razorpay_signature: string
+        }) => {
+          // Verify HMAC signature server-side before granting access
+          try {
+            const verified = await callEdgeFunction('razorpay-verify-payment', {
+              razorpay_order_id:  response.razorpay_order_id,
+              razorpay_payment_id: response.razorpay_payment_id,
+              razorpay_signature:  response.razorpay_signature,
+            }) as { verified?: boolean } | null
+            if (!verified?.verified) throw new Error('Signature mismatch')
+          } catch {
+            setError('Payment signature verification failed. Your payment was captured — please contact hello@xmetrics.app with your email and we will activate your account.')
+            setLoading(false)
+            return
+          }
           setLoading(false)
           setDone(true)
           setTimeout(() => {
