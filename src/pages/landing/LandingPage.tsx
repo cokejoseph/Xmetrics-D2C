@@ -3,8 +3,7 @@ import { Link } from 'react-router-dom'
 import {
   TrendingDown, Zap, MessageSquare,
   Check, ChevronDown, ArrowRight, Shield, Clock, X as XIcon,
-  Truck, ShoppingCart, AlertTriangle, BarChart2, Users,
-  RotateCcw, TrendingUp,
+  ShoppingCart, AlertTriangle, BarChart2, Users,
 } from 'lucide-react'
 
 // ─── Scroll-triggered fade-in wrapper ────────────────────────────────────────
@@ -77,151 +76,6 @@ function SpotlightCard({ className = '', children }: { className?: string; child
   )
 }
 
-// ─── Word-by-word reveal ──────────────────────────────────────────────────────
-function RevealWords({ text, baseDelay = 0 }: { text: string; baseDelay?: number }) {
-  const words = text.split(' ')
-  return (
-    <>
-      {words.map((word, i) => (
-        <span key={i} className="word-reveal-wrap" style={{ marginRight: i < words.length - 1 ? '0.28em' : 0 }}>
-          <span className="word-reveal" style={{ animationDelay: `${baseDelay + i * 75}ms` }}>
-            {word}
-          </span>
-        </span>
-      ))}
-    </>
-  )
-}
-
-// ─── Typewriter — cycles through phrases ─────────────────────────────────────
-function TypeWriter({ phrases }: { phrases: string[] }) {
-  const [phraseIdx, setPhraseIdx] = useState(0)
-  const [charIdx, setCharIdx] = useState(0)
-  const [deleting, setDeleting] = useState(false)
-
-  useEffect(() => {
-    const current = phrases[phraseIdx]
-    const delay = deleting ? 38 : charIdx === current.length ? 2200 : 68
-    const t = setTimeout(() => {
-      if (!deleting && charIdx < current.length) {
-        setCharIdx(c => c + 1)
-      } else if (!deleting && charIdx === current.length) {
-        setDeleting(true)
-      } else if (deleting && charIdx > 0) {
-        setCharIdx(c => c - 1)
-      } else {
-        setDeleting(false)
-        setPhraseIdx(i => (i + 1) % phrases.length)
-      }
-    }, delay)
-    return () => clearTimeout(t)
-  }, [charIdx, deleting, phraseIdx, phrases])
-
-  return (
-    <span className="text-brand-300">
-      {phrases[phraseIdx].slice(0, charIdx)}
-      <span className="animate-cursor-blink text-white/60">|</span>
-    </span>
-  )
-}
-
-// ─── Particle network — dark hero backdrop ────────────────────────────────────
-function ParticleField() {
-  const canvasRef = useRef<HTMLCanvasElement>(null)
-  useEffect(() => {
-    const canvas = canvasRef.current
-    if (!canvas) return
-    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return
-    const ctx = canvas.getContext('2d')
-    if (!ctx) return
-    const dpr = Math.min(window.devicePixelRatio || 1, 2)
-    const resize = () => { canvas.width = canvas.offsetWidth * dpr; canvas.height = canvas.offsetHeight * dpr }
-    resize()
-    window.addEventListener('resize', resize)
-    const N = 68
-    const pts = Array.from({ length: N }, () => ({
-      x: Math.random() * canvas.width, y: Math.random() * canvas.height,
-      vx: (Math.random() - 0.5) * 0.22 * dpr, vy: (Math.random() - 0.5) * 0.22 * dpr,
-      r: (Math.random() * 1.6 + 0.6) * dpr,
-    }))
-    const LINK = 150 * dpr
-    let raf = 0
-    const tick = () => {
-      ctx.clearRect(0, 0, canvas.width, canvas.height)
-      for (const p of pts) {
-        p.x += p.vx; p.y += p.vy
-        if (p.x < 0 || p.x > canvas.width) p.vx *= -1
-        if (p.y < 0 || p.y > canvas.height) p.vy *= -1
-      }
-      for (let i = 0; i < N; i++) {
-        for (let j = i + 1; j < N; j++) {
-          const dx = pts[i].x - pts[j].x, dy = pts[i].y - pts[j].y
-          const d = Math.hypot(dx, dy)
-          if (d < LINK) {
-            ctx.strokeStyle = `rgba(147,197,253,${(1 - d / LINK) * 0.35})`
-            ctx.lineWidth = 0.7 * dpr
-            ctx.beginPath(); ctx.moveTo(pts[i].x, pts[i].y); ctx.lineTo(pts[j].x, pts[j].y); ctx.stroke()
-          }
-        }
-      }
-      ctx.fillStyle = 'rgba(186,230,253,0.8)'
-      for (const p of pts) { ctx.beginPath(); ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2); ctx.fill() }
-      raf = requestAnimationFrame(tick)
-    }
-    raf = requestAnimationFrame(tick)
-    return () => { cancelAnimationFrame(raf); window.removeEventListener('resize', resize) }
-  }, [])
-  return <canvas ref={canvasRef} className="absolute inset-0 w-full h-full opacity-80 pointer-events-none" />
-}
-
-function ParticleFieldLight() {
-  const canvasRef = useRef<HTMLCanvasElement>(null)
-  useEffect(() => {
-    const canvas = canvasRef.current
-    if (!canvas) return
-    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return
-    const ctx = canvas.getContext('2d')
-    if (!ctx) return
-    const dpr = Math.min(window.devicePixelRatio || 1, 2)
-    const resize = () => { canvas.width = canvas.offsetWidth * dpr; canvas.height = canvas.offsetHeight * dpr }
-    resize()
-    window.addEventListener('resize', resize)
-    const N = 22
-    const pts = Array.from({ length: N }, () => ({
-      x: Math.random() * canvas.width, y: Math.random() * canvas.height,
-      vx: (Math.random() - 0.5) * 0.12 * dpr, vy: (Math.random() - 0.5) * 0.12 * dpr,
-      r: (Math.random() * 1.1 + 0.4) * dpr,
-    }))
-    const LINK = 110 * dpr
-    let raf = 0
-    const tick = () => {
-      ctx.clearRect(0, 0, canvas.width, canvas.height)
-      for (const p of pts) {
-        p.x += p.vx; p.y += p.vy
-        if (p.x < 0 || p.x > canvas.width) p.vx *= -1
-        if (p.y < 0 || p.y > canvas.height) p.vy *= -1
-      }
-      for (let i = 0; i < N; i++) {
-        for (let j = i + 1; j < N; j++) {
-          const dx = pts[i].x - pts[j].x, dy = pts[i].y - pts[j].y
-          const d = Math.hypot(dx, dy)
-          if (d < LINK) {
-            ctx.strokeStyle = `rgba(37,99,235,${(1 - d / LINK) * 0.08})`
-            ctx.lineWidth = 0.5 * dpr
-            ctx.beginPath(); ctx.moveTo(pts[i].x, pts[i].y); ctx.lineTo(pts[j].x, pts[j].y); ctx.stroke()
-          }
-        }
-      }
-      ctx.fillStyle = 'rgba(37,99,235,0.18)'
-      for (const p of pts) { ctx.beginPath(); ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2); ctx.fill() }
-      raf = requestAnimationFrame(tick)
-    }
-    raf = requestAnimationFrame(tick)
-    return () => { cancelAnimationFrame(raf); window.removeEventListener('resize', resize) }
-  }, [])
-  return <canvas ref={canvasRef} className="absolute inset-0 w-full h-full opacity-40 pointer-events-none" />
-}
-
 // ─── Magnetic CTA ─────────────────────────────────────────────────────────────
 function MagneticLink({ to, className = '', children }: { to: string; className?: string; children: React.ReactNode }) {
   const ref = useRef<HTMLAnchorElement>(null)
@@ -241,8 +95,7 @@ function MagneticLink({ to, className = '', children }: { to: string; className?
   )
 }
 
-
-// ─── Hero dashboard mockup ────────────────────────────────────────────────────
+// ─── Hero dashboard mockup (simplified: KPIs + order feed) ───────────────────
 const ORDER_POOL = [
   { id: '#3412', name: 'Ananya S.', city: 'Bengaluru', amount: '₹1,249', method: 'UPI',  score: 12, verdict: 'SHIP'   },
   { id: '#3411', name: 'Rahul M.', city: 'Patna',     amount: '₹2,899', method: 'COD',  score: 78, verdict: 'HOLD'   },
@@ -260,16 +113,10 @@ const VERDICT_STYLE: Record<string, string> = {
 }
 function scoreColor(s: number) { return s >= 60 ? 'bg-red-400' : s >= 35 ? 'bg-amber-400' : 'bg-green-400' }
 
-const CHANNEL_BARS = [
-  { label: 'Shopify',   pct: 58, color: 'bg-brand-500' },
-  { label: 'WhatsApp',  pct: 27, color: 'bg-green-500' },
-  { label: 'Manual',    pct: 15, color: 'bg-amber-400' },
-]
-
 function HeroMockup() {
   const cardRef = useRef<HTMLDivElement>(null)
   const [revenue, setRevenue]       = useState(84320)
-  const [rtoTenths, setRtoTenths]   = useState(112)   // 112 = 11.2%
+  const [rtoTenths, setRtoTenths]   = useState(112)
   const [exceptions, setExceptions] = useState(3)
   const [feedIdx, setFeedIdx]       = useState(0)
 
@@ -286,7 +133,7 @@ function HeroMockup() {
     return () => { clearInterval(t1); clearInterval(t2); clearInterval(t3); clearInterval(t4) }
   }, [])
 
-  const feed = Array.from({ length: 3 }, (_, k) => ORDER_POOL[(feedIdx + k) % ORDER_POOL.length])
+  const feed = Array.from({ length: 4 }, (_, k) => ORDER_POOL[(feedIdx + k) % ORDER_POOL.length])
   const rtoDisplay = (rtoTenths / 10).toFixed(1) + '%'
 
   const handleMove = (e: React.MouseEvent<HTMLDivElement>) => {
@@ -298,7 +145,7 @@ function HeroMockup() {
   const handleLeave = () => { if (cardRef.current) cardRef.current.style.transform = 'rotateX(4deg)' }
 
   return (
-    <div className="relative max-w-3xl mx-auto animate-float-slow" style={{ perspective: '1200px' }}
+    <div className="relative max-w-2xl mx-auto animate-float-slow" style={{ perspective: '1200px' }}
       onMouseMove={handleMove} onMouseLeave={handleLeave}>
       <div className="absolute -inset-6 bg-brand-500/25 blur-3xl rounded-full" />
       <div ref={cardRef}
@@ -315,92 +162,48 @@ function HeroMockup() {
             </div>
           </div>
 
-          <div className="p-4 sm:p-5 grid grid-cols-1 sm:grid-cols-5 gap-4">
-            {/* Left column */}
-            <div className="sm:col-span-3 space-y-3">
-
-              {/* KPI row — all three now animate */}
-              <div className="grid grid-cols-3 gap-2.5">
-                <div className="bg-gray-50 rounded-xl p-2.5 border border-gray-100">
-                  <p className="text-[9px] text-gray-400 font-medium mb-0.5 truncate">Revenue Today</p>
-                  <p className="text-sm font-bold text-gray-900">
-                    <span key={revenue} className="animate-tick-flash">₹{revenue.toLocaleString('en-IN')}</span>
-                  </p>
-                  <p className="text-[9px] font-semibold text-green-500">+12.4%</p>
-                </div>
-                <div className="bg-gray-50 rounded-xl p-2.5 border border-gray-100">
-                  <p className="text-[9px] text-gray-400 font-medium mb-0.5 truncate">RTO Rate</p>
-                  <p className="text-sm font-bold text-gray-900">
-                    <span key={rtoTenths} className="animate-tick-flash">{rtoDisplay}</span>
-                  </p>
-                  <p className="text-[9px] font-semibold text-brand-500">
-                    {rtoTenths <= 105 ? '↓ improving' : '−8.1%'}
-                  </p>
-                </div>
-                <div className="bg-gray-50 rounded-xl p-2.5 border border-gray-100">
-                  <p className="text-[9px] text-gray-400 font-medium mb-0.5 truncate">Exceptions</p>
-                  <p className="text-sm font-bold text-gray-900">
-                    <span key={exceptions} className="animate-tick-flash">{exceptions}</span>
-                  </p>
-                  <p className="text-[9px] font-semibold text-brand-500">
-                    {exceptions > 3 ? `${exceptions - 3} new` : exceptions < 3 ? 'clearing' : '2 new'}
-                  </p>
-                </div>
+          <div className="p-4 sm:p-5 space-y-3">
+            {/* KPI row */}
+            <div className="grid grid-cols-3 gap-2.5">
+              <div className="bg-gray-50 rounded-xl p-2.5 border border-gray-100">
+                <p className="text-[9px] text-gray-400 font-medium mb-0.5 truncate">Revenue Today</p>
+                <p className="text-sm font-bold text-gray-900">
+                  <span key={revenue} className="animate-tick-flash">₹{revenue.toLocaleString('en-IN')}</span>
+                </p>
+                <p className="text-[9px] font-semibold text-green-500">+12.4%</p>
               </div>
-
-              {/* Revenue area chart */}
-              <div className="bg-gray-50 rounded-xl p-3 border border-gray-100">
-                <div className="flex items-center justify-between mb-2">
-                  <p className="text-[10px] font-semibold text-gray-600">Revenue, 14 days</p>
-                  <span className="flex items-center gap-1 text-[9px] text-green-500 font-semibold">
-                    <span className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse-dot" /> Live
-                  </span>
-                </div>
-                <svg viewBox="0 0 300 72" className="w-full h-[72px]" preserveAspectRatio="none">
-                  <defs>
-                    <linearGradient id="heroChartFill" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="0%" stopColor="#3B82F6" stopOpacity="0.28" />
-                      <stop offset="100%" stopColor="#3B82F6" stopOpacity="0" />
-                    </linearGradient>
-                  </defs>
-                  <path className="animate-chart-fill"
-                    d="M0,56 C25,52 40,44 60,46 C85,48 95,34 120,36 C145,38 155,26 180,24 C205,22 215,30 240,20 C262,12 280,10 300,6 L300,72 L0,72 Z"
-                    fill="url(#heroChartFill)" />
-                  <path className="animate-draw-line"
-                    d="M0,56 C25,52 40,44 60,46 C85,48 95,34 120,36 C145,38 155,26 180,24 C205,22 215,30 240,20 C262,12 280,10 300,6"
-                    fill="none" stroke="#2563EB" strokeWidth="2" strokeLinecap="round" />
-                  {/* Axis labels */}
-                  {['Day 1','','','Day 7','','','Day 14'].map((l, i) => l ? (
-                    <text key={i} x={i * 50} y={70} fontSize="6" fill="#9CA3AF" textAnchor="middle">{l}</text>
-                  ) : null)}
-                </svg>
+              <div className="bg-gray-50 rounded-xl p-2.5 border border-gray-100">
+                <p className="text-[9px] text-gray-400 font-medium mb-0.5 truncate">RTO Rate</p>
+                <p className="text-sm font-bold text-gray-900">
+                  <span key={rtoTenths} className="animate-tick-flash">{rtoDisplay}</span>
+                </p>
+                <p className="text-[9px] font-semibold text-brand-500">
+                  {rtoTenths <= 105 ? '↓ improving' : 'scored live'}
+                </p>
               </div>
-
-              {/* Channel split — fills the empty bottom space */}
-              <div className="bg-gray-50 rounded-xl p-3 border border-gray-100">
-                <p className="text-[10px] font-semibold text-gray-600 mb-2">Channel split</p>
-                <div className="space-y-1.5">
-                  {CHANNEL_BARS.map((ch, i) => (
-                    <div key={ch.label} className="flex items-center gap-2">
-                      <span className="text-[9px] text-gray-400 w-14 shrink-0">{ch.label}</span>
-                      <div className="flex-1 h-1.5 bg-gray-200 rounded-full overflow-hidden">
-                        <div className={`h-full ${ch.color} rounded-full animate-score-fill`}
-                          style={{ width: `${ch.pct}%`, animationDelay: `${900 + i * 200}ms` }} />
-                      </div>
-                      <span className="text-[9px] text-gray-500 font-semibold w-7 text-right">{ch.pct}%</span>
-                    </div>
-                  ))}
-                </div>
+              <div className="bg-gray-50 rounded-xl p-2.5 border border-gray-100">
+                <p className="text-[9px] text-gray-400 font-medium mb-0.5 truncate">Exceptions</p>
+                <p className="text-sm font-bold text-gray-900">
+                  <span key={exceptions} className="animate-tick-flash">{exceptions}</span>
+                </p>
+                <p className="text-[9px] font-semibold text-brand-500">
+                  {exceptions > 3 ? `${exceptions - 3} new` : 'auto-flagged'}
+                </p>
               </div>
             </div>
 
-            {/* Right column — incoming orders */}
-            <div className="sm:col-span-2 bg-gray-50 rounded-xl p-3 border border-gray-100">
-              <p className="text-[10px] font-semibold text-gray-600 mb-2.5">Incoming Orders · RTO Score</p>
+            {/* Order feed — the core value prop */}
+            <div className="bg-gray-50 rounded-xl p-3 border border-gray-100">
+              <p className="text-[10px] font-semibold text-gray-600 mb-2.5">
+                Incoming Orders · RTO Score
+                <span className="ml-2 inline-flex items-center gap-1 text-[9px] text-green-500 font-semibold">
+                  <span className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse-dot" /> Live
+                </span>
+              </p>
               <div className="space-y-2">
                 {feed.map((o, i) => (
                   <div key={o.id} className="bg-white rounded-lg border border-gray-100 p-2 animate-slide-in-row"
-                    style={{ animationDelay: i === 0 && feedIdx > 0 ? '0ms' : `${800 + i * 250}ms` }}>
+                    style={{ animationDelay: i === 0 && feedIdx > 0 ? '0ms' : `${800 + i * 200}ms` }}>
                     <div className="flex items-center justify-between mb-1">
                       <span className="text-[10px] font-semibold text-gray-900">{o.name}</span>
                       <span className={`text-[8px] font-bold px-1.5 py-0.5 rounded border ${VERDICT_STYLE[o.verdict]}`}>{o.verdict}</span>
@@ -411,7 +214,7 @@ function HeroMockup() {
                     </div>
                     <div className="h-1 rounded-full bg-gray-100 overflow-hidden">
                       <div className={`h-full rounded-full animate-score-fill ${scoreColor(o.score)}`}
-                        style={{ width: `${o.score}%`, animationDelay: i === 0 && feedIdx > 0 ? '150ms' : `${1000 + i * 250}ms` }} />
+                        style={{ width: `${o.score}%`, animationDelay: i === 0 && feedIdx > 0 ? '150ms' : `${950 + i * 200}ms` }} />
                     </div>
                   </div>
                 ))}
@@ -419,16 +222,6 @@ function HeroMockup() {
             </div>
           </div>
         </div>
-      </div>
-
-      {/* Floating badges — top corners, outside the card on wider viewports */}
-      <div className="hidden lg:flex absolute -left-44 top-14 items-center gap-2 bg-white rounded-xl shadow-lg border border-gray-100 px-3 py-2 animate-float">
-        <Shield size={14} className="text-green-500" />
-        <span className="text-[11px] font-semibold text-gray-700">RTO blocked: ₹2,899 saved</span>
-      </div>
-      <div className="hidden lg:flex absolute -right-44 top-24 items-center gap-2 bg-white rounded-xl shadow-lg border border-gray-100 px-3 py-2 animate-float" style={{ animationDelay: '1.5s' }}>
-        <MessageSquare size={14} className="text-brand-500" />
-        <span className="text-[11px] font-semibold text-gray-700">Daily brief sent · 7:00 AM</span>
       </div>
     </div>
   )
@@ -498,8 +291,7 @@ function AnnouncementBar({ onDismiss }: { onDismiss: () => void }) {
       <span className="w-1.5 h-1.5 rounded-full bg-amber-400 shrink-0 announce-dot" />
       <span className="text-white/80">
         <span className="font-semibold text-white">Founding access</span>
-        {': '}<span className="font-semibold text-amber-300">₹2,999/mo for life</span>
-        {' · '}<span className="font-semibold text-white">Only 5 spots left</span>
+        {': '}<span className="font-semibold text-amber-300">₹2,999/mo locked for life</span>
         <Link to="/checkout?plan=GROWTH" className="ml-2 underline underline-offset-2 font-semibold text-brand-300 hover:text-white transition-colors">
           Claim spot →
         </Link>
@@ -515,156 +307,131 @@ function AnnouncementBar({ onDismiss }: { onDismiss: () => void }) {
   )
 }
 
+// ─── 3 Outcome blocks (replaces 6-card bento) ────────────────────────────────
+const OUTCOMES = [
+  {
+    stat: '35%',
+    statLabel: 'avg RTO reduction',
+    title: 'Stop absorbing RTO losses',
+    desc: 'Every order scored 0–100 on pincode history, COD patterns, address quality, and customer track record. Ship, Verify, or Hold in one click, before the order ships.',
+    icon: <Shield size={20} className="text-brand-600" />,
+    iconBg: 'bg-brand-100 border-brand-200/60',
+    border: 'hover:border-brand-200',
+  },
+  {
+    stat: '8 min',
+    statLabel: 'daily ops review',
+    title: 'End the morning chaos',
+    desc: 'Revenue, exceptions, fulfillment status, and refunds delivered to WhatsApp at 7 AM. Your entire ops picture in the time it takes to have chai.',
+    icon: <MessageSquare size={20} className="text-amber-600" />,
+    iconBg: 'bg-amber-100 border-amber-200/60',
+    border: 'hover:border-amber-200',
+  },
+  {
+    stat: '0',
+    statLabel: 'missed exceptions',
+    title: 'Know before your customer does',
+    desc: 'Stuck shipments, failed payments, NDR escalations, and low stock surface automatically, so you resolve them before a customer complaint arrives.',
+    icon: <AlertTriangle size={20} className="text-red-500" />,
+    iconBg: 'bg-red-100 border-red-200/60',
+    border: 'hover:border-red-200',
+  },
+]
 
-// ─── Features — bento grid ────────────────────────────────────────────────────
-function FeaturesSection() {
+function OutcomesSection() {
   return (
-    <section id="features" className="py-24 bg-white relative overflow-hidden">
-      <ParticleFieldLight />
-      <div className="max-w-5xl mx-auto px-6 relative">
+    <section id="features" className="py-24 bg-white">
+      <div className="max-w-5xl mx-auto px-6">
         <AnimateIn className="mb-14">
-          <span className="text-[11px] font-bold uppercase tracking-widest text-brand-500">Platform</span>
-          <h2 className="text-4xl font-bold text-gray-900 mt-3 mb-4 max-w-lg leading-tight">Everything your ops team needs</h2>
+          <span className="text-[11px] font-bold uppercase tracking-widest text-brand-500">What changes</span>
+          <h2 className="text-4xl font-bold text-gray-900 mt-3 mb-4 max-w-lg leading-tight">Three outcomes that matter</h2>
           <p className="text-gray-500 max-w-lg text-[15px] leading-relaxed">
-            From the moment an order lands to the rupee that settles. One dashboard, seven modules.
+            Connect your store in 10 minutes. From day one, these three things change for your ops team.
           </p>
         </AnimateIn>
 
-        {/* Bento grid */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-
-          {/* RTO Intelligence — large dark hero card spanning 2 cols */}
-          <AnimateIn className="md:col-span-2" delay={0}>
-            <SpotlightCard className="bento-glow group relative h-full bg-gradient-to-br from-gray-950 via-brand-950 to-gray-950 text-white border border-white/5 rounded-2xl p-7 transition-all duration-300 hover:-translate-y-1 overflow-hidden">
-              <div className="absolute -top-16 -right-16 w-56 h-56 bg-brand-500/20 rounded-full blur-3xl group-hover:bg-brand-500/30 transition-colors duration-500" />
-              <div className="relative">
-                <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-brand-400 to-brand-600 flex items-center justify-center mb-4 shadow-lg shadow-brand-600/30">
-                  <Shield size={20} className="text-white" />
+        <div className="grid md:grid-cols-3 gap-6">
+          {OUTCOMES.map((item, i) => (
+            <AnimateIn key={item.title} delay={i * 80}>
+              <SpotlightCard className={`group h-full bg-white border border-gray-100 rounded-2xl p-8 transition-all duration-300 hover:-translate-y-1 hover:shadow-card ${item.border}`}>
+                <div className={`w-11 h-11 rounded-xl border flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300 ${item.iconBg}`}>
+                  {item.icon}
                 </div>
-                <h3 className="font-bold text-white text-lg mb-2">Real-time RTO Intelligence</h3>
-                <p className="text-white/50 text-sm leading-relaxed max-w-md mb-5">
-                  Every order scored 0–100 the instant it lands: pincode history, COD patterns,
-                  address quality, and customer track record fused into one Ship / Verify / Hold verdict.
-                </p>
-                <div className="flex items-center gap-3">
-                  {[
-                    { label: 'Ship', color: 'from-green-400 to-green-500', w: 'w-2/3' },
-                    { label: 'Verify', color: 'from-amber-400 to-amber-500', w: 'w-1/3' },
-                    { label: 'Hold', color: 'from-red-400 to-red-500', w: 'w-1/4' },
-                  ].map(b => (
-                    <div key={b.label} className="flex-1">
-                      <div className="h-1.5 rounded-full bg-white/10 overflow-hidden">
-                        <div className={`h-full bg-gradient-to-r ${b.color} ${b.w} rounded-full`} />
-                      </div>
-                      <span className="text-[10px] text-white/40 font-medium mt-1 block">{b.label}</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </SpotlightCard>
-          </AnimateIn>
-
-          {/* Daily Brief — accent gradient card */}
-          <AnimateIn delay={80}>
-            <SpotlightCard className="bento-glow group h-full bg-gradient-to-br from-brand-600 to-brand-800 text-white border border-brand-500/30 rounded-2xl p-7 transition-all duration-300 hover:-translate-y-1 shadow-[0_8px_30px_rgba(37,99,235,0.25)] hover:shadow-[0_12px_44px_rgba(37,99,235,0.4)]">
-              <div className="w-11 h-11 rounded-xl bg-white/15 backdrop-blur flex items-center justify-center mb-4">
-                <MessageSquare size={20} className="text-white" />
-              </div>
-              <h3 className="font-bold text-white text-lg mb-2">8-minute Daily Brief</h3>
-              <p className="text-white/70 text-sm leading-relaxed">
-                Revenue, true profit, RTO health, and your action list. Delivered to WhatsApp at 7 AM.
-                Two hours of reporting, compressed into eight minutes.
-              </p>
-            </SpotlightCard>
-          </AnimateIn>
-
-          {/* Returns — blue tint */}
-          <AnimateIn delay={120}>
-            <SpotlightCard className="group h-full bg-sky-50/60 border border-sky-100 rounded-2xl p-7 transition-all duration-300 hover:-translate-y-1 hover:border-sky-200 hover:bg-sky-50 hover:shadow-card">
-              <div className="w-11 h-11 rounded-xl bg-brand-100 border border-brand-200/60 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-300">
-                <RotateCcw size={20} className="text-brand-600" />
-              </div>
-              <h3 className="font-bold text-gray-900 text-lg mb-2">Returns &amp; Refunds</h3>
-              <p className="text-gray-500 text-sm leading-relaxed">
-                Eligibility checks, fraud flags, Shiprocket reverse pickup, and one-click Razorpay
-                refunds. Full return lifecycle, automated end to end.
-              </p>
-            </SpotlightCard>
-          </AnimateIn>
-
-          {/* Exceptions — amber tint */}
-          <AnimateIn delay={160}>
-            <SpotlightCard className="group h-full bg-amber-50/60 border border-amber-100 rounded-2xl p-7 transition-all duration-300 hover:-translate-y-1 hover:border-amber-200 hover:bg-amber-50 hover:shadow-card">
-              <div className="w-11 h-11 rounded-xl bg-amber-100 border border-amber-200/60 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-300">
-                <AlertTriangle size={20} className="text-amber-600" />
-              </div>
-              <h3 className="font-bold text-gray-900 text-lg mb-2">Exception Radar</h3>
-              <p className="text-gray-500 text-sm leading-relaxed">
-                Stuck shipments, failed payments, NDR escalations, low stock. Caught before your customer ever notices.
-              </p>
-            </SpotlightCard>
-          </AnimateIn>
-
-          {/* Demand Forecast — green tint */}
-          <AnimateIn delay={200}>
-            <SpotlightCard className="group h-full bg-green-50/60 border border-green-100 rounded-2xl p-7 transition-all duration-300 hover:-translate-y-1 hover:border-green-200 hover:bg-green-50 hover:shadow-card">
-              <div className="w-11 h-11 rounded-xl bg-green-100 border border-green-200/60 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-300">
-                <TrendingUp size={20} className="text-green-600" />
-              </div>
-              <h3 className="font-bold text-gray-900 text-lg mb-2">Demand Forecast</h3>
-              <p className="text-gray-500 text-sm leading-relaxed">
-                Per-SKU velocity and stockout dates from your last 30 days of sales. Reorder before you run dry, never sit on dead stock.
-              </p>
-            </SpotlightCard>
-          </AnimateIn>
-
-          {/* Fulfillment — wide bottom card */}
-          <AnimateIn className="md:col-span-3" delay={240}>
-            <SpotlightCard className="bento-glow bg-brand-gradient text-white border border-white/[0.08] rounded-2xl p-7 transition-all duration-300 hover:-translate-y-1 shadow-[0_8px_32px_rgba(37,99,235,0.3)] hover:shadow-[0_16px_48px_rgba(37,99,235,0.45)]">
-              <div className="flex flex-col md:flex-row md:items-center gap-6">
-                <div className="flex-1">
-                  <div className="w-11 h-11 rounded-xl bg-white/15 backdrop-blur flex items-center justify-center mb-4">
-                    <Truck size={20} className="text-white" />
-                  </div>
-                  <h3 className="font-bold text-white text-lg mb-2">7-Stage Fulfillment Workflow</h3>
-                  <p className="text-white/70 text-sm leading-relaxed max-w-xl">
-                    From Packed to Dispatched to In Transit to Delivered. Bulk AWB generation, pickup scheduling,
-                    tracking updates, and COD reconciliation, all in one linear workflow.
-                  </p>
-                </div>
-                <div className="flex gap-2 flex-wrap md:flex-col md:items-end shrink-0">
-                  {['Bulk AWB generation', 'Pickup scheduling', 'COD reconciliation', 'NDR management'].map(tag => (
-                    <span key={tag} className="text-[10px] font-semibold bg-white/15 border border-white/20 text-white/80 px-2.5 py-1 rounded-full whitespace-nowrap">
-                      {tag}
-                    </span>
-                  ))}
-                </div>
-              </div>
-            </SpotlightCard>
-          </AnimateIn>
+                <div className="text-5xl font-black text-gray-900 leading-none mb-1">{item.stat}</div>
+                <div className="text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-5">{item.statLabel}</div>
+                <h3 className="font-bold text-gray-900 text-lg mb-3">{item.title}</h3>
+                <p className="text-gray-500 text-sm leading-relaxed">{item.desc}</p>
+              </SpotlightCard>
+            </AnimateIn>
+          ))}
         </div>
       </div>
     </section>
   )
 }
 
-// ─── Comparison table ─────────────────────────────────────────────────────────
+// ─── Social proof ─────────────────────────────────────────────────────────────
+// TODO: Replace placeholder quotes with real founder testimonials before launch
+const TESTIMONIALS = [
+  {
+    quote: "We cut RTOs from 26% to 14% in 8 weeks. The daily brief alone saved our ops team two hours every morning. I don't know how we ran the brand without it.",
+    name: 'Priya M.',
+    role: 'Founder',
+    brand: 'D2C Skincare Brand, Mumbai',
+    initials: 'PM',
+  },
+  {
+    quote: "I used to open Shopify, Shiprocket, and WhatsApp separately every morning. Now I check one dashboard and I'm done by 8 AM. The exception alerts are the best part. I know before the customer does.",
+    name: 'Rahul K.',
+    role: 'Co-founder',
+    brand: 'Health Supplements Brand, Bengaluru',
+    initials: 'RK',
+  },
+]
+
+function SocialProof() {
+  return (
+    <section className="py-24 bg-gray-50">
+      <div className="max-w-4xl mx-auto px-6">
+        <AnimateIn className="text-center mb-12">
+          <h2 className="text-3xl font-bold text-gray-900 mb-3">What founders say</h2>
+          <p className="text-gray-500">D2C brands using Xmetrics to run leaner ops.</p>
+        </AnimateIn>
+        <div className="grid md:grid-cols-2 gap-6">
+          {TESTIMONIALS.map((t, i) => (
+            <AnimateIn key={t.name} delay={i * 80}>
+              <div className="bg-white rounded-2xl p-8 border border-gray-200 shadow-sm h-full flex flex-col">
+                <p className="text-gray-700 text-[15px] leading-relaxed mb-6 flex-1">"{t.quote}"</p>
+                <div className="flex items-center gap-3">
+                  <div className="w-9 h-9 rounded-full bg-brand-100 flex items-center justify-center text-brand-700 text-xs font-bold shrink-0">
+                    {t.initials}
+                  </div>
+                  <div>
+                    <p className="font-semibold text-gray-900 text-sm">{t.name}</p>
+                    <p className="text-xs text-gray-400">{t.role}, {t.brand}</p>
+                  </div>
+                </div>
+              </div>
+            </AnimateIn>
+          ))}
+        </div>
+      </div>
+    </section>
+  )
+}
+
+// ─── Comparison table (5 rows, focused) ──────────────────────────────────────
 const COMPARE_ROWS: { feature: string; legacy: string | false; xm: string | true }[] = [
-  { feature: 'Unified order view',        legacy: false,              xm: true },
-  { feature: 'Real-time RTO scoring',     legacy: false,              xm: true },
-  { feature: 'Exception detection',       legacy: 'Manual',           xm: true },
-  { feature: 'Returns & refund automation', legacy: false,            xm: true },
-  { feature: 'Daily ops brief',           legacy: '2–3 hours',        xm: '8 min' },
-  { feature: '7-stage fulfillment',       legacy: 'Shiprocket only',  xm: true },
-  { feature: 'Demand forecasting',        legacy: false,              xm: true },
-  { feature: 'Payment reconciliation',    legacy: 'Excel',            xm: true },
-  { feature: 'WhatsApp integration',      legacy: false,              xm: true },
-  { feature: 'Pincode intelligence',      legacy: false,              xm: true },
+  { feature: 'Order visibility',       legacy: '4 separate tools',    xm: '1 unified view' },
+  { feature: 'RTO prevention',         legacy: false,                 xm: 'Scored per order' },
+  { feature: 'Daily ops review',       legacy: '2–3 hours',          xm: '8 min' },
+  { feature: 'Exception alerts',       legacy: 'Found by customers',  xm: true },
+  { feature: 'Returns & refunds',      legacy: 'Manual, fragmented',  xm: true },
 ]
 
 function ComparisonTable() {
   return (
-    <section className="py-24 bg-gray-50">
+    <section className="py-24 bg-white">
       <div className="max-w-3xl mx-auto px-6">
         <AnimateIn className="text-center mb-12">
           <h2 className="text-3xl font-bold text-gray-900 mb-4">Your current stack vs Xmetrics</h2>
@@ -673,28 +440,24 @@ function ComparisonTable() {
 
         <AnimateIn delay={100}>
           <div className="rounded-2xl overflow-hidden shadow-[0_4px_24px_rgba(0,0,0,0.08)] border border-gray-200">
-            {/* Header */}
             <div className="grid grid-cols-3 bg-gray-950">
               <div className="px-6 py-5">
                 <span className="text-[11px] font-semibold text-white/35 uppercase tracking-widest">Feature</span>
               </div>
               <div className="px-4 py-5 border-l border-white/[0.06] text-center">
-                <span className="text-[11px] font-semibold text-white/35 uppercase tracking-widest">Your current stack</span>
+                <span className="text-[11px] font-semibold text-white/35 uppercase tracking-widest">Without Xmetrics</span>
               </div>
               <div className="px-4 py-5 border-l border-white/[0.06] text-center bg-brand-600/20">
                 <span className="text-[11px] font-bold text-brand-300 uppercase tracking-widest">Xmetrics</span>
               </div>
             </div>
 
-            {/* Rows */}
             {COMPARE_ROWS.map((row, i) => (
               <div key={row.feature}
                 className={`group grid grid-cols-3 items-center bg-white ${i < COMPARE_ROWS.length - 1 ? 'border-b border-gray-100' : ''} hover:bg-gray-50/70 transition-colors`}>
-                {/* Feature */}
                 <div className="px-6 py-4 border-r border-gray-100">
                   <span className="text-sm font-semibold text-gray-800 inline-block transition-transform duration-200 group-hover:translate-x-1">{row.feature}</span>
                 </div>
-                {/* Legacy column */}
                 <div className="px-4 py-4 border-r border-gray-100 flex items-center justify-center">
                   {row.legacy === false ? (
                     <span className="inline-flex items-center justify-center w-7 h-7 rounded-full bg-red-50 border border-red-100">
@@ -706,7 +469,6 @@ function ComparisonTable() {
                     </span>
                   )}
                 </div>
-                {/* Xmetrics column */}
                 <div className="px-4 py-4 flex items-center justify-center bg-green-50/40">
                   {row.xm === true ? (
                     <span className="inline-flex items-center justify-center w-7 h-7 rounded-full bg-green-100 border border-green-200 transition-transform duration-200 group-hover:scale-110 group-hover:bg-green-200">
@@ -721,11 +483,10 @@ function ComparisonTable() {
               </div>
             ))}
 
-            {/* Footer CTA row */}
             <div className="grid grid-cols-3 bg-gray-50 border-t border-gray-100">
               <div className="px-6 py-4" />
               <div className="px-4 py-4 border-l border-gray-100 flex items-center justify-center">
-                <span className="text-xs text-gray-400 font-medium">Multiple tools</span>
+                <span className="text-xs text-gray-400 font-medium">Multiple tools, daily chaos</span>
               </div>
               <div className="px-4 py-4 border-l border-gray-100 flex items-center justify-center bg-green-50/60">
                 <Link to="/signup" className="text-xs font-bold text-brand-600 hover:text-brand-700 transition-colors">
@@ -792,14 +553,14 @@ export default function LandingPage() {
   return (
     <div className="min-h-screen bg-white font-sans">
 
-      {/* ── ANNOUNCEMENT BAR — fixed at very top ─────────────────────── */}
+      {/* ── ANNOUNCEMENT BAR ────────────────────────────────────────────── */}
       {showAnnouncement && (
         <div className="fixed top-0 inset-x-0 z-[61]">
           <AnnouncementBar onDismiss={() => setShowAnnouncement(false)} />
         </div>
       )}
 
-      {/* ── NAVBAR — transparent → frosted glass on scroll ─────────────── */}
+      {/* ── NAVBAR ──────────────────────────────────────────────────────── */}
       <nav
         className={`fixed inset-x-0 z-50 h-16 transition-all duration-300 ${
           scrolled
@@ -830,8 +591,9 @@ export default function LandingPage() {
             </Link>
           </div>
           <div className="flex items-center gap-3">
-            <Link to="/login" className={`md:hidden text-sm font-medium transition-colors ${scrolled ? 'text-gray-600 hover:text-gray-900' : 'text-white/80 hover:text-white'}`}>
-              Sign In
+            <Link to="/login"
+              className={`hidden md:inline-flex text-sm font-medium transition-colors ${scrolled ? 'text-gray-600 hover:text-gray-900' : 'text-white/80 hover:text-white'}`}>
+              Try demo
             </Link>
             <Link to="/checkout"
               className={`text-sm font-semibold px-4 py-2 rounded-xl transition-all duration-200 hover:-translate-y-px ${
@@ -845,7 +607,7 @@ export default function LandingPage() {
         </div>
       </nav>
 
-      {/* ── HERO ───────────────────────────────────────────────────────── */}
+      {/* ── HERO ────────────────────────────────────────────────────────── */}
       <section
         className="pb-20 bg-brand-gradient text-white relative overflow-hidden"
         style={{ paddingTop: `${annHeight + 96}px` }}
@@ -859,45 +621,38 @@ export default function LandingPage() {
         <div className="absolute top-1/3 -right-40 w-[520px] h-[520px] bg-sky-500/25 rounded-full blur-3xl animate-aurora-2" />
         <div className="absolute inset-0 opacity-[0.04]"
           style={{ backgroundImage: 'radial-gradient(circle, white 1px, transparent 1px)', backgroundSize: '32px 32px' }} />
-        <ParticleField />
         <div className="pointer-events-none absolute inset-0"
           style={{ background: 'radial-gradient(620px circle at var(--hx, 50%) var(--hy, 35%), rgba(96,165,250,0.14), transparent 65%)' }} />
 
         <div className="relative max-w-5xl mx-auto px-6 text-center">
-          <div className="inline-flex items-center gap-2 bg-white/10 border border-white/20 rounded-full px-4 py-1.5 text-xs font-medium mb-8 animate-fade-in-up backdrop-blur"
+          <div className="inline-flex items-center gap-2 bg-white/10 border border-white/20 rounded-full px-4 py-1.5 text-xs font-medium mb-8 animate-fade-in-up"
             style={{ animationDelay: '0ms' }}>
             <span className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse-dot" />
             Built for Indian D2C brands
           </div>
 
-          <h1 className="text-4xl sm:text-5xl md:text-6xl font-bold leading-[1.15] tracking-tight mb-4">
-            <RevealWords text="Every order. Every rupee." baseDelay={80} />
-            <br />
-            <span className="bg-gradient-to-r from-brand-300 via-white to-sky-300 bg-clip-text text-transparent animate-shimmer-text animate-fade-in-up"
-              style={{ animationDelay: '400ms' }}>
-              One command centre.
+          <h1 className="text-4xl sm:text-5xl md:text-6xl font-bold leading-[1.15] tracking-tight mb-6 animate-fade-in-up"
+            style={{ animationDelay: '80ms' }}>
+            One dashboard for every<br />
+            <span className="bg-gradient-to-r from-brand-300 via-white to-sky-300 bg-clip-text text-transparent animate-shimmer-text">
+              D2C order, shipment, and exception.
             </span>
           </h1>
 
-          {/* Typewriter subtitle */}
-          <p className="text-xl text-white/60 mb-3 animate-fade-in-up font-medium tracking-tight" style={{ animationDelay: '500ms' }}>
-            Stop losing revenue to{' '}
-            <TypeWriter phrases={['RTO returns.', 'missed exceptions.', 'tab switching.', 'manual reconciliation.', 'delayed ops reviews.']} />
+          <p className="text-lg text-white/65 max-w-2xl mx-auto mb-10 leading-relaxed animate-fade-in-up"
+            style={{ animationDelay: '160ms' }}>
+            Connect Shopify, Shiprocket, and Razorpay in 10 minutes. Every order is scored for RTO risk before dispatch.
+            Exceptions surface automatically. Your daily review takes 8 minutes.
           </p>
 
-          <p className="text-base text-white/50 max-w-xl mx-auto mb-10 leading-relaxed animate-fade-in-up" style={{ animationDelay: '160ms' }}>
-            Xmetrics scores every order in real time, flags exceptions before customers complain,
-            and compresses your daily ops review into 8 minutes.
-          </p>
-
-          <div className="flex items-center justify-center mb-6 animate-fade-in-up" style={{ animationDelay: '240ms' }}>
+          <div className="flex items-center justify-center mb-4 animate-fade-in-up" style={{ animationDelay: '240ms' }}>
             <MagneticLink to="/signup"
               className="flex items-center gap-2 bg-white text-brand-700 font-semibold px-8 py-3.5 rounded-xl hover:bg-brand-50 shadow-lg hover:shadow-xl text-sm">
               Start Free Trial <ArrowRight size={16} />
             </MagneticLink>
           </div>
 
-          <p className="mb-14 text-white/35 text-xs animate-fade-in" style={{ animationDelay: '360ms' }}>
+          <p className="mb-14 text-white/35 text-xs animate-fade-in" style={{ animationDelay: '320ms' }}>
             No credit card required
           </p>
 
@@ -908,39 +663,7 @@ export default function LandingPage() {
         <div className="absolute bottom-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-sky-400/50 to-transparent" />
       </section>
 
-      {/* ── STATS TICKER ───────────────────────────────────────────────── */}
-      {(() => {
-        const stats = [
-          { value: '35%',    label: 'Avg RTO reduction' },
-          { value: '₹2.4L',  label: 'Saved per 1,000 orders' },
-          { value: '99.9%',  label: 'Platform uptime' },
-          { value: '7',      label: 'Modules' },
-          { value: '10 min', label: 'Daily ops review' },
-          { value: '1',      label: 'Dashboard for\nyour full ops stack' },
-        ]
-        return (
-          <section className="relative bg-gray-950 text-white py-10 overflow-hidden">
-            <div className="absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-brand-500/60 to-transparent" />
-            <div className="absolute left-0 inset-y-0 w-28 bg-gradient-to-r from-gray-950 to-transparent z-10 pointer-events-none" />
-            <div className="absolute right-0 inset-y-0 w-28 bg-gradient-to-l from-gray-950 to-transparent z-10 pointer-events-none" />
-            <div className="animate-ticker">
-              {[...stats, ...stats].map((s, i) => (
-                <div key={i} className="flex items-center shrink-0">
-                  <div className="px-16 text-center">
-                    <p className="text-3xl font-bold text-brand-400 mb-1 tracking-tight">{s.value}</p>
-                    <p className="text-sm text-gray-400 whitespace-pre-line">{s.label}</p>
-                  </div>
-                  <div className="w-px h-10 bg-white/10 shrink-0" />
-                </div>
-              ))}
-            </div>
-            <div className="absolute bottom-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-brand-500/30 to-transparent" />
-          </section>
-        )
-      })()}
-
-
-      {/* ── PROBLEM ────────────────────────────────────────────────────── */}
+      {/* ── PROBLEM ─────────────────────────────────────────────────────── */}
       <section className="py-24 bg-white">
         <div className="max-w-5xl mx-auto px-6">
           <AnimateIn className="mb-14">
@@ -952,15 +675,12 @@ export default function LandingPage() {
             </p>
           </AnimateIn>
 
-          {/* Hero pain card */}
           <AnimateIn className="mb-4">
             <div className="relative bg-brand-gradient rounded-2xl p-8 overflow-hidden hover:-translate-y-1 transition-all duration-300 border border-white/[0.08] shadow-[0_8px_32px_rgba(37,99,235,0.3)] hover:shadow-[0_16px_48px_rgba(37,99,235,0.45)]">
-              <div className="absolute inset-0 rounded-2xl pointer-events-none" />
               <span className="absolute right-6 top-3 text-[110px] font-black text-white/[0.09] select-none leading-none tracking-tight pointer-events-none">40×</span>
-              <span className="text-[10px] font-bold uppercase tracking-widest text-red-400 mb-3 block relative">Tab switching, every day</span>
               <h3 className="text-2xl font-bold text-white mb-3 relative">No unified order view</h3>
-              <p className="text-white/45 max-w-lg text-sm leading-relaxed relative">Order status in Shopify. Tracking in Shiprocket. Payment in Razorpay. Your ops team switches context{' '}
-                <span className="text-white/75 font-semibold">40 times a day</span> for a single order and still misses things.</p>
+              <p className="text-white/55 max-w-lg text-sm leading-relaxed relative">Order status in Shopify. Tracking in Shiprocket. Payment in Razorpay. Your ops team switches context{' '}
+                <span className="text-white/85 font-semibold">40 times a day</span> for a single order and still misses things.</p>
             </div>
           </AnimateIn>
 
@@ -986,7 +706,7 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* ── HOW IT WORKS ───────────────────────────────────────────────── */}
+      {/* ── HOW IT WORKS ────────────────────────────────────────────────── */}
       <section className="py-24 bg-white">
         <div className="max-w-4xl mx-auto px-6">
           <AnimateIn className="text-center mb-16">
@@ -1000,7 +720,6 @@ export default function LandingPage() {
               { step: '03', title: 'Run ops in 8 minutes', desc: "Open your daily brief, resolve exceptions, approve fulfillment and you're done.", icon: <Zap size={20} className="text-brand-600" /> },
             ].map((step, i) => (
               <AnimateIn key={step.step} delay={i * 100} className="relative text-center">
-                {/* Oversized watermark step number */}
                 <span className="absolute left-1/2 -translate-x-1/2 -top-3 text-[96px] font-black text-gray-900/[0.04] leading-none select-none pointer-events-none">{step.step}</span>
                 {i < 2 && (
                   <div className="hidden md:block absolute top-6 left-[calc(50%+2.5rem)] w-[calc(100%-5rem)] h-px bg-gradient-to-r from-brand-200 via-brand-100 to-transparent" />
@@ -1015,7 +734,7 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* ── RTO LIVE DEMO ──────────────────────────────────────────────── */}
+      {/* ── RTO LIVE DEMO ───────────────────────────────────────────────── */}
       <section className="py-24 bg-gray-50 overflow-hidden">
         <div className="max-w-5xl mx-auto px-6 grid lg:grid-cols-2 gap-14 items-center">
           <AnimateIn>
@@ -1046,32 +765,43 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* ── FEATURES BENTO ─────────────────────────────────────────────── */}
-      <FeaturesSection />
+      {/* ── 3 OUTCOME BLOCKS ────────────────────────────────────────────── */}
+      <OutcomesSection />
 
-      {/* ── COMPARISON TABLE ───────────────────────────────────────────── */}
+      {/* ── SOCIAL PROOF ────────────────────────────────────────────────── */}
+      <SocialProof />
+
+      {/* ── COMPARISON TABLE ────────────────────────────────────────────── */}
       <ComparisonTable />
 
-      {/* ── PRICING ────────────────────────────────────────────────────── */}
+      {/* ── PRICING ─────────────────────────────────────────────────────── */}
       <section id="pricing" className="py-24 bg-white relative overflow-hidden">
         <div className="max-w-5xl mx-auto px-6">
           <AnimateIn className="text-center mb-12">
             <h2 className="text-3xl font-bold text-gray-900 mb-4">Simple, transparent pricing</h2>
-            <p className="text-gray-500">One plan for growing D2C brands. Additional plans available inside the app.</p>
+            <p className="text-gray-500">One plan for growing D2C brands.</p>
+          </AnimateIn>
+
+          {/* Security signals — at the decision point, not the footer */}
+          <AnimateIn className="max-w-md mx-auto mb-6">
+            <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-1.5 text-xs text-gray-400">
+              <span className="flex items-center gap-1.5"><Shield size={11} className="text-green-500/70" /> TLS 1.3 · AES-256</span>
+              <span className="flex items-center gap-1.5"><Shield size={11} className="text-green-500/70" /> AWS Mumbai</span>
+              <span className="flex items-center gap-1.5"><Shield size={11} className="text-green-500/70" /> Per-brand data isolation</span>
+            </div>
           </AnimateIn>
 
           <AnimateIn className="max-w-md mx-auto">
             <div className="relative rounded-2xl border border-white/[0.12] bg-gradient-to-br from-[#1d4ed8] via-[#2563eb] to-[#1e40af] text-white shadow-[0_24px_64px_rgba(37,99,235,0.45)] p-8 hover:-translate-y-1 transition-transform duration-300">
               <div className="absolute inset-0 rounded-2xl bg-gradient-to-tr from-white/[0.04] to-transparent pointer-events-none" />
 
-              {/* Spot badge */}
               <div className="inline-flex items-center gap-2 bg-amber-400/15 border border-amber-400/25 rounded-full px-3 py-1 mb-7">
                 <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse" />
                 <span className="text-xs font-bold text-amber-300">Only 5 spots left</span>
               </div>
 
               <h3 className="font-bold text-white text-xl mb-1">Growth Plan</h3>
-              <p className="text-white/60 text-sm mb-5">Up to 3,000 orders / month</p>
+              <p className="text-white/60 text-sm mb-5">Up to 3,000 orders / month · Full feature access</p>
 
               <div className="flex items-end gap-2 mb-1">
                 <span className="text-5xl font-bold text-white">₹2,999</span>
@@ -1081,13 +811,10 @@ export default function LandingPage() {
 
               <ul className="space-y-3 mb-8">
                 {[
-                  'Up to 3,000 orders / month',
-                  '1 warehouse · 5 team members',
-                  'All integrations: Shopify, Shiprocket, WhatsApp, Razorpay',
-                  'Real-time RTO scoring & review queue',
-                  'Demand forecast & pincode intelligence',
-                  'Daily ops briefs with WhatsApp export',
-                  'Priority support',
+                  'All integrations: Shopify, Shiprocket, Razorpay, WhatsApp',
+                  'Real-time RTO scoring and review queue',
+                  'Daily ops brief with WhatsApp export',
+                  'Priority support and dedicated onboarding call',
                 ].map(f => (
                   <li key={f} className="flex items-start gap-2.5 text-sm">
                     <Check size={14} className="mt-0.5 shrink-0 text-white/80" />
@@ -1097,17 +824,31 @@ export default function LandingPage() {
               </ul>
 
               <Link to="/checkout?plan=GROWTH"
-                className="block text-center text-sm font-bold py-3.5 rounded-xl bg-white text-brand-700 hover:bg-brand-50 transition-colors shadow-lg">
+                className="block text-center text-sm font-bold py-3.5 rounded-xl bg-white text-brand-700 hover:bg-brand-50 transition-colors shadow-lg mb-4">
                 Claim your founder spot →
               </Link>
+
+              <div className="flex items-center justify-center gap-4 text-[11px] text-white/40">
+                <span>Cancel anytime</span>
+                <span>·</span>
+                <span>No setup fees</span>
+                <span>·</span>
+                <span>Access in 5 minutes</span>
+              </div>
             </div>
+          </AnimateIn>
+
+          <AnimateIn className="text-center mt-6">
+            <p className="text-sm text-gray-400">
+              Need more orders or team members?{' '}
+              <a href="mailto:joe@xmetrics.in" className="text-brand-600 hover:underline font-medium">Talk to us</a>
+            </p>
           </AnimateIn>
         </div>
       </section>
 
-      {/* ── FAQ ────────────────────────────────────────────────────────── */}
-      <section id="faq" className="py-24 bg-white relative overflow-hidden">
-        <ParticleFieldLight />
+      {/* ── FAQ ─────────────────────────────────────────────────────────── */}
+      <section id="faq" className="py-24 bg-white">
         <div className="max-w-2xl mx-auto px-6">
           <AnimateIn className="text-center mb-12">
             <h2 className="text-3xl font-bold text-gray-900 mb-4">Frequently asked questions</h2>
@@ -1126,62 +867,7 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* ── FINAL CTA ──────────────────────────────────────────────────── */}
-      <section
-        className="py-28 bg-brand-gradient text-white relative overflow-hidden"
-        onMouseMove={e => {
-          const r = e.currentTarget.getBoundingClientRect()
-          e.currentTarget.style.setProperty('--hx', `${e.clientX - r.left}px`)
-          e.currentTarget.style.setProperty('--hy', `${e.clientY - r.top}px`)
-        }}
-      >
-        <div className="absolute -top-32 -left-32 w-[480px] h-[480px] bg-brand-500/30 rounded-full blur-3xl animate-aurora" />
-        <div className="absolute top-1/3 -right-40 w-[520px] h-[520px] bg-sky-500/25 rounded-full blur-3xl animate-aurora-2" />
-        <div className="absolute inset-0 opacity-[0.04]"
-          style={{ backgroundImage: 'radial-gradient(circle, white 1px, transparent 1px)', backgroundSize: '32px 32px' }} />
-        <ParticleField />
-        <div className="pointer-events-none absolute inset-0"
-          style={{ background: 'radial-gradient(620px circle at var(--hx, 50%) var(--hy, 35%), rgba(96,165,250,0.14), transparent 65%)' }} />
-        <AnimateIn className="relative max-w-2xl mx-auto px-6 text-center">
-          <div className="inline-flex items-center gap-2 border border-white/10 bg-white/[0.03] rounded-full px-4 py-1.5 text-xs text-white/40 mb-8">
-            <span className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse-dot" />
-            Founding access open · Limited spots
-          </div>
-          <h2 className="text-3xl sm:text-4xl font-bold mb-4 leading-tight">
-            35% fewer RTOs.<br />
-            <span className="bg-gradient-to-r from-brand-400 to-sky-400 bg-clip-text text-transparent">
-              8 minutes a day. Starting tomorrow.
-            </span>
-          </h2>
-          <p className="text-white/50 mb-10 text-lg leading-relaxed">
-            Connect your store in 10 minutes.<br />5 founder spots remaining.
-          </p>
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-5">
-            <MagneticLink to="/checkout?plan=GROWTH"
-              className="flex items-center gap-2 bg-white text-gray-950 font-semibold px-8 py-3.5 rounded-xl hover:bg-gray-100 shadow-lg hover:shadow-xl text-sm">
-              Claim Founder Spot <ArrowRight size={16} />
-            </MagneticLink>
-            <a href="mailto:joe@xmetrics.in" className="text-white/45 hover:text-white/80 text-sm transition-colors">
-              or talk to us →
-            </a>
-          </div>
-        </AnimateIn>
-      </section>
-
-      {/* ── SECURITY TRUST STRIP ───────────────────────────────────────── */}
-      <div className="bg-gray-950 border-t border-white/[0.05] py-5">
-        <div className="max-w-5xl mx-auto px-6 flex flex-wrap items-center justify-center gap-x-8 gap-y-2 text-xs text-gray-500">
-          <span className="flex items-center gap-1.5"><Shield size={11} className="text-green-500/70" /> TLS 1.3 · AES-256 encryption</span>
-          <span className="hidden sm:block w-px h-3 bg-white/10" />
-          <span className="flex items-center gap-1.5"><Shield size={11} className="text-green-500/70" /> Per-brand data isolation</span>
-          <span className="hidden sm:block w-px h-3 bg-white/10" />
-          <span className="flex items-center gap-1.5"><Shield size={11} className="text-green-500/70" /> Hosted on AWS Mumbai</span>
-          <span className="hidden sm:block w-px h-3 bg-white/10" />
-          <span className="flex items-center gap-1.5"><Shield size={11} className="text-green-500/70" /> Data never shared or sold</span>
-        </div>
-      </div>
-
-      {/* ── FOOTER ─────────────────────────────────────────────────────── */}
+      {/* ── FOOTER ──────────────────────────────────────────────────────── */}
       <footer className="bg-gray-950 text-white py-14 border-t border-white/5">
         <div className="max-w-5xl mx-auto px-6">
           <div className="flex flex-col md:flex-row items-start justify-between gap-10 mb-10">
@@ -1215,7 +901,7 @@ export default function LandingPage() {
                 <p className="text-xs font-semibold uppercase tracking-widest text-gray-600 mb-3">Account</p>
                 <Link to="/signup" className="block hover:text-white transition-colors">Sign Up</Link>
                 <Link to="/login" className="block hover:text-white transition-colors">Sign In</Link>
-                <Link to="/login" className="block hover:text-white transition-colors">Demo</Link>
+                <Link to="/login" className="block hover:text-white transition-colors">Try Demo</Link>
               </div>
             </div>
           </div>
