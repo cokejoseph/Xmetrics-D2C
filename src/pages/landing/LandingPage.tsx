@@ -620,7 +620,7 @@ function FeaturesSection() {
 
           {/* Fulfillment — wide bottom card */}
           <AnimateIn className="md:col-span-3" delay={240}>
-            <SpotlightCard className="bento-glow bg-gradient-to-br from-brand-600 to-brand-800 text-white border border-brand-500/30 rounded-2xl p-7 transition-all duration-300 hover:-translate-y-1 shadow-[0_8px_30px_rgba(37,99,235,0.25)] hover:shadow-[0_12px_44px_rgba(37,99,235,0.4)]">
+            <SpotlightCard className="bento-glow bg-brand-gradient text-white border border-white/[0.08] rounded-2xl p-7 transition-all duration-300 hover:-translate-y-1 shadow-[0_8px_32px_rgba(37,99,235,0.3)] hover:shadow-[0_16px_48px_rgba(37,99,235,0.45)]">
               <div className="flex flex-col md:flex-row md:items-center gap-6">
                 <div className="flex-1">
                   <div className="w-11 h-11 rounded-xl bg-white/15 backdrop-blur flex items-center justify-center mb-4">
