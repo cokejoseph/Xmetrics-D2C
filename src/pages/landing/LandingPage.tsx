@@ -1165,9 +1165,6 @@ export default function LandingPage() {
               </AnimateIn>
             ))}
           </div>
-          <p className="text-center text-sm text-gray-400 mt-8">
-            Pay now · Instant access · No setup fees · Cancel anytime
-          </p>
         </div>
       </section>
 
