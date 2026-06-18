@@ -303,16 +303,35 @@ const VERDICT_STYLE: Record<string, string> = {
 }
 function scoreColor(s: number) { return s >= 60 ? 'bg-red-400' : s >= 35 ? 'bg-amber-400' : 'bg-green-400' }
 
+const CHANNEL_BARS = [
+  { label: 'Shopify',   pct: 58, color: 'bg-brand-500' },
+  { label: 'WhatsApp',  pct: 27, color: 'bg-green-500' },
+  { label: 'Manual',    pct: 15, color: 'bg-amber-400' },
+]
+
 function HeroMockup() {
   const cardRef = useRef<HTMLDivElement>(null)
-  const [revenue, setRevenue] = useState(84320)
-  const [feedIdx, setFeedIdx] = useState(0)
+  const [revenue, setRevenue]       = useState(84320)
+  const [rtoTenths, setRtoTenths]   = useState(112)   // 112 = 11.2%
+  const [exceptions, setExceptions] = useState(3)
+  const [feedIdx, setFeedIdx]       = useState(0)
+
   useEffect(() => {
     const t1 = setInterval(() => setRevenue(r => r > 98500 ? 84320 : r + 120 + Math.floor(Math.random() * 740)), 2600)
     const t2 = setInterval(() => setFeedIdx(i => i + 1), 3400)
-    return () => { clearInterval(t1); clearInterval(t2) }
+    const t3 = setInterval(() => {
+      setRtoTenths(r => {
+        const delta = (Math.random() > 0.5 ? 1 : -1) * (Math.floor(Math.random() * 4) + 1)
+        return Math.max(80, Math.min(140, r + delta))
+      })
+    }, 3800)
+    const t4 = setInterval(() => setExceptions(([2, 3, 3, 4, 3, 2])[Math.floor(Math.random() * 6)]), 5500)
+    return () => { clearInterval(t1); clearInterval(t2); clearInterval(t3); clearInterval(t4) }
   }, [])
-  const feed = Array.from({ length: 4 }, (_, k) => ORDER_POOL[(feedIdx + k) % ORDER_POOL.length])
+
+  const feed = Array.from({ length: 3 }, (_, k) => ORDER_POOL[(feedIdx + k) % ORDER_POOL.length])
+  const rtoDisplay = (rtoTenths / 10).toFixed(1) + '%'
+
   const handleMove = (e: React.MouseEvent<HTMLDivElement>) => {
     const card = cardRef.current; if (!card) return
     const r = e.currentTarget.getBoundingClientRect()
@@ -329,6 +348,7 @@ function HeroMockup() {
         className="relative rounded-2xl shadow-2xl p-[1.5px] text-left animate-border-pan bg-[linear-gradient(120deg,rgba(96,165,250,0.55),rgba(255,255,255,0.3),rgba(14,165,233,0.65),rgba(96,165,250,0.55))]"
         style={{ transform: 'rotateX(4deg)', transition: 'transform 0.15s ease-out' }}>
         <div className="bg-white rounded-[14.5px] overflow-hidden">
+          {/* Browser chrome */}
           <div className="flex items-center gap-2 px-4 py-2.5 bg-gray-50 border-b border-gray-100">
             <span className="w-2.5 h-2.5 rounded-full bg-red-400" />
             <span className="w-2.5 h-2.5 rounded-full bg-amber-400" />
@@ -337,21 +357,41 @@ function HeroMockup() {
               app.xmetrics.app/dashboard
             </div>
           </div>
+
           <div className="p-4 sm:p-5 grid grid-cols-1 sm:grid-cols-5 gap-4">
+            {/* Left column */}
             <div className="sm:col-span-3 space-y-3">
+
+              {/* KPI row — all three now animate */}
               <div className="grid grid-cols-3 gap-2.5">
-                {[
-                  { label: 'Revenue Today', value: <span key={revenue} className="animate-tick-flash">₹{revenue.toLocaleString('en-IN')}</span>, delta: '+12.4%', up: true },
-                  { label: 'RTO Rate', value: '11.2%' as React.ReactNode, delta: '−8.1%', up: false },
-                  { label: 'Exceptions', value: '3' as React.ReactNode, delta: '2 new', up: false },
-                ].map(k => (
-                  <div key={k.label} className="bg-gray-50 rounded-xl p-2.5 border border-gray-100">
-                    <p className="text-[9px] text-gray-400 font-medium mb-0.5 truncate">{k.label}</p>
-                    <p className="text-sm font-bold text-gray-900">{k.value}</p>
-                    <p className={`text-[9px] font-semibold ${k.up ? 'text-green-500' : 'text-brand-500'}`}>{k.delta}</p>
-                  </div>
-                ))}
+                <div className="bg-gray-50 rounded-xl p-2.5 border border-gray-100">
+                  <p className="text-[9px] text-gray-400 font-medium mb-0.5 truncate">Revenue Today</p>
+                  <p className="text-sm font-bold text-gray-900">
+                    <span key={revenue} className="animate-tick-flash">₹{revenue.toLocaleString('en-IN')}</span>
+                  </p>
+                  <p className="text-[9px] font-semibold text-green-500">+12.4%</p>
+                </div>
+                <div className="bg-gray-50 rounded-xl p-2.5 border border-gray-100">
+                  <p className="text-[9px] text-gray-400 font-medium mb-0.5 truncate">RTO Rate</p>
+                  <p className="text-sm font-bold text-gray-900">
+                    <span key={rtoTenths} className="animate-tick-flash">{rtoDisplay}</span>
+                  </p>
+                  <p className="text-[9px] font-semibold text-brand-500">
+                    {rtoTenths <= 105 ? '↓ improving' : '−8.1%'}
+                  </p>
+                </div>
+                <div className="bg-gray-50 rounded-xl p-2.5 border border-gray-100">
+                  <p className="text-[9px] text-gray-400 font-medium mb-0.5 truncate">Exceptions</p>
+                  <p className="text-sm font-bold text-gray-900">
+                    <span key={exceptions} className="animate-tick-flash">{exceptions}</span>
+                  </p>
+                  <p className="text-[9px] font-semibold text-brand-500">
+                    {exceptions > 3 ? `${exceptions - 3} new` : exceptions < 3 ? 'clearing' : '2 new'}
+                  </p>
+                </div>
               </div>
+
+              {/* Revenue area chart */}
               <div className="bg-gray-50 rounded-xl p-3 border border-gray-100">
                 <div className="flex items-center justify-between mb-2">
                   <p className="text-[10px] font-semibold text-gray-600">Revenue — 14 days</p>
@@ -359,22 +399,45 @@ function HeroMockup() {
                     <span className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse-dot" /> Live
                   </span>
                 </div>
-                <svg viewBox="0 0 300 80" className="w-full h-20" preserveAspectRatio="none">
+                <svg viewBox="0 0 300 72" className="w-full h-[72px]" preserveAspectRatio="none">
                   <defs>
                     <linearGradient id="heroChartFill" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="0%" stopColor="#3B82F6" stopOpacity="0.3" />
+                      <stop offset="0%" stopColor="#3B82F6" stopOpacity="0.28" />
                       <stop offset="100%" stopColor="#3B82F6" stopOpacity="0" />
                     </linearGradient>
                   </defs>
                   <path className="animate-chart-fill"
-                    d="M0,62 C25,58 40,50 60,52 C85,54 95,38 120,40 C145,42 155,30 180,28 C205,26 215,34 240,24 C262,16 280,14 300,10 L300,80 L0,80 Z"
+                    d="M0,56 C25,52 40,44 60,46 C85,48 95,34 120,36 C145,38 155,26 180,24 C205,22 215,30 240,20 C262,12 280,10 300,6 L300,72 L0,72 Z"
                     fill="url(#heroChartFill)" />
                   <path className="animate-draw-line"
-                    d="M0,62 C25,58 40,50 60,52 C85,54 95,38 120,40 C145,42 155,30 180,28 C205,26 215,34 240,24 C262,16 280,14 300,10"
+                    d="M0,56 C25,52 40,44 60,46 C85,48 95,34 120,36 C145,38 155,26 180,24 C205,22 215,30 240,20 C262,12 280,10 300,6"
                     fill="none" stroke="#2563EB" strokeWidth="2" strokeLinecap="round" />
+                  {/* Axis labels */}
+                  {['Day 1','','','Day 7','','','Day 14'].map((l, i) => l ? (
+                    <text key={i} x={i * 50} y={70} fontSize="6" fill="#9CA3AF" textAnchor="middle">{l}</text>
+                  ) : null)}
                 </svg>
               </div>
+
+              {/* Channel split — fills the empty bottom space */}
+              <div className="bg-gray-50 rounded-xl p-3 border border-gray-100">
+                <p className="text-[10px] font-semibold text-gray-600 mb-2">Channel split — today</p>
+                <div className="space-y-1.5">
+                  {CHANNEL_BARS.map((ch, i) => (
+                    <div key={ch.label} className="flex items-center gap-2">
+                      <span className="text-[9px] text-gray-400 w-14 shrink-0">{ch.label}</span>
+                      <div className="flex-1 h-1.5 bg-gray-200 rounded-full overflow-hidden">
+                        <div className={`h-full ${ch.color} rounded-full animate-score-fill`}
+                          style={{ width: `${ch.pct}%`, animationDelay: `${900 + i * 200}ms` }} />
+                      </div>
+                      <span className="text-[9px] text-gray-500 font-semibold w-7 text-right">{ch.pct}%</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
             </div>
+
+            {/* Right column — incoming orders */}
             <div className="sm:col-span-2 bg-gray-50 rounded-xl p-3 border border-gray-100">
               <p className="text-[10px] font-semibold text-gray-600 mb-2.5">Incoming Orders · RTO Score</p>
               <div className="space-y-2">
@@ -400,11 +463,13 @@ function HeroMockup() {
           </div>
         </div>
       </div>
-      <div className="hidden md:flex absolute -left-10 top-16 items-center gap-2 bg-white rounded-xl shadow-lg border border-gray-100 px-3 py-2 animate-float">
+
+      {/* Floating badges — positioned to not overlap KPI cards */}
+      <div className="hidden md:flex absolute -left-12 top-[42%] items-center gap-2 bg-white rounded-xl shadow-lg border border-gray-100 px-3 py-2 animate-float">
         <Shield size={14} className="text-green-500" />
         <span className="text-[11px] font-semibold text-gray-700">RTO blocked — ₹2,899 saved</span>
       </div>
-      <div className="hidden md:flex absolute -right-8 bottom-12 items-center gap-2 bg-white rounded-xl shadow-lg border border-gray-100 px-3 py-2 animate-float" style={{ animationDelay: '1.5s' }}>
+      <div className="hidden md:flex absolute -right-8 bottom-10 items-center gap-2 bg-white rounded-xl shadow-lg border border-gray-100 px-3 py-2 animate-float" style={{ animationDelay: '1.5s' }}>
         <MessageSquare size={14} className="text-brand-500" />
         <span className="text-[11px] font-semibold text-gray-700">Daily brief sent · 7:00 AM</span>
       </div>
