@@ -541,10 +541,11 @@ function AnnouncementBar({ onDismiss }: { onDismiss: () => void }) {
     <div className="relative bg-gradient-to-r from-[#1a1a35] via-brand-900 to-[#1a1a35] text-white text-xs py-2.5 px-4 text-center flex items-center justify-center gap-2 z-[60]">
       <span className="w-1.5 h-1.5 rounded-full bg-amber-400 shrink-0 announce-dot" />
       <span className="text-white/80">
-        <span className="font-semibold text-white">Founding access open</span>
-        {' — '}Get Growth plan at <span className="font-semibold text-amber-300">₹2,999/mo for life</span>
-        {' · '}Only 45 founder spots
-        <Link to="/founding" className="ml-2 underline underline-offset-2 font-semibold text-brand-300 hover:text-white transition-colors">
+        <span className="font-semibold text-white">Founding access</span>
+        {' — '}<span className="font-semibold text-amber-300">₹2,999/mo for life</span>
+        {' · '}37 founders enrolled
+        {' · '}<span className="font-semibold text-white">Only 8 spots left</span>
+        <Link to="/checkout?plan=GROWTH" className="ml-2 underline underline-offset-2 font-semibold text-brand-300 hover:text-white transition-colors">
           Claim spot →
         </Link>
       </span>
@@ -793,12 +794,12 @@ function ComparisonTable() {
 
 // ─── FAQ item ─────────────────────────────────────────────────────────────────
 const FAQS = [
-  { q: 'How does the RTO scoring actually work?', a: 'Xmetrics analyses pincode delivery history, address quality, phone signal strength, COD patterns, and customer history. Each order gets a risk score (0–100) that maps to Ship (green), Verify (yellow), or Hold (red). This happens instantly on order creation.' },
+  { q: 'Do you offer a free trial?', a: "Yes — use the live demo to explore the full app with real-looking data before signing up. Founding customers also get a 14-day window after signup to test with their own store data before being charged." },
+  { q: 'Can I cancel anytime?', a: 'Absolutely. No lock-ins, no cancellation fees. You can cancel your subscription at any time from the Billing settings page. Your data remains accessible for 30 days after cancellation.' },
   { q: 'When do I get access?', a: "Founding customers get access within 48 hours. You'll get a dedicated onboarding call to sync your Shopify store and Shiprocket account. Full training included." },
   { q: 'Which platforms do you integrate with?', a: 'Xmetrics connects with Shopify (orders + products), Shiprocket (fulfillment + tracking), Razorpay (payments + settlements), and WhatsApp Business (alerts + daily brief). More integrations are on the roadmap.' },
   { q: 'Is my data safe?', a: 'Yes. All data is encrypted in transit (TLS 1.3) and at rest (AES-256). We are hosted on Supabase (AWS Mumbai), with row-level security ensuring each brand can only access its own data. We never share or sell your data.' },
-  { q: 'Can I cancel anytime?', a: 'Absolutely. No lock-ins, no cancellation fees. You can cancel your subscription at any time from the Billing settings page. Your data remains accessible for 30 days after cancellation.' },
-  { q: 'Do you offer a free trial?', a: "Yes — use the live demo to explore the full app with real-looking seed data before signing up. When you're ready, the Starter plan gives you 14 days free to try with your own store data." },
+  { q: 'How does the RTO scoring actually work?', a: 'Xmetrics analyses pincode delivery history, address quality, phone signal strength, COD patterns, and customer history. Each order gets a risk score (0–100) that maps to Ship (green), Verify (yellow), or Hold (red). This happens instantly on order creation.' },
 ]
 
 function FaqItem({ q, a }: { q: string; a: string }) {
@@ -905,7 +906,7 @@ export default function LandingPage() {
             <Link to="/checkout"
               className={`text-sm font-semibold px-4 py-2 rounded-xl transition-all duration-200 hover:-translate-y-px ${
                 scrolled
-                  ? 'bg-gray-950 text-white hover:bg-gray-800 shadow-sm'
+                  ? 'bg-brand-600 text-white hover:bg-brand-700 shadow-sm'
                   : 'bg-white/15 text-white border border-white/30 hover:bg-white/25 backdrop-blur-sm'
               }`}>
               Get Started →
@@ -959,23 +960,16 @@ export default function LandingPage() {
             and compresses your daily ops review into 8 minutes.
           </p>
 
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-6 animate-fade-in-up" style={{ animationDelay: '240ms' }}>
-            <MagneticLink to="/login"
+          <div className="flex items-center justify-center mb-6 animate-fade-in-up" style={{ animationDelay: '240ms' }}>
+            <MagneticLink to="/signup"
               className="flex items-center gap-2 bg-white text-brand-700 font-semibold px-8 py-3.5 rounded-xl hover:bg-brand-50 shadow-lg hover:shadow-xl text-sm">
               Start Free Trial <ArrowRight size={16} />
             </MagneticLink>
-            <Link to="/login" className="flex items-center gap-1.5 text-white/60 hover:text-white text-sm font-medium transition-colors">
-              Explore demo first <ArrowRight size={13} className="opacity-60" />
-            </Link>
           </div>
 
-          <div className="flex flex-wrap items-center justify-center gap-x-5 gap-y-2 mb-14 animate-fade-in" style={{ animationDelay: '360ms' }}>
-            {['No credit card', 'Cancel anytime', 'Live demo available'].map(t => (
-              <span key={t} className="flex items-center gap-1.5 text-white/35 text-xs">
-                <Check size={10} className="text-white/25" />{t}
-              </span>
-            ))}
-          </div>
+          <p className="mb-14 text-white/35 text-xs animate-fade-in" style={{ animationDelay: '360ms' }}>
+            No credit card required
+          </p>
 
           <div className="animate-fade-in-up" style={{ animationDelay: '320ms' }}>
             <HeroMockup />
@@ -1015,13 +1009,6 @@ export default function LandingPage() {
         )
       })()}
 
-      {/* ── INTEGRATION FLOW ───────────────────────────────────────────── */}
-      <section className="py-14 bg-white border-b border-gray-50">
-        <AnimateIn className="max-w-4xl mx-auto px-6 text-center">
-          <p className="text-[11px] font-semibold uppercase tracking-widest text-gray-400 mb-6">Works with your stack</p>
-          <IntegrationFlow />
-        </AnimateIn>
-      </section>
 
       {/* ── PROBLEM ────────────────────────────────────────────────────── */}
       <section className="py-24 bg-white">
@@ -1048,6 +1035,33 @@ export default function LandingPage() {
                     <p className="text-gray-500 text-sm leading-relaxed">{item.desc}</p>
                   </div>
                 </SpotlightCard>
+              </AnimateIn>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ── HOW IT WORKS ───────────────────────────────────────────────── */}
+      <section className="py-24 bg-white">
+        <div className="max-w-4xl mx-auto px-6">
+          <AnimateIn className="text-center mb-16">
+            <h2 className="text-3xl font-bold text-gray-900 mb-4">Up and running in 10 minutes</h2>
+            <p className="text-gray-500">No dev work, no data migration. Just connect and go.</p>
+          </AnimateIn>
+          <div className="grid md:grid-cols-3 gap-10">
+            {[
+              { step: '01', title: 'Connect your store', desc: 'Link Shopify, Shiprocket, and Razorpay using OAuth. No API keys to manage.', icon: <ShoppingCart size={20} className="text-brand-600" /> },
+              { step: '02', title: 'Every order gets scored', desc: 'Xmetrics immediately scores each order for RTO risk and flags exceptions in real time.', icon: <BarChart2 size={20} className="text-brand-600" /> },
+              { step: '03', title: 'Run ops in 8 minutes', desc: "Open your daily brief, resolve exceptions, approve fulfillment — and you're done.", icon: <Zap size={20} className="text-brand-600" /> },
+            ].map((step, i) => (
+              <AnimateIn key={step.step} delay={i * 100} className="relative text-center">
+                {i < 2 && (
+                  <div className="hidden md:block absolute top-6 left-[calc(50%+2.5rem)] w-[calc(100%-5rem)] h-px bg-gradient-to-r from-brand-200 via-brand-100 to-transparent" />
+                )}
+                <div className="w-12 h-12 rounded-2xl bg-white border border-brand-100 shadow-sm flex items-center justify-center mx-auto mb-4">{step.icon}</div>
+                <div className="text-xs font-bold mb-1 bg-gradient-to-r from-brand-600 to-sky-500 bg-clip-text text-transparent">{step.step}</div>
+                <h3 className="font-semibold text-gray-900 mb-2">{step.title}</h3>
+                <p className="text-gray-500 text-sm leading-relaxed">{step.desc}</p>
               </AnimateIn>
             ))}
           </div>
@@ -1089,33 +1103,6 @@ export default function LandingPage() {
       {/* ── FEATURES BENTO ─────────────────────────────────────────────── */}
       <FeaturesSection />
 
-      {/* ── HOW IT WORKS ───────────────────────────────────────────────── */}
-      <section className="py-24 bg-gray-50">
-        <div className="max-w-4xl mx-auto px-6">
-          <AnimateIn className="text-center mb-16">
-            <h2 className="text-3xl font-bold text-gray-900 mb-4">Up and running in 10 minutes</h2>
-            <p className="text-gray-500">No dev work, no data migration. Just connect and go.</p>
-          </AnimateIn>
-          <div className="grid md:grid-cols-3 gap-10">
-            {[
-              { step: '01', title: 'Connect your store', desc: 'Link Shopify, Shiprocket, and Razorpay using OAuth. No API keys to manage.', icon: <ShoppingCart size={20} className="text-brand-600" /> },
-              { step: '02', title: 'Every order gets scored', desc: 'Xmetrics immediately scores each order for RTO risk and flags exceptions in real time.', icon: <BarChart2 size={20} className="text-brand-600" /> },
-              { step: '03', title: 'Run ops in 8 minutes', desc: "Open your daily brief, resolve exceptions, approve fulfillment — and you're done.", icon: <Zap size={20} className="text-brand-600" /> },
-            ].map((step, i) => (
-              <AnimateIn key={step.step} delay={i * 100} className="relative text-center">
-                {i < 2 && (
-                  <div className="hidden md:block absolute top-6 left-[calc(50%+2.5rem)] w-[calc(100%-5rem)] h-px bg-gradient-to-r from-brand-200 via-brand-100 to-transparent" />
-                )}
-                <div className="w-12 h-12 rounded-2xl bg-white border border-brand-100 shadow-sm flex items-center justify-center mx-auto mb-4">{step.icon}</div>
-                <div className="text-xs font-bold mb-1 bg-gradient-to-r from-brand-600 to-sky-500 bg-clip-text text-transparent">{step.step}</div>
-                <h3 className="font-semibold text-gray-900 mb-2">{step.title}</h3>
-                <p className="text-gray-500 text-sm leading-relaxed">{step.desc}</p>
-              </AnimateIn>
-            ))}
-          </div>
-        </div>
-      </section>
-
       {/* ── COMPARISON TABLE ───────────────────────────────────────────── */}
       <ComparisonTable />
 
@@ -1123,48 +1110,58 @@ export default function LandingPage() {
       <section id="pricing" className="py-24 bg-gray-50 relative overflow-hidden">
         <ParticleFieldLight />
         <div className="max-w-5xl mx-auto px-6">
-          <AnimateIn className="text-center mb-16">
+          <AnimateIn className="text-center mb-12">
             <h2 className="text-3xl font-bold text-gray-900 mb-4">Simple, transparent pricing</h2>
-            <p className="text-gray-500">Pay based on order volume. Upgrade or downgrade anytime.</p>
+            <p className="text-gray-500">One plan for growing D2C brands. Additional plans available inside the app.</p>
           </AnimateIn>
-          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5 max-w-4xl mx-auto">
-            {PLANS.map((plan, i) => (
-              <AnimateIn key={plan.name} delay={i * 100}>
-                <div className={`relative rounded-2xl border p-6 flex flex-col h-full hover:-translate-y-1 transition-all duration-200 ${
-                  plan.highlight
-                    ? 'border-brand-600 bg-gradient-to-br from-brand-600 to-brand-800 text-white shadow-[0_12px_40px_rgba(37,99,235,0.35)] hover:shadow-[0_16px_56px_rgba(37,99,235,0.5)]'
-                    : 'border-gray-100 bg-white hover:shadow-card-hover'
-                }`}>
-                  {plan.badge && (
-                    <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-0.5 bg-amber-400 text-gray-900 text-[10px] font-bold rounded-full tracking-wide">
-                      {plan.badge}
-                    </div>
-                  )}
-                  <div className="mb-5">
-                    <h3 className={`font-bold mb-2 ${plan.highlight ? 'text-white' : 'text-gray-900'}`}>{plan.name}</h3>
-                    <div className="flex items-end gap-1">
-                      <span className={`text-3xl font-bold ${plan.highlight ? 'text-white' : 'text-gray-900'}`}>{plan.price}</span>
-                      <span className={`text-sm mb-1 ${plan.highlight ? 'text-white/70' : 'text-gray-400'}`}>{plan.period}</span>
-                    </div>
-                    <p className={`text-xs mt-1 ${plan.highlight ? 'text-white/60' : 'text-gray-400'}`}>{plan.orders}</p>
-                  </div>
-                  <ul className="space-y-2 mb-6 flex-1">
-                    {plan.features.map(f => (
-                      <li key={f} className="flex items-start gap-2 text-xs">
-                        <Check size={13} className={`mt-0.5 shrink-0 ${plan.highlight ? 'text-white' : 'text-green-500'}`} />
-                        <span className={plan.highlight ? 'text-white/80' : 'text-gray-600'}>{f}</span>
-                      </li>
-                    ))}
-                  </ul>
-                  <Link to={`/checkout?plan=${plan.name.toUpperCase()}`} className={`block text-center text-sm font-semibold py-2.5 rounded-xl transition-colors ${
-                    plan.highlight ? 'bg-white text-brand-600 hover:bg-brand-50' : 'bg-brand-50 text-brand-600 hover:bg-brand-100'
-                  }`}>
-                    Get Started
-                  </Link>
+
+          <AnimateIn className="max-w-md mx-auto">
+            <div className="relative rounded-2xl border border-brand-500/40 bg-gradient-to-br from-brand-600 to-brand-800 text-white shadow-[0_16px_60px_rgba(37,99,235,0.4)] p-8 hover:-translate-y-1 transition-transform duration-300">
+
+              {/* Spot counter */}
+              <div className="bg-white/10 border border-white/10 rounded-xl p-4 mb-7">
+                <div className="flex items-center justify-between text-xs mb-2">
+                  <span className="text-white/60">Founder spots claimed</span>
+                  <span className="font-bold text-amber-300">Only 8 left</span>
                 </div>
-              </AnimateIn>
-            ))}
-          </div>
+                <div className="h-2 bg-white/15 rounded-full overflow-hidden">
+                  <div className="h-full bg-gradient-to-r from-amber-400 to-amber-300 rounded-full" style={{ width: '82%' }} />
+                </div>
+                <p className="text-[10px] text-white/40 mt-1.5">37 of 45 founder spots taken</p>
+              </div>
+
+              <h3 className="font-bold text-white text-xl mb-1">Growth Plan</h3>
+              <p className="text-white/60 text-sm mb-5">Up to 3,000 orders / month</p>
+
+              <div className="flex items-end gap-2 mb-1">
+                <span className="text-5xl font-bold text-white">₹2,999</span>
+                <span className="text-white/60 mb-1.5">/mo</span>
+              </div>
+              <p className="text-white/40 text-xs mb-7">Locked for life — price never increases for founders</p>
+
+              <ul className="space-y-3 mb-8">
+                {[
+                  'Up to 3,000 orders / month',
+                  '1 warehouse · 5 team members',
+                  'All integrations — Shopify, Shiprocket, WhatsApp, Razorpay',
+                  'Real-time RTO scoring & review queue',
+                  'Demand forecast & pincode intelligence',
+                  'Daily ops briefs with WhatsApp export',
+                  'Priority support',
+                ].map(f => (
+                  <li key={f} className="flex items-start gap-2.5 text-sm">
+                    <Check size={14} className="mt-0.5 shrink-0 text-white/80" />
+                    <span className="text-white/75">{f}</span>
+                  </li>
+                ))}
+              </ul>
+
+              <Link to="/checkout?plan=GROWTH"
+                className="block text-center text-sm font-bold py-3.5 rounded-xl bg-white text-brand-700 hover:bg-brand-50 transition-colors shadow-lg">
+                Claim your founder spot →
+              </Link>
+            </div>
+          </AnimateIn>
         </div>
       </section>
 
@@ -1176,7 +1173,7 @@ export default function LandingPage() {
             <h2 className="text-3xl font-bold text-gray-900 mb-4">Frequently asked questions</h2>
             <p className="text-gray-500">
               Still have questions?{' '}
-              <a href="mailto:hello@xmetrics.app" className="text-brand-600 hover:underline">Email us</a>
+              <a href="mailto:joe@xmetrics.in" className="text-brand-600 hover:underline">Email us</a>
             </p>
           </AnimateIn>
           <div className="space-y-3">
@@ -1200,22 +1197,38 @@ export default function LandingPage() {
             Founding access open · Limited spots
           </div>
           <h2 className="text-3xl sm:text-4xl font-bold mb-4 leading-tight">
-            Your ops team deserves<br />
+            35% fewer RTOs.<br />
             <span className="bg-gradient-to-r from-brand-400 to-sky-400 bg-clip-text text-transparent">
-              better tools.
+              8 minutes a day. Starting tomorrow.
             </span>
           </h2>
           <p className="text-white/50 mb-10 text-lg leading-relaxed">
-            Start free. Connect your store in 10 minutes.<br />Run tomorrow's ops in 8.
+            Connect your store in 10 minutes.<br />8 founder spots remaining.
           </p>
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-            <MagneticLink to="/checkout"
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-5">
+            <MagneticLink to="/checkout?plan=GROWTH"
               className="flex items-center gap-2 bg-white text-gray-950 font-semibold px-8 py-3.5 rounded-xl hover:bg-gray-100 shadow-lg hover:shadow-xl text-sm">
-              Get Started <ArrowRight size={16} />
+              Claim Founder Spot <ArrowRight size={16} />
             </MagneticLink>
+            <a href="mailto:joe@xmetrics.in" className="text-white/45 hover:text-white/80 text-sm transition-colors">
+              or talk to us →
+            </a>
           </div>
         </AnimateIn>
       </section>
+
+      {/* ── SECURITY TRUST STRIP ───────────────────────────────────────── */}
+      <div className="bg-gray-950 border-t border-white/[0.05] py-5">
+        <div className="max-w-5xl mx-auto px-6 flex flex-wrap items-center justify-center gap-x-8 gap-y-2 text-xs text-gray-500">
+          <span className="flex items-center gap-1.5"><Shield size={11} className="text-green-500/70" /> TLS 1.3 · AES-256 encryption</span>
+          <span className="hidden sm:block w-px h-3 bg-white/10" />
+          <span className="flex items-center gap-1.5"><Shield size={11} className="text-green-500/70" /> Per-brand data isolation</span>
+          <span className="hidden sm:block w-px h-3 bg-white/10" />
+          <span className="flex items-center gap-1.5"><Shield size={11} className="text-green-500/70" /> Hosted on AWS Mumbai</span>
+          <span className="hidden sm:block w-px h-3 bg-white/10" />
+          <span className="flex items-center gap-1.5"><Shield size={11} className="text-green-500/70" /> Data never shared or sold</span>
+        </div>
+      </div>
 
       {/* ── FOOTER ─────────────────────────────────────────────────────── */}
       <footer className="bg-gray-950 text-white py-14 border-t border-white/5">
@@ -1245,9 +1258,7 @@ export default function LandingPage() {
               </div>
               <div className="space-y-2.5">
                 <p className="text-xs font-semibold uppercase tracking-widest text-gray-600 mb-3">Company</p>
-                <a href="mailto:hello@xmetrics.app" className="block hover:text-white transition-colors">Contact</a>
-                <a href="mailto:hello@xmetrics.app" className="block hover:text-white transition-colors">Careers</a>
-                <a href="mailto:hello@xmetrics.app" className="block hover:text-white transition-colors">Blog</a>
+                <a href="mailto:joe@xmetrics.in" className="block hover:text-white transition-colors">Contact</a>
               </div>
               <div className="space-y-2.5">
                 <p className="text-xs font-semibold uppercase tracking-widest text-gray-600 mb-3">Account</p>
