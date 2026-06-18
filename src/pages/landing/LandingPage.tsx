@@ -351,7 +351,7 @@ function HeroMockup() {
               {/* Revenue area chart */}
               <div className="bg-gray-50 rounded-xl p-3 border border-gray-100">
                 <div className="flex items-center justify-between mb-2">
-                  <p className="text-[10px] font-semibold text-gray-600">Revenue — 14 days</p>
+                  <p className="text-[10px] font-semibold text-gray-600">Revenue, 14 days</p>
                   <span className="flex items-center gap-1 text-[9px] text-green-500 font-semibold">
                     <span className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse-dot" /> Live
                   </span>
@@ -378,7 +378,7 @@ function HeroMockup() {
 
               {/* Channel split — fills the empty bottom space */}
               <div className="bg-gray-50 rounded-xl p-3 border border-gray-100">
-                <p className="text-[10px] font-semibold text-gray-600 mb-2">Channel split — today</p>
+                <p className="text-[10px] font-semibold text-gray-600 mb-2">Channel split</p>
                 <div className="space-y-1.5">
                   {CHANNEL_BARS.map((ch, i) => (
                     <div key={ch.label} className="flex items-center gap-2">
@@ -424,7 +424,7 @@ function HeroMockup() {
       {/* Floating badges — top corners, outside the card on wider viewports */}
       <div className="hidden lg:flex absolute -left-44 top-14 items-center gap-2 bg-white rounded-xl shadow-lg border border-gray-100 px-3 py-2 animate-float">
         <Shield size={14} className="text-green-500" />
-        <span className="text-[11px] font-semibold text-gray-700">RTO blocked — ₹2,899 saved</span>
+        <span className="text-[11px] font-semibold text-gray-700">RTO blocked: ₹2,899 saved</span>
       </div>
       <div className="hidden lg:flex absolute -right-44 top-24 items-center gap-2 bg-white rounded-xl shadow-lg border border-gray-100 px-3 py-2 animate-float" style={{ animationDelay: '1.5s' }}>
         <MessageSquare size={14} className="text-brand-500" />
@@ -498,7 +498,7 @@ function AnnouncementBar({ onDismiss }: { onDismiss: () => void }) {
       <span className="w-1.5 h-1.5 rounded-full bg-amber-400 shrink-0 announce-dot" />
       <span className="text-white/80">
         <span className="font-semibold text-white">Founding access</span>
-        {' — '}<span className="font-semibold text-amber-300">₹2,999/mo for life</span>
+        {': '}<span className="font-semibold text-amber-300">₹2,999/mo for life</span>
         {' · '}<span className="font-semibold text-white">Only 5 spots left</span>
         <Link to="/checkout?plan=GROWTH" className="ml-2 underline underline-offset-2 font-semibold text-brand-300 hover:text-white transition-colors">
           Claim spot →
@@ -526,7 +526,7 @@ function FeaturesSection() {
           <span className="text-[11px] font-bold uppercase tracking-widest text-brand-500">Platform</span>
           <h2 className="text-4xl font-bold text-gray-900 mt-3 mb-4 max-w-lg leading-tight">Everything your ops team needs</h2>
           <p className="text-gray-500 max-w-lg text-[15px] leading-relaxed">
-            From the moment an order lands to the rupee that settles — one dashboard, seven modules.
+            From the moment an order lands to the rupee that settles. One dashboard, seven modules.
           </p>
         </AnimateIn>
 
@@ -543,7 +543,7 @@ function FeaturesSection() {
                 </div>
                 <h3 className="font-bold text-white text-lg mb-2">Real-time RTO Intelligence</h3>
                 <p className="text-white/50 text-sm leading-relaxed max-w-md mb-5">
-                  Every order scored 0–100 the instant it lands — pincode history, COD patterns,
+                  Every order scored 0–100 the instant it lands: pincode history, COD patterns,
                   address quality, and customer track record fused into one Ship / Verify / Hold verdict.
                 </p>
                 <div className="flex items-center gap-3">
@@ -572,7 +572,7 @@ function FeaturesSection() {
               </div>
               <h3 className="font-bold text-white text-lg mb-2">8-minute Daily Brief</h3>
               <p className="text-white/70 text-sm leading-relaxed">
-                Revenue, true profit, RTO health, and your action list — delivered to WhatsApp at 7 AM.
+                Revenue, true profit, RTO health, and your action list. Delivered to WhatsApp at 7 AM.
                 Two hours of reporting, compressed into eight minutes.
               </p>
             </SpotlightCard>
@@ -587,7 +587,7 @@ function FeaturesSection() {
               <h3 className="font-bold text-gray-900 text-lg mb-2">Returns &amp; Refunds</h3>
               <p className="text-gray-500 text-sm leading-relaxed">
                 Eligibility checks, fraud flags, Shiprocket reverse pickup, and one-click Razorpay
-                refunds — the full return lifecycle, automated end to end.
+                refunds. Full return lifecycle, automated end to end.
               </p>
             </SpotlightCard>
           </AnimateIn>
@@ -600,8 +600,7 @@ function FeaturesSection() {
               </div>
               <h3 className="font-bold text-gray-900 text-lg mb-2">Exception Radar</h3>
               <p className="text-gray-500 text-sm leading-relaxed">
-                Stuck shipments, failed payments, NDR escalations, low stock — caught and queued
-                before your customer ever notices.
+                Stuck shipments, failed payments, NDR escalations, low stock. Caught before your customer ever notices.
               </p>
             </SpotlightCard>
           </AnimateIn>
@@ -614,8 +613,7 @@ function FeaturesSection() {
               </div>
               <h3 className="font-bold text-gray-900 text-lg mb-2">Demand Forecast</h3>
               <p className="text-gray-500 text-sm leading-relaxed">
-                Per-SKU velocity and stockout dates from your last 30 days of sales —
-                reorder before you run dry, never sit on dead stock.
+                Per-SKU velocity and stockout dates from your last 30 days of sales. Reorder before you run dry, never sit on dead stock.
               </p>
             </SpotlightCard>
           </AnimateIn>
@@ -628,10 +626,10 @@ function FeaturesSection() {
                   <div className="w-11 h-11 rounded-xl bg-white/10 flex items-center justify-center mb-4">
                     <Truck size={20} className="text-sky-400" />
                   </div>
-                  <h3 className="font-bold text-white text-lg mb-2">Fulfillment Workflow — 7 stages</h3>
+                  <h3 className="font-bold text-white text-lg mb-2">7-Stage Fulfillment Workflow</h3>
                   <p className="text-white/50 text-sm leading-relaxed max-w-xl">
                     From Packed → Dispatched → In Transit → Delivered. Bulk AWB generation, pickup scheduling,
-                    tracking updates, and COD reconciliation — all in one linear workflow.
+                    tracking updates, and COD reconciliation, all in one linear workflow.
                   </p>
                 </div>
                 <div className="flex gap-2 flex-wrap md:flex-col md:items-end shrink-0">
@@ -744,7 +742,7 @@ function ComparisonTable() {
 
 // ─── FAQ item ─────────────────────────────────────────────────────────────────
 const FAQS = [
-  { q: 'Do you offer a free trial?', a: "Yes — use the live demo to explore the full app with real-looking data before signing up. Founding customers also get a 14-day window after signup to test with their own store data before being charged." },
+  { q: 'Do you offer a free trial?', a: "Yes. Use the live demo to explore the full app with real-looking data before signing up. Founding customers also get a 14-day window after signup to test with their own store data before being charged." },
   { q: 'Can I cancel anytime?', a: 'Absolutely. No lock-ins, no cancellation fees. You can cancel your subscription at any time from the Billing settings page. Your data remains accessible for 30 days after cancellation.' },
   { q: 'When do I get access?', a: "Founding customers get access within 48 hours. You'll get a dedicated onboarding call to sync your Shopify store and Shiprocket account. Full training included." },
   { q: 'Which platforms do you integrate with?', a: 'Xmetrics connects with Shopify (orders + products), Shiprocket (fulfillment + tracking), Razorpay (payments + settlements), and WhatsApp Business (alerts + daily brief). More integrations are on the roadmap.' },
@@ -950,7 +948,7 @@ export default function LandingPage() {
             <h2 className="text-4xl font-bold text-gray-900 mt-3 mb-4 max-w-2xl leading-tight">Running a D2C brand<br />on 6 different tabs?</h2>
             <p className="text-gray-500 max-w-lg leading-relaxed text-[15px]">
               Most brands stitch together Shopify, Shiprocket, Razorpay, WhatsApp, and Excel.
-              It works — until a high-RTO order ships and nobody finds out for three days.
+              It works until a high-RTO order ships and nobody finds out for three days.
             </p>
           </AnimateIn>
 
@@ -959,10 +957,10 @@ export default function LandingPage() {
             <div className="relative bg-brand-gradient rounded-2xl p-8 overflow-hidden hover:-translate-y-1 transition-all duration-300 border border-white/[0.08] shadow-[0_8px_32px_rgba(37,99,235,0.3)] hover:shadow-[0_16px_48px_rgba(37,99,235,0.45)]">
               <div className="absolute inset-0 rounded-2xl pointer-events-none" />
               <span className="absolute right-6 top-3 text-[110px] font-black text-white/[0.09] select-none leading-none tracking-tight pointer-events-none">40×</span>
-              <span className="text-[10px] font-bold uppercase tracking-widest text-red-400 mb-3 block relative">Tab switching — every day</span>
+              <span className="text-[10px] font-bold uppercase tracking-widest text-red-400 mb-3 block relative">Tab switching, every day</span>
               <h3 className="text-2xl font-bold text-white mb-3 relative">No unified order view</h3>
               <p className="text-white/45 max-w-lg text-sm leading-relaxed relative">Order status in Shopify. Tracking in Shiprocket. Payment in Razorpay. Your ops team switches context{' '}
-                <span className="text-white/75 font-semibold">40 times a day</span> for a single order — and still misses things.</p>
+                <span className="text-white/75 font-semibold">40 times a day</span> for a single order and still misses things.</p>
             </div>
           </AnimateIn>
 
@@ -970,7 +968,7 @@ export default function LandingPage() {
             {[
               { stat: '25–35%', label: 'avg RTO rate without scoring', icon: <TrendingDown size={15} className="text-orange-500" />, title: 'RTO is pure guesswork', desc: 'No pincode data. No COD pattern scoring. You accept every order and absorb the losses.', cardClass: 'bg-orange-50/70 border-orange-100 hover:bg-orange-50 hover:border-orange-200' },
               { stat: '2+ hrs', label: 'wasted every morning', icon: <Clock size={15} className="text-amber-500" />, title: 'Ops review takes forever', desc: 'Stitching reports, chasing teams on WhatsApp, manually reconciling returns and COD.', cardClass: 'bg-yellow-50/70 border-yellow-100 hover:bg-yellow-50 hover:border-yellow-200' },
-              { stat: '∞', label: 'alerts you never see', icon: <AlertTriangle size={15} className="text-red-500" />, title: 'Exceptions arrive too late', desc: 'Stuck shipments, NDR escalations, failed payments — found out after the customer complains.', cardClass: 'bg-rose-50/70 border-rose-100 hover:bg-rose-50 hover:border-rose-200' },
+              { stat: '∞', label: 'alerts you never see', icon: <AlertTriangle size={15} className="text-red-500" />, title: 'Exceptions arrive too late', desc: 'Stuck shipments, NDR escalations, failed payments, found out after the customer complains.', cardClass: 'bg-rose-50/70 border-rose-100 hover:bg-rose-50 hover:border-rose-200' },
             ].map((item, i) => (
               <AnimateIn key={item.title} delay={100 + i * 80}>
                 <div className={`border rounded-2xl p-6 h-full hover:shadow-md hover:-translate-y-1 transition-all duration-200 ${item.cardClass}`}>
@@ -999,7 +997,7 @@ export default function LandingPage() {
             {[
               { step: '01', title: 'Connect your store', desc: 'Link Shopify, Shiprocket, and Razorpay using OAuth. No API keys to manage.', icon: <ShoppingCart size={20} className="text-brand-600" /> },
               { step: '02', title: 'Every order gets scored', desc: 'Xmetrics immediately scores each order for RTO risk and flags exceptions in real time.', icon: <BarChart2 size={20} className="text-brand-600" /> },
-              { step: '03', title: 'Run ops in 8 minutes', desc: "Open your daily brief, resolve exceptions, approve fulfillment — and you're done.", icon: <Zap size={20} className="text-brand-600" /> },
+              { step: '03', title: 'Run ops in 8 minutes', desc: "Open your daily brief, resolve exceptions, approve fulfillment and you're done.", icon: <Zap size={20} className="text-brand-600" /> },
             ].map((step, i) => (
               <AnimateIn key={step.step} delay={i * 100} className="relative text-center">
                 {/* Oversized watermark step number */}
@@ -1029,12 +1027,11 @@ export default function LandingPage() {
             </h2>
             <p className="text-gray-500 leading-relaxed mb-6">
               The moment an order lands, Xmetrics weighs pincode delivery history, COD patterns,
-              address quality, and customer track record into a single 0–100 risk score — then
-              tells you exactly what to do with it.
+              address quality, and customer track record into a single 0–100 risk score and tells you exactly what to do with it.
             </p>
             <ul className="space-y-3">
               {[
-                { icon: <Check size={14} className="text-green-500" />, text: 'Green orders ship automatically — no review needed' },
+                { icon: <Check size={14} className="text-green-500" />, text: 'Green orders ship automatically with no review needed' },
                 { icon: <AlertTriangle size={14} className="text-amber-500" />, text: 'Yellow orders get a WhatsApp confirmation nudge' },
                 { icon: <Shield size={14} className="text-red-500" />, text: 'Red orders hold for manual review before dispatch' },
               ].map(item => (
@@ -1080,13 +1077,13 @@ export default function LandingPage() {
                 <span className="text-5xl font-bold text-white">₹2,999</span>
                 <span className="text-white/60 mb-1.5">/mo</span>
               </div>
-              <p className="text-white/40 text-xs mb-7">Locked for life — price never increases for founders</p>
+              <p className="text-white/40 text-xs mb-7">Locked for life. Price never increases for founders.</p>
 
               <ul className="space-y-3 mb-8">
                 {[
                   'Up to 3,000 orders / month',
                   '1 warehouse · 5 team members',
-                  'All integrations — Shopify, Shiprocket, WhatsApp, Razorpay',
+                  'All integrations: Shopify, Shiprocket, WhatsApp, Razorpay',
                   'Real-time RTO scoring & review queue',
                   'Demand forecast & pincode intelligence',
                   'Daily ops briefs with WhatsApp export',

@@ -117,7 +117,7 @@ export default function FoundingAccess() {
               <span className="text-brand-600">well-oiled machine</span>
             </h1>
             <p className="text-lg text-gray-500 mb-8 leading-relaxed">
-              Xmetrics gives D2C brands a single command centre for orders, RTO, fulfillment, and daily ops intelligence. As a founding member, you lock in Growth plan pricing forever — at 40% off the regular price.
+              Xmetrics gives D2C brands a single command centre for orders, RTO, fulfillment, and daily ops intelligence. As a founding member, you lock in Growth plan pricing forever, at 40% off the regular price.
             </p>
 
             {/* Price comparison */}

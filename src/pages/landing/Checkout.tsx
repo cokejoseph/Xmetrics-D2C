@@ -142,7 +142,7 @@ export default function Checkout() {
             }) as { verified?: boolean } | null
             if (!verified?.verified) throw new Error('Signature mismatch')
           } catch {
-            setError('Payment signature verification failed. Your payment was captured — please contact hello@xmetrics.app with your email and we will activate your account.')
+            setError('Payment signature verification failed. Your payment was captured. Please contact hello@xmetrics.app with your email and we will activate your account.')
             setLoading(false)
             return
           }
@@ -234,7 +234,7 @@ export default function Checkout() {
               {plan.originalMonthlyPrice && (
                 <div className="inline-flex items-center gap-2 bg-amber-50 border border-amber-200 rounded-full px-3 py-1 mb-3">
                   <span className="w-1.5 h-1.5 rounded-full bg-amber-400" />
-                  <span className="text-xs font-semibold text-amber-700">Founding rate — locked at this price for life</span>
+                  <span className="text-xs font-semibold text-amber-700">Founding rate: locked at this price for life</span>
                 </div>
               )}
               <p className="text-sm text-gray-400 mb-1">{billing === 'MONTHLY' ? 'Monthly price' : 'Yearly price'}</p>
@@ -259,7 +259,7 @@ export default function Checkout() {
                 </div>
               ) : (
                 <p className="text-sm text-gray-400 mt-1">
-                  Switch to yearly and save {formatINR(yearlySaving)} more — 2 months free
+                  Switch to yearly and save {formatINR(yearlySaving)} more, 2 months free
                 </p>
               )}
             </div>
@@ -343,7 +343,7 @@ export default function Checkout() {
                   {plan.originalMonthlyPrice && (
                     <div className="bg-amber-50 border border-amber-100 rounded-xl px-4 py-2.5 mb-4 flex items-center gap-2">
                       <span className="w-2 h-2 rounded-full bg-amber-400 shrink-0" />
-                      <p className="text-xs text-amber-700 font-medium flex-1">Founding rate — locked at ₹2,999/mo for life</p>
+                      <p className="text-xs text-amber-700 font-medium flex-1">Founding rate: locked at ₹2,999/mo for life</p>
                       <span className="text-xs font-bold text-amber-600 shrink-0">8 spots left</span>
                     </div>
                   )}
