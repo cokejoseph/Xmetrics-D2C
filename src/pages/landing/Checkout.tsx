@@ -13,6 +13,20 @@ const PLAN_DATA: Record<string, {
   features: string[]
   color: string
 }> = {
+  TEST: {
+    name: 'Test',
+    price: 10,
+    priceDisplay: '₹10',
+    period: '/one-time',
+    badge: 'PAYMENT TESTING',
+    features: [
+      '₹10 test charge — refundable',
+      'Verifies Razorpay integration end-to-end',
+      'Confirms webhook delivery',
+      'For internal testing only',
+    ],
+    color: 'brand',
+  },
   STARTER: {
     name: 'Starter',
     price: 2499,
