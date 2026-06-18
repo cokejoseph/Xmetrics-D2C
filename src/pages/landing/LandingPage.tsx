@@ -705,6 +705,7 @@ const COMPARE_ROWS: { feature: string; legacy: string | false; xm: string | true
   { feature: 'Unified order view',        legacy: false,              xm: true },
   { feature: 'Real-time RTO scoring',     legacy: false,              xm: true },
   { feature: 'Exception detection',       legacy: 'Manual',           xm: true },
+  { feature: 'Returns & refund automation', legacy: false,            xm: true },
   { feature: 'Daily ops brief',           legacy: '2–3 hours',        xm: '8 min' },
   { feature: '7-stage fulfillment',       legacy: 'Shiprocket only',  xm: true },
   { feature: 'Demand forecasting',        legacy: false,              xm: true },
@@ -740,10 +741,10 @@ function ComparisonTable() {
             {/* Rows */}
             {COMPARE_ROWS.map((row, i) => (
               <div key={row.feature}
-                className={`grid grid-cols-3 items-center bg-white ${i < COMPARE_ROWS.length - 1 ? 'border-b border-gray-100' : ''} hover:bg-gray-50/70 transition-colors`}>
+                className={`group grid grid-cols-3 items-center bg-white ${i < COMPARE_ROWS.length - 1 ? 'border-b border-gray-100' : ''} hover:bg-gray-50/70 transition-colors`}>
                 {/* Feature */}
                 <div className="px-6 py-4 border-r border-gray-100">
-                  <span className="text-sm font-semibold text-gray-800">{row.feature}</span>
+                  <span className="text-sm font-semibold text-gray-800 inline-block transition-transform duration-200 group-hover:translate-x-1">{row.feature}</span>
                 </div>
                 {/* Legacy column */}
                 <div className="px-4 py-4 border-r border-gray-100 flex items-center justify-center">
@@ -760,11 +761,11 @@ function ComparisonTable() {
                 {/* Xmetrics column */}
                 <div className="px-4 py-4 flex items-center justify-center bg-green-50/40">
                   {row.xm === true ? (
-                    <span className="inline-flex items-center justify-center w-7 h-7 rounded-full bg-green-100 border border-green-200">
+                    <span className="inline-flex items-center justify-center w-7 h-7 rounded-full bg-green-100 border border-green-200 transition-transform duration-200 group-hover:scale-110 group-hover:bg-green-200">
                       <Check size={13} className="text-green-600" strokeWidth={2.5} />
                     </span>
                   ) : (
-                    <span className="inline-flex items-center text-xs font-bold text-green-700 bg-green-100 border border-green-200 rounded-full px-3 py-1">
+                    <span className="inline-flex items-center text-xs font-bold text-green-700 bg-green-100 border border-green-200 rounded-full px-3 py-1 transition-transform duration-200 group-hover:scale-105">
                       {row.xm}
                     </span>
                   )}
