@@ -620,21 +620,21 @@ function FeaturesSection() {
 
           {/* Fulfillment — wide bottom card */}
           <AnimateIn className="md:col-span-3" delay={240}>
-            <SpotlightCard className="bento-glow bg-gray-950 text-white border border-white/5 rounded-2xl p-7 transition-all duration-300 hover:-translate-y-1">
+            <SpotlightCard className="bento-glow bg-gradient-to-br from-brand-600 to-brand-800 text-white border border-brand-500/30 rounded-2xl p-7 transition-all duration-300 hover:-translate-y-1 shadow-[0_8px_30px_rgba(37,99,235,0.25)] hover:shadow-[0_12px_44px_rgba(37,99,235,0.4)]">
               <div className="flex flex-col md:flex-row md:items-center gap-6">
                 <div className="flex-1">
-                  <div className="w-11 h-11 rounded-xl bg-white/10 flex items-center justify-center mb-4">
-                    <Truck size={20} className="text-sky-400" />
+                  <div className="w-11 h-11 rounded-xl bg-white/15 backdrop-blur flex items-center justify-center mb-4">
+                    <Truck size={20} className="text-white" />
                   </div>
                   <h3 className="font-bold text-white text-lg mb-2">7-Stage Fulfillment Workflow</h3>
-                  <p className="text-white/50 text-sm leading-relaxed max-w-xl">
-                    From Packed → Dispatched → In Transit → Delivered. Bulk AWB generation, pickup scheduling,
+                  <p className="text-white/70 text-sm leading-relaxed max-w-xl">
+                    From Packed to Dispatched to In Transit to Delivered. Bulk AWB generation, pickup scheduling,
                     tracking updates, and COD reconciliation, all in one linear workflow.
                   </p>
                 </div>
                 <div className="flex gap-2 flex-wrap md:flex-col md:items-end shrink-0">
                   {['Bulk AWB generation', 'Pickup scheduling', 'COD reconciliation', 'NDR management'].map(tag => (
-                    <span key={tag} className="text-[10px] font-semibold bg-white/8 border border-white/10 text-white/60 px-2.5 py-1 rounded-full whitespace-nowrap">
+                    <span key={tag} className="text-[10px] font-semibold bg-white/15 border border-white/20 text-white/80 px-2.5 py-1 rounded-full whitespace-nowrap">
                       {tag}
                     </span>
                   ))}
