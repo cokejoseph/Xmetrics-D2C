@@ -354,7 +354,7 @@ function HeroMockup() {
             <span className="w-2.5 h-2.5 rounded-full bg-amber-400" />
             <span className="w-2.5 h-2.5 rounded-full bg-green-400" />
             <div className="ml-3 flex-1 max-w-xs bg-white border border-gray-100 rounded-md px-3 py-1 text-[10px] text-gray-400">
-              app.xmetrics.app/dashboard
+              app.xmetrics.in/dashboard
             </div>
           </div>
 
@@ -732,7 +732,7 @@ const PLANS = [
   {
     name: 'Growth', price: '₹4,999', period: '/mo', orders: 'Up to 3,000 orders/mo', highlight: true,
     badge: 'MOST POPULAR',
-    features: ['Up to 3,000 orders / month', '3 warehouses', '5 team members', 'Demand forecast', 'Pincode intelligence', 'Priority support'],
+    features: ['Up to 3,000 orders / month', '1 warehouse', '5 team members', 'Demand forecast', 'Pincode intelligence', 'Priority support'],
   },
   {
     name: 'Scale', price: '₹9,999', period: '/mo', orders: 'Up to 10,000 orders/mo', highlight: false,
@@ -806,7 +806,7 @@ export default function LandingPage() {
             <Link to="/login" className={`md:hidden text-sm font-medium transition-colors ${scrolled ? 'text-gray-600 hover:text-gray-900' : 'text-white/80 hover:text-white'}`}>
               Sign In
             </Link>
-            <Link to="/signup"
+            <Link to="/checkout"
               className={`text-sm font-semibold px-4 py-2 rounded-xl transition-all duration-200 hover:-translate-y-px ${
                 scrolled
                   ? 'bg-gray-950 text-white hover:bg-gray-800 shadow-sm'
@@ -864,14 +864,14 @@ export default function LandingPage() {
           </p>
 
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-6 animate-fade-in-up" style={{ animationDelay: '240ms' }}>
-            <MagneticLink to="/signup"
+            <MagneticLink to="/checkout"
               className="flex items-center gap-2 bg-white text-brand-700 font-semibold px-8 py-3.5 rounded-xl hover:bg-brand-50 shadow-lg hover:shadow-xl text-sm">
-              Start Free Trial <ArrowRight size={16} />
+              Get Started <ArrowRight size={16} />
             </MagneticLink>
           </div>
 
           <p className="mb-14 text-white/35 text-xs animate-fade-in" style={{ animationDelay: '360ms' }}>
-            No credit card required · 14-day free trial · Cancel anytime
+            Pay once · Instant access · No setup fees
           </p>
 
           <div className="animate-fade-in-up" style={{ animationDelay: '320ms' }}>
@@ -1063,7 +1063,7 @@ export default function LandingPage() {
             ))}
           </div>
           <p className="text-center text-sm text-gray-400 mt-8">
-            All plans include a 14-day free trial. No credit card required.
+            Pay now · Instant access · No setup fees · Cancel anytime
           </p>
         </div>
       </section>
@@ -1109,9 +1109,9 @@ export default function LandingPage() {
             Start free. Connect your store in 10 minutes.<br />Run tomorrow's ops in 8.
           </p>
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-            <MagneticLink to="/signup"
+            <MagneticLink to="/checkout"
               className="flex items-center gap-2 bg-white text-gray-950 font-semibold px-8 py-3.5 rounded-xl hover:bg-gray-100 shadow-lg hover:shadow-xl text-sm">
-              Start Free Trial <ArrowRight size={16} />
+              Get Started <ArrowRight size={16} />
             </MagneticLink>
           </div>
         </AnimateIn>
