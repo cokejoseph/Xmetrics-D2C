@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
-import { Check, Shield, Lock, Zap, Package } from 'lucide-react'
+import { Check, Shield, Zap, Package } from 'lucide-react'
 import { loadRazorpayScript } from '../../lib/razorpay'
 import { callEdgeFunction, DEMO_MODE } from '../../lib/supabase'
 
@@ -31,7 +31,7 @@ const PLAN_DATA: Record<string, {
     badge: 'MOST POPULAR',
     features: [
       'Up to 3,000 orders / month',
-      '3 warehouses',
+      '1 warehouse',
       '5 team members',
       'All integrations (Shopify, Shiprocket, WhatsApp)',
       'RTO scoring & review queue',
@@ -245,7 +245,6 @@ export default function Checkout() {
             {/* Trust signals */}
             <div className="flex flex-wrap gap-5 text-xs text-gray-500">
               <span className="flex items-center gap-1.5"><Shield size={12} className="text-green-500" /> Secured by Razorpay</span>
-              <span className="flex items-center gap-1.5"><Lock size={12} className="text-brand-500" /> Cancel anytime</span>
               <span className="flex items-center gap-1.5"><Zap size={12} className="text-amber-500" /> Access in under 5 minutes</span>
             </div>
 
@@ -312,7 +311,7 @@ export default function Checkout() {
                       </p>
                     </div>
                     <div className="text-right">
-                      <p className="text-xs text-gray-400">Cancel anytime</p>
+                      <p className="text-xs text-gray-400">Razorpay secured</p>
                     </div>
                   </div>
 
