@@ -89,13 +89,13 @@ function ParticleField() {
     const resize = () => { canvas.width = canvas.offsetWidth * dpr; canvas.height = canvas.offsetHeight * dpr }
     resize()
     window.addEventListener('resize', resize)
-    const N = 32
+    const N = 48
     const pts = Array.from({ length: N }, () => ({
       x: Math.random() * canvas.width, y: Math.random() * canvas.height,
-      vx: (Math.random() - 0.5) * 0.15 * dpr, vy: (Math.random() - 0.5) * 0.15 * dpr,
-      r: (Math.random() * 1.2 + 0.4) * dpr,
+      vx: (Math.random() - 0.5) * 0.18 * dpr, vy: (Math.random() - 0.5) * 0.18 * dpr,
+      r: (Math.random() * 1.4 + 0.5) * dpr,
     }))
-    const LINK = 120 * dpr
+    const LINK = 130 * dpr
     let raf = 0
     const tick = () => {
       ctx.clearRect(0, 0, canvas.width, canvas.height)
@@ -109,20 +109,20 @@ function ParticleField() {
           const dx = pts[i].x - pts[j].x, dy = pts[i].y - pts[j].y
           const d = Math.hypot(dx, dy)
           if (d < LINK) {
-            ctx.strokeStyle = `rgba(147,197,253,${(1 - d / LINK) * 0.18})`
-            ctx.lineWidth = 0.5 * dpr
+            ctx.strokeStyle = `rgba(147,197,253,${(1 - d / LINK) * 0.26})`
+            ctx.lineWidth = 0.6 * dpr
             ctx.beginPath(); ctx.moveTo(pts[i].x, pts[i].y); ctx.lineTo(pts[j].x, pts[j].y); ctx.stroke()
           }
         }
       }
-      ctx.fillStyle = 'rgba(186,230,253,0.5)'
+      ctx.fillStyle = 'rgba(186,230,253,0.65)'
       for (const p of pts) { ctx.beginPath(); ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2); ctx.fill() }
       raf = requestAnimationFrame(tick)
     }
     raf = requestAnimationFrame(tick)
     return () => { cancelAnimationFrame(raf); window.removeEventListener('resize', resize) }
   }, [])
-  return <canvas ref={canvasRef} className="absolute inset-0 w-full h-full opacity-40 pointer-events-none" />
+  return <canvas ref={canvasRef} className="absolute inset-0 w-full h-full opacity-55 pointer-events-none" />
 }
 
 // ─── Magnetic CTA ─────────────────────────────────────────────────────────────
