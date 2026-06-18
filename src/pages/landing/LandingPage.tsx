@@ -968,12 +968,12 @@ export default function LandingPage() {
 
           <div className="grid sm:grid-cols-3 gap-4">
             {[
-              { stat: '25–35%', label: 'avg RTO rate without scoring', icon: <TrendingDown size={15} className="text-orange-400" />, title: 'RTO is pure guesswork', desc: 'No pincode data. No COD pattern scoring. You accept every order and absorb the losses.' },
-              { stat: '2+ hrs', label: 'wasted every morning', icon: <Clock size={15} className="text-amber-400" />, title: 'Ops review takes forever', desc: 'Stitching reports, chasing teams on WhatsApp, manually reconciling returns and COD.' },
-              { stat: '∞', label: 'alerts you never see', icon: <AlertTriangle size={15} className="text-red-400" />, title: 'Exceptions arrive too late', desc: 'Stuck shipments, NDR escalations, failed payments — found out after the customer complains.' },
+              { stat: '25–35%', label: 'avg RTO rate without scoring', icon: <TrendingDown size={15} className="text-orange-500" />, title: 'RTO is pure guesswork', desc: 'No pincode data. No COD pattern scoring. You accept every order and absorb the losses.', cardClass: 'bg-orange-50/70 border-orange-100 hover:bg-orange-50 hover:border-orange-200' },
+              { stat: '2+ hrs', label: 'wasted every morning', icon: <Clock size={15} className="text-amber-500" />, title: 'Ops review takes forever', desc: 'Stitching reports, chasing teams on WhatsApp, manually reconciling returns and COD.', cardClass: 'bg-yellow-50/70 border-yellow-100 hover:bg-yellow-50 hover:border-yellow-200' },
+              { stat: '∞', label: 'alerts you never see', icon: <AlertTriangle size={15} className="text-red-500" />, title: 'Exceptions arrive too late', desc: 'Stuck shipments, NDR escalations, failed payments — found out after the customer complains.', cardClass: 'bg-rose-50/70 border-rose-100 hover:bg-rose-50 hover:border-rose-200' },
             ].map((item, i) => (
               <AnimateIn key={item.title} delay={100 + i * 80}>
-                <div className="bg-white border border-gray-200 rounded-2xl p-6 h-full hover:border-brand-200 hover:shadow-md hover:-translate-y-1 transition-all duration-200">
+                <div className={`border rounded-2xl p-6 h-full hover:shadow-md hover:-translate-y-1 transition-all duration-200 ${item.cardClass}`}>
                   <p className="text-3xl font-black text-gray-900 leading-none mb-0.5">{item.stat}</p>
                   <p className="text-[10px] font-semibold uppercase tracking-wide text-gray-400 mb-4">{item.label}</p>
                   <div className="flex items-center gap-1.5 mb-2">
