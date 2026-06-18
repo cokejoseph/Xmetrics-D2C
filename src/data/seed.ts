@@ -52,8 +52,8 @@ export const DEMO_INTEGRATIONS: Integration[] = [
   { id: 'int-razorpay', brand_id: DEMO_BRAND_ID, platform: 'RAZORPAY', status: 'CONNECTED', credentials: { key_id: 'rzp_live_****' }, last_sync_at: dAt(0, 8, 0), created_at: '2024-01-20T10:00:00Z' },
   { id: 'int-shiprocket', brand_id: DEMO_BRAND_ID, platform: 'SHIPROCKET', status: 'CONNECTED', credentials: { email: 'ops@zestifyfoods.in' }, last_sync_at: dAt(0, 7, 30), created_at: '2024-01-22T10:00:00Z' },
   { id: 'int-whatsapp', brand_id: DEMO_BRAND_ID, platform: 'WHATSAPP', status: 'CONNECTED', credentials: { phone_number: '+91 9876500000' }, last_sync_at: dAt(1, 18, 0), created_at: '2024-02-05T10:00:00Z' },
-  { id: 'int-shippo', brand_id: DEMO_BRAND_ID, platform: 'SHIPPO', status: 'DISCONNECTED', credentials: {}, last_sync_at: null, created_at: '2024-05-10T10:00:00Z' },
-  { id: 'int-easypost', brand_id: DEMO_BRAND_ID, platform: 'EASYPOST', status: 'DISCONNECTED', credentials: {}, last_sync_at: null, created_at: '2024-05-10T10:00:00Z' },
+  { id: 'int-ecomexpress', brand_id: DEMO_BRAND_ID, platform: 'ECOMEXPRESS', status: 'DISCONNECTED', credentials: {}, last_sync_at: null, created_at: '2024-05-10T10:00:00Z' },
+  { id: 'int-unicommerce', brand_id: DEMO_BRAND_ID, platform: 'UNICOMMERCE', status: 'DISCONNECTED', credentials: {}, last_sync_at: null, created_at: '2024-05-10T10:00:00Z' },
 ]
 
 // ─── Products (20 SKUs) ────────────────────────────────────────────────────
