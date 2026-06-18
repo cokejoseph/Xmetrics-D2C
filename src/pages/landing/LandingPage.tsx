@@ -76,6 +76,55 @@ function SpotlightCard({ className = '', children }: { className?: string; child
   )
 }
 
+// ─── Particle network — dark hero backdrop ────────────────────────────────────
+function ParticleField() {
+  const canvasRef = useRef<HTMLCanvasElement>(null)
+  useEffect(() => {
+    const canvas = canvasRef.current
+    if (!canvas) return
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return
+    const ctx = canvas.getContext('2d')
+    if (!ctx) return
+    const dpr = Math.min(window.devicePixelRatio || 1, 2)
+    const resize = () => { canvas.width = canvas.offsetWidth * dpr; canvas.height = canvas.offsetHeight * dpr }
+    resize()
+    window.addEventListener('resize', resize)
+    const N = 68
+    const pts = Array.from({ length: N }, () => ({
+      x: Math.random() * canvas.width, y: Math.random() * canvas.height,
+      vx: (Math.random() - 0.5) * 0.22 * dpr, vy: (Math.random() - 0.5) * 0.22 * dpr,
+      r: (Math.random() * 1.6 + 0.6) * dpr,
+    }))
+    const LINK = 150 * dpr
+    let raf = 0
+    const tick = () => {
+      ctx.clearRect(0, 0, canvas.width, canvas.height)
+      for (const p of pts) {
+        p.x += p.vx; p.y += p.vy
+        if (p.x < 0 || p.x > canvas.width) p.vx *= -1
+        if (p.y < 0 || p.y > canvas.height) p.vy *= -1
+      }
+      for (let i = 0; i < N; i++) {
+        for (let j = i + 1; j < N; j++) {
+          const dx = pts[i].x - pts[j].x, dy = pts[i].y - pts[j].y
+          const d = Math.hypot(dx, dy)
+          if (d < LINK) {
+            ctx.strokeStyle = `rgba(147,197,253,${(1 - d / LINK) * 0.35})`
+            ctx.lineWidth = 0.7 * dpr
+            ctx.beginPath(); ctx.moveTo(pts[i].x, pts[i].y); ctx.lineTo(pts[j].x, pts[j].y); ctx.stroke()
+          }
+        }
+      }
+      ctx.fillStyle = 'rgba(186,230,253,0.8)'
+      for (const p of pts) { ctx.beginPath(); ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2); ctx.fill() }
+      raf = requestAnimationFrame(tick)
+    }
+    raf = requestAnimationFrame(tick)
+    return () => { cancelAnimationFrame(raf); window.removeEventListener('resize', resize) }
+  }, [])
+  return <canvas ref={canvasRef} className="absolute inset-0 w-full h-full opacity-80 pointer-events-none" />
+}
+
 // ─── Magnetic CTA ─────────────────────────────────────────────────────────────
 function MagneticLink({ to, className = '', children }: { to: string; className?: string; children: React.ReactNode }) {
   const ref = useRef<HTMLAnchorElement>(null)
@@ -95,7 +144,7 @@ function MagneticLink({ to, className = '', children }: { to: string; className?
   )
 }
 
-// ─── Hero dashboard mockup (simplified: KPIs + order feed) ───────────────────
+// ─── Hero dashboard mockup ────────────────────────────────────────────────────
 const ORDER_POOL = [
   { id: '#3412', name: 'Ananya S.', city: 'Bengaluru', amount: '₹1,249', method: 'UPI',  score: 12, verdict: 'SHIP'   },
   { id: '#3411', name: 'Rahul M.', city: 'Patna',     amount: '₹2,899', method: 'COD',  score: 78, verdict: 'HOLD'   },
@@ -112,6 +161,12 @@ const VERDICT_STYLE: Record<string, string> = {
   HOLD: 'bg-red-50 text-red-600 border-red-100',
 }
 function scoreColor(s: number) { return s >= 60 ? 'bg-red-400' : s >= 35 ? 'bg-amber-400' : 'bg-green-400' }
+
+const CHANNEL_BARS = [
+  { label: 'Shopify',   pct: 58, color: 'bg-brand-500' },
+  { label: 'WhatsApp',  pct: 27, color: 'bg-green-500' },
+  { label: 'Manual',    pct: 15, color: 'bg-amber-400' },
+]
 
 function HeroMockup() {
   const cardRef = useRef<HTMLDivElement>(null)
@@ -133,7 +188,7 @@ function HeroMockup() {
     return () => { clearInterval(t1); clearInterval(t2); clearInterval(t3); clearInterval(t4) }
   }, [])
 
-  const feed = Array.from({ length: 4 }, (_, k) => ORDER_POOL[(feedIdx + k) % ORDER_POOL.length])
+  const feed = Array.from({ length: 3 }, (_, k) => ORDER_POOL[(feedIdx + k) % ORDER_POOL.length])
   const rtoDisplay = (rtoTenths / 10).toFixed(1) + '%'
 
   const handleMove = (e: React.MouseEvent<HTMLDivElement>) => {
@@ -145,7 +200,7 @@ function HeroMockup() {
   const handleLeave = () => { if (cardRef.current) cardRef.current.style.transform = 'rotateX(4deg)' }
 
   return (
-    <div className="relative max-w-2xl mx-auto animate-float-slow" style={{ perspective: '1200px' }}
+    <div className="relative max-w-3xl mx-auto animate-float-slow" style={{ perspective: '1200px' }}
       onMouseMove={handleMove} onMouseLeave={handleLeave}>
       <div className="absolute -inset-6 bg-brand-500/25 blur-3xl rounded-full" />
       <div ref={cardRef}
@@ -162,38 +217,84 @@ function HeroMockup() {
             </div>
           </div>
 
-          <div className="p-4 sm:p-5 space-y-3">
-            {/* KPI row */}
-            <div className="grid grid-cols-3 gap-2.5">
-              <div className="bg-gray-50 rounded-xl p-2.5 border border-gray-100">
-                <p className="text-[9px] text-gray-400 font-medium mb-0.5 truncate">Revenue Today</p>
-                <p className="text-sm font-bold text-gray-900">
-                  <span key={revenue} className="animate-tick-flash">₹{revenue.toLocaleString('en-IN')}</span>
-                </p>
-                <p className="text-[9px] font-semibold text-green-500">+12.4%</p>
+          <div className="p-4 sm:p-5 grid grid-cols-1 sm:grid-cols-5 gap-4">
+            {/* Left column — KPIs, revenue chart, channel split */}
+            <div className="sm:col-span-3 space-y-3">
+              <div className="grid grid-cols-3 gap-2.5">
+                <div className="bg-gray-50 rounded-xl p-2.5 border border-gray-100">
+                  <p className="text-[9px] text-gray-400 font-medium mb-0.5 truncate">Revenue Today</p>
+                  <p className="text-sm font-bold text-gray-900">
+                    <span key={revenue} className="animate-tick-flash">₹{revenue.toLocaleString('en-IN')}</span>
+                  </p>
+                  <p className="text-[9px] font-semibold text-green-500">+12.4%</p>
+                </div>
+                <div className="bg-gray-50 rounded-xl p-2.5 border border-gray-100">
+                  <p className="text-[9px] text-gray-400 font-medium mb-0.5 truncate">RTO Rate</p>
+                  <p className="text-sm font-bold text-gray-900">
+                    <span key={rtoTenths} className="animate-tick-flash">{rtoDisplay}</span>
+                  </p>
+                  <p className="text-[9px] font-semibold text-brand-500">
+                    {rtoTenths <= 105 ? '↓ improving' : '−8.1%'}
+                  </p>
+                </div>
+                <div className="bg-gray-50 rounded-xl p-2.5 border border-gray-100">
+                  <p className="text-[9px] text-gray-400 font-medium mb-0.5 truncate">Exceptions</p>
+                  <p className="text-sm font-bold text-gray-900">
+                    <span key={exceptions} className="animate-tick-flash">{exceptions}</span>
+                  </p>
+                  <p className="text-[9px] font-semibold text-brand-500">
+                    {exceptions > 3 ? `${exceptions - 3} new` : exceptions < 3 ? 'clearing' : '2 new'}
+                  </p>
+                </div>
               </div>
-              <div className="bg-gray-50 rounded-xl p-2.5 border border-gray-100">
-                <p className="text-[9px] text-gray-400 font-medium mb-0.5 truncate">RTO Rate</p>
-                <p className="text-sm font-bold text-gray-900">
-                  <span key={rtoTenths} className="animate-tick-flash">{rtoDisplay}</span>
-                </p>
-                <p className="text-[9px] font-semibold text-brand-500">
-                  {rtoTenths <= 105 ? '↓ improving' : 'scored live'}
-                </p>
+
+              {/* Revenue area chart */}
+              <div className="bg-gray-50 rounded-xl p-3 border border-gray-100">
+                <div className="flex items-center justify-between mb-2">
+                  <p className="text-[10px] font-semibold text-gray-600">Revenue, 14 days</p>
+                  <span className="flex items-center gap-1 text-[9px] text-green-500 font-semibold">
+                    <span className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse-dot" /> Live
+                  </span>
+                </div>
+                <svg viewBox="0 0 300 72" className="w-full h-[72px]" preserveAspectRatio="none">
+                  <defs>
+                    <linearGradient id="heroChartFill" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stopColor="#3B82F6" stopOpacity="0.28" />
+                      <stop offset="100%" stopColor="#3B82F6" stopOpacity="0" />
+                    </linearGradient>
+                  </defs>
+                  <path className="animate-chart-fill"
+                    d="M0,56 C25,52 40,44 60,46 C85,48 95,34 120,36 C145,38 155,26 180,24 C205,22 215,30 240,20 C262,12 280,10 300,6 L300,72 L0,72 Z"
+                    fill="url(#heroChartFill)" />
+                  <path className="animate-draw-line"
+                    d="M0,56 C25,52 40,44 60,46 C85,48 95,34 120,36 C145,38 155,26 180,24 C205,22 215,30 240,20 C262,12 280,10 300,6"
+                    fill="none" stroke="#2563EB" strokeWidth="2" strokeLinecap="round" />
+                  {['Day 1','','','Day 7','','','Day 14'].map((l, i) => l ? (
+                    <text key={i} x={i * 50} y={70} fontSize="6" fill="#9CA3AF" textAnchor="middle">{l}</text>
+                  ) : null)}
+                </svg>
               </div>
-              <div className="bg-gray-50 rounded-xl p-2.5 border border-gray-100">
-                <p className="text-[9px] text-gray-400 font-medium mb-0.5 truncate">Exceptions</p>
-                <p className="text-sm font-bold text-gray-900">
-                  <span key={exceptions} className="animate-tick-flash">{exceptions}</span>
-                </p>
-                <p className="text-[9px] font-semibold text-brand-500">
-                  {exceptions > 3 ? `${exceptions - 3} new` : 'auto-flagged'}
-                </p>
+
+              {/* Channel split */}
+              <div className="bg-gray-50 rounded-xl p-3 border border-gray-100">
+                <p className="text-[10px] font-semibold text-gray-600 mb-2">Channel split</p>
+                <div className="space-y-1.5">
+                  {CHANNEL_BARS.map((ch, i) => (
+                    <div key={ch.label} className="flex items-center gap-2">
+                      <span className="text-[9px] text-gray-400 w-14 shrink-0">{ch.label}</span>
+                      <div className="flex-1 h-1.5 bg-gray-200 rounded-full overflow-hidden">
+                        <div className={`h-full ${ch.color} rounded-full animate-score-fill`}
+                          style={{ width: `${ch.pct}%`, animationDelay: `${900 + i * 200}ms` }} />
+                      </div>
+                      <span className="text-[9px] text-gray-500 font-semibold w-7 text-right">{ch.pct}%</span>
+                    </div>
+                  ))}
+                </div>
               </div>
             </div>
 
-            {/* Order feed — the core value prop */}
-            <div className="bg-gray-50 rounded-xl p-3 border border-gray-100">
+            {/* Right column — incoming orders */}
+            <div className="sm:col-span-2 bg-gray-50 rounded-xl p-3 border border-gray-100">
               <p className="text-[10px] font-semibold text-gray-600 mb-2.5">
                 Incoming Orders · RTO Score
                 <span className="ml-2 inline-flex items-center gap-1 text-[9px] text-green-500 font-semibold">
@@ -203,7 +304,7 @@ function HeroMockup() {
               <div className="space-y-2">
                 {feed.map((o, i) => (
                   <div key={o.id} className="bg-white rounded-lg border border-gray-100 p-2 animate-slide-in-row"
-                    style={{ animationDelay: i === 0 && feedIdx > 0 ? '0ms' : `${800 + i * 200}ms` }}>
+                    style={{ animationDelay: i === 0 && feedIdx > 0 ? '0ms' : `${800 + i * 250}ms` }}>
                     <div className="flex items-center justify-between mb-1">
                       <span className="text-[10px] font-semibold text-gray-900">{o.name}</span>
                       <span className={`text-[8px] font-bold px-1.5 py-0.5 rounded border ${VERDICT_STYLE[o.verdict]}`}>{o.verdict}</span>
@@ -214,7 +315,7 @@ function HeroMockup() {
                     </div>
                     <div className="h-1 rounded-full bg-gray-100 overflow-hidden">
                       <div className={`h-full rounded-full animate-score-fill ${scoreColor(o.score)}`}
-                        style={{ width: `${o.score}%`, animationDelay: i === 0 && feedIdx > 0 ? '150ms' : `${950 + i * 200}ms` }} />
+                        style={{ width: `${o.score}%`, animationDelay: i === 0 && feedIdx > 0 ? '150ms' : `${1000 + i * 250}ms` }} />
                     </div>
                   </div>
                 ))}
@@ -619,6 +720,7 @@ export default function LandingPage() {
       >
         <div className="absolute -top-32 -left-32 w-[480px] h-[480px] bg-brand-500/30 rounded-full blur-3xl animate-aurora" />
         <div className="absolute top-1/3 -right-40 w-[520px] h-[520px] bg-sky-500/25 rounded-full blur-3xl animate-aurora-2" />
+        <ParticleField />
         <div className="absolute inset-0 opacity-[0.04]"
           style={{ backgroundImage: 'radial-gradient(circle, white 1px, transparent 1px)', backgroundSize: '32px 32px' }} />
         <div className="pointer-events-none absolute inset-0"
