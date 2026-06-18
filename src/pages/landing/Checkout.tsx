@@ -9,6 +9,7 @@ type BillingCycle = 'MONTHLY' | 'YEARLY'
 const PLAN_DATA: Record<string, {
   name: string
   monthlyPrice: number
+  originalMonthlyPrice?: number
   badge: string | null
   features: string[]
 }> = {
@@ -27,8 +28,9 @@ const PLAN_DATA: Record<string, {
   },
   GROWTH: {
     name: 'Growth',
-    monthlyPrice: 4999,
-    badge: 'MOST POPULAR',
+    monthlyPrice: 2999,
+    originalMonthlyPrice: 4999,
+    badge: 'FOUNDING ACCESS',
     features: [
       'Up to 3,000 orders / month',
       '1 warehouse',
@@ -229,19 +231,35 @@ export default function Checkout() {
 
             {/* Price */}
             <div className="mb-8">
+              {plan.originalMonthlyPrice && (
+                <div className="inline-flex items-center gap-2 bg-amber-50 border border-amber-200 rounded-full px-3 py-1 mb-3">
+                  <span className="w-1.5 h-1.5 rounded-full bg-amber-400" />
+                  <span className="text-xs font-semibold text-amber-700">Founding rate — locked at this price for life</span>
+                </div>
+              )}
               <p className="text-sm text-gray-400 mb-1">{billing === 'MONTHLY' ? 'Monthly price' : 'Yearly price'}</p>
-              <div className="flex items-end gap-2">
+              <div className="flex items-end gap-3">
                 <span className="text-5xl font-bold text-gray-900">{priceDisplay}</span>
                 <span className="text-lg text-gray-500 mb-1">{periodLabel}</span>
+                {plan.originalMonthlyPrice && (
+                  <span className="text-xl text-gray-300 line-through mb-1">
+                    {formatINR(billing === 'MONTHLY' ? plan.originalMonthlyPrice : plan.originalMonthlyPrice * 10)}
+                  </span>
+                )}
               </div>
+              {plan.originalMonthlyPrice && (
+                <p className="text-sm text-amber-600 font-medium mt-1">
+                  Save {formatINR((billing === 'MONTHLY' ? plan.originalMonthlyPrice : plan.originalMonthlyPrice * 10) - activePrice)} vs regular price
+                </p>
+              )}
               {billing === 'YEARLY' ? (
-                <div className="mt-2 space-y-0.5">
-                  <p className="text-sm text-green-600 font-medium">You save {formatINR(yearlySaving)} vs monthly billing</p>
+                <div className="mt-1 space-y-0.5">
+                  <p className="text-sm text-green-600 font-medium">+ save {formatINR(yearlySaving)} vs monthly billing (2 months free)</p>
                   <p className="text-xs text-gray-400">Equivalent to {formatINR(yearlyMonthly)}/mo billed annually</p>
                 </div>
               ) : (
                 <p className="text-sm text-gray-400 mt-1">
-                  Switch to yearly and save {formatINR(yearlySaving)} — 2 months free
+                  Switch to yearly and save {formatINR(yearlySaving)} more — 2 months free
                 </p>
               )}
             </div>
@@ -321,6 +339,15 @@ export default function Checkout() {
                     <p className="text-sm text-gray-500 mt-1">Pay now, create your account immediately after.</p>
                   </div>
 
+                  {/* Founding access banner */}
+                  {plan.originalMonthlyPrice && (
+                    <div className="bg-amber-50 border border-amber-100 rounded-xl px-4 py-2.5 mb-4 flex items-center gap-2">
+                      <span className="w-2 h-2 rounded-full bg-amber-400 shrink-0" />
+                      <p className="text-xs text-amber-700 font-medium flex-1">Founding rate — locked at ₹2,999/mo for life</p>
+                      <span className="text-xs font-bold text-amber-600 shrink-0">8 spots left</span>
+                    </div>
+                  )}
+
                   {/* Price pill */}
                   <div className="bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 mb-6 flex items-center justify-between">
                     <div>
@@ -330,9 +357,16 @@ export default function Checkout() {
                           <span className="ml-2 text-green-600 font-semibold">2 months free</span>
                         )}
                       </p>
-                      <p className="text-2xl font-bold text-gray-900 mt-0.5">
-                        {priceDisplay}<span className="text-sm font-normal text-gray-500">{periodLabel}</span>
-                      </p>
+                      <div className="flex items-baseline gap-2 mt-0.5">
+                        <p className="text-2xl font-bold text-gray-900">
+                          {priceDisplay}<span className="text-sm font-normal text-gray-500">{periodLabel}</span>
+                        </p>
+                        {plan.originalMonthlyPrice && (
+                          <span className="text-sm text-gray-300 line-through">
+                            {formatINR(billing === 'MONTHLY' ? plan.originalMonthlyPrice : plan.originalMonthlyPrice * 10)}{periodLabel}
+                          </span>
+                        )}
+                      </div>
                     </div>
                     <div className="text-right">
                       <p className="text-xs text-gray-400">Razorpay secured</p>

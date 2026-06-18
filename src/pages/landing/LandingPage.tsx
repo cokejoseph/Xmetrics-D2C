@@ -1013,28 +1013,42 @@ export default function LandingPage() {
       {/* ── PROBLEM ────────────────────────────────────────────────────── */}
       <section className="py-24 bg-white">
         <div className="max-w-5xl mx-auto px-6">
-          <AnimateIn className="text-center mb-16">
-            <h2 className="text-3xl font-bold text-gray-900 mb-4">Running a D2C brand on 6 different tabs?</h2>
-            <p className="text-gray-500 max-w-xl mx-auto">
-              Most brands cobble together Shopify, Shiprocket, Razorpay, WhatsApp, and Excel.
-              It works — until it doesn't.
+          <AnimateIn className="mb-14">
+            <span className="text-[11px] font-bold uppercase tracking-widest text-red-400">The problem</span>
+            <h2 className="text-4xl font-bold text-gray-900 mt-3 mb-4 max-w-2xl leading-tight">Running a D2C brand<br />on 6 different tabs?</h2>
+            <p className="text-gray-500 max-w-lg leading-relaxed text-[15px]">
+              Most brands stitch together Shopify, Shiprocket, Razorpay, WhatsApp, and Excel.
+              It works — until a high-RTO order ships and nobody finds out for three days.
             </p>
           </AnimateIn>
-          <div className="grid sm:grid-cols-2 gap-6">
+
+          {/* Hero pain card */}
+          <AnimateIn className="mb-4">
+            <div className="relative bg-gray-950 rounded-2xl p-8 overflow-hidden hover:-translate-y-0.5 transition-transform duration-300">
+              <span className="absolute right-6 top-3 text-[110px] font-black text-white/[0.04] select-none leading-none tracking-tight pointer-events-none">40×</span>
+              <span className="text-[10px] font-bold uppercase tracking-widest text-red-400 mb-3 block">Tab switching — every day</span>
+              <h3 className="text-2xl font-bold text-white mb-3">No unified order view</h3>
+              <p className="text-white/40 max-w-lg text-sm leading-relaxed">Order status in Shopify. Tracking in Shiprocket. Payment in Razorpay. Your ops team switches context{' '}
+                <span className="text-white/70 font-semibold">40 times a day</span> for a single order — and still misses things.</p>
+            </div>
+          </AnimateIn>
+
+          <div className="grid sm:grid-cols-3 gap-4">
             {[
-              { icon: <ShoppingCart size={20} className="text-red-500" />, title: 'No unified order view', desc: 'Order status lives in Shopify, tracking in Shiprocket, payment in Razorpay. You switch tabs 40 times a day.' },
-              { icon: <TrendingDown size={20} className="text-orange-500" />, title: 'RTO decisions are guesswork', desc: 'You accept every COD order and absorb 25–35% returns. No data, no scoring, no way to stop it.' },
-              { icon: <AlertTriangle size={20} className="text-amber-500" />, title: 'Exceptions arrive too late', desc: 'Stuck shipments, failed payments, NDR escalations — you find out after the customer complains.' },
-              { icon: <Clock size={20} className="text-blue-500" />, title: 'Daily ops take 2+ hours', desc: 'Stitching together reports, chasing teams on WhatsApp, manually reconciling returns and COD.' },
+              { stat: '25–35%', label: 'avg RTO rate without scoring', icon: <TrendingDown size={15} className="text-orange-400" />, title: 'RTO is pure guesswork', desc: 'No pincode data. No COD pattern scoring. You accept every order and absorb the losses.' },
+              { stat: '2+ hrs', label: 'wasted every morning', icon: <Clock size={15} className="text-amber-400" />, title: 'Ops review takes forever', desc: 'Stitching reports, chasing teams on WhatsApp, manually reconciling returns and COD.' },
+              { stat: '∞', label: 'alerts you never see', icon: <AlertTriangle size={15} className="text-red-400" />, title: 'Exceptions arrive too late', desc: 'Stuck shipments, NDR escalations, failed payments — found out after the customer complains.' },
             ].map((item, i) => (
-              <AnimateIn key={item.title} delay={i * 80}>
-                <SpotlightCard className="flex gap-4 p-6 bg-gray-50 rounded-2xl border border-gray-100 hover:border-gray-200 hover:shadow-card transition-all duration-200">
-                  <div className="w-9 h-9 shrink-0 rounded-lg bg-white border border-gray-100 flex items-center justify-center shadow-sm">{item.icon}</div>
-                  <div>
-                    <h3 className="font-semibold text-gray-900 mb-1 text-sm">{item.title}</h3>
-                    <p className="text-gray-500 text-sm leading-relaxed">{item.desc}</p>
+              <AnimateIn key={item.title} delay={100 + i * 80}>
+                <div className="bg-gray-50 border border-gray-100 rounded-2xl p-6 h-full hover:border-gray-200 hover:shadow-sm transition-all duration-200">
+                  <p className="text-3xl font-black text-gray-900 leading-none mb-0.5">{item.stat}</p>
+                  <p className="text-[10px] font-semibold uppercase tracking-wide text-gray-400 mb-4">{item.label}</p>
+                  <div className="flex items-center gap-1.5 mb-2">
+                    {item.icon}
+                    <h3 className="font-semibold text-gray-800 text-sm">{item.title}</h3>
                   </div>
-                </SpotlightCard>
+                  <p className="text-gray-500 text-sm leading-relaxed">{item.desc}</p>
+                </div>
               </AnimateIn>
             ))}
           </div>
@@ -1055,13 +1069,15 @@ export default function LandingPage() {
               { step: '03', title: 'Run ops in 8 minutes', desc: "Open your daily brief, resolve exceptions, approve fulfillment — and you're done.", icon: <Zap size={20} className="text-brand-600" /> },
             ].map((step, i) => (
               <AnimateIn key={step.step} delay={i * 100} className="relative text-center">
+                {/* Oversized watermark step number */}
+                <span className="absolute left-1/2 -translate-x-1/2 -top-3 text-[96px] font-black text-gray-900/[0.04] leading-none select-none pointer-events-none">{step.step}</span>
                 {i < 2 && (
                   <div className="hidden md:block absolute top-6 left-[calc(50%+2.5rem)] w-[calc(100%-5rem)] h-px bg-gradient-to-r from-brand-200 via-brand-100 to-transparent" />
                 )}
-                <div className="w-12 h-12 rounded-2xl bg-white border border-brand-100 shadow-sm flex items-center justify-center mx-auto mb-4">{step.icon}</div>
-                <div className="text-xs font-bold mb-1 bg-gradient-to-r from-brand-600 to-sky-500 bg-clip-text text-transparent">{step.step}</div>
-                <h3 className="font-semibold text-gray-900 mb-2">{step.title}</h3>
-                <p className="text-gray-500 text-sm leading-relaxed">{step.desc}</p>
+                <div className="relative w-12 h-12 rounded-2xl bg-white border border-brand-100 shadow-sm flex items-center justify-center mx-auto mb-4">{step.icon}</div>
+                <div className="relative text-xs font-bold mb-1 bg-gradient-to-r from-brand-600 to-sky-500 bg-clip-text text-transparent">{step.step}</div>
+                <h3 className="relative font-semibold text-gray-900 mb-2">{step.title}</h3>
+                <p className="relative text-gray-500 text-sm leading-relaxed">{step.desc}</p>
               </AnimateIn>
             ))}
           </div>
@@ -1107,12 +1123,13 @@ export default function LandingPage() {
       <ComparisonTable />
 
       {/* ── PRICING ────────────────────────────────────────────────────── */}
-      <section id="pricing" className="py-24 bg-gray-50 relative overflow-hidden">
-        <ParticleFieldLight />
-        <div className="max-w-5xl mx-auto px-6">
+      <section id="pricing" className="py-24 bg-[#060610] relative overflow-hidden">
+        <ParticleField />
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[700px] h-[400px] bg-brand-600/10 rounded-full blur-3xl pointer-events-none" />
+        <div className="max-w-5xl mx-auto px-6 relative">
           <AnimateIn className="text-center mb-12">
-            <h2 className="text-3xl font-bold text-gray-900 mb-4">Simple, transparent pricing</h2>
-            <p className="text-gray-500">One plan for growing D2C brands. Additional plans available inside the app.</p>
+            <h2 className="text-3xl font-bold text-white mb-4">Simple, transparent pricing</h2>
+            <p className="text-white/40">One plan for growing D2C brands. Additional plans available inside the app.</p>
           </AnimateIn>
 
           <AnimateIn className="max-w-md mx-auto">
