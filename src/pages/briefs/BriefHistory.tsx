@@ -1,7 +1,7 @@
 import { useState, useMemo } from 'react'
-import { Search, ChevronRight } from 'lucide-react'
+import { Search, ChevronRight, MessageCircle, Copy, Check, X } from 'lucide-react'
 import { useAppStore } from '../../stores/appStore'
-import { generateDailyBrief, getOrderDates, dayLabel } from '../../lib/briefEngine'
+import { generateDailyBrief, getOrderDates, dayLabel, buildWhatsAppText } from '../../lib/briefEngine'
 import { Card, Input } from '../../components/ui'
 import type { BriefData } from '../../types'
 
@@ -9,6 +9,8 @@ export default function BriefHistory() {
   const { orders, customers, products, exceptions } = useAppStore()
   const [search, setSearch] = useState('')
   const [selected, setSelected] = useState<string | null>(null)
+  const [showExport, setShowExport] = useState(false)
+  const [copied, setCopied] = useState(false)
 
   const dates = useMemo(() => getOrderDates(orders), [orders])
 
@@ -74,9 +76,18 @@ export default function BriefHistory() {
 
         {selectedBrief && (
           <div className="space-y-4">
-            <h2 className="text-lg font-semibold text-gray-900">
-              Brief for {dayLabel(selectedBrief.date)}
-            </h2>
+            <div className="flex items-center justify-between">
+              <h2 className="text-lg font-semibold text-gray-900">
+                Brief for {dayLabel(selectedBrief.date)}
+              </h2>
+              <button
+                onClick={() => { setShowExport(true); setCopied(false) }}
+                className="flex items-center gap-1.5 px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold rounded-xl transition-colors"
+              >
+                <MessageCircle size={13} />
+                Export to WhatsApp
+              </button>
+            </div>
 
             {/* Headline */}
             <Card className="p-4">
@@ -137,6 +148,58 @@ export default function BriefHistory() {
             )}
           </div>
         )}
+      </div>
+      {/* WhatsApp export modal */}
+      {showExport && selectedBrief && (
+        <WhatsAppExportModal
+          text={buildWhatsAppText(selectedBrief)}
+          copied={copied}
+          onCopy={(text) => { navigator.clipboard.writeText(text); setCopied(true) }}
+          onClose={() => setShowExport(false)}
+        />
+      )}
+    </div>
+  )
+}
+
+function WhatsAppExportModal({
+  text, copied, onCopy, onClose,
+}: { text: string; copied: boolean; onCopy: (t: string) => void; onClose: () => void }) {
+  return (
+    <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4" onClick={onClose}>
+      <div
+        className="bg-white rounded-2xl shadow-xl w-full max-w-md p-5 space-y-4"
+        onClick={e => e.stopPropagation()}
+      >
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <MessageCircle size={16} className="text-emerald-600" />
+            <h3 className="text-sm font-semibold text-gray-900">WhatsApp Export</h3>
+          </div>
+          <button onClick={onClose} className="p-1 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors">
+            <X size={16} />
+          </button>
+        </div>
+        <textarea
+          readOnly
+          value={text}
+          rows={10}
+          className="w-full text-xs font-mono bg-gray-50 border border-gray-200 rounded-xl p-3 resize-none focus:outline-none"
+        />
+        <div className="flex items-center justify-between">
+          <span className="text-xs text-gray-400">{text.length} characters</span>
+          <button
+            onClick={() => onCopy(text)}
+            className={`flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold transition-colors ${
+              copied
+                ? 'bg-green-100 text-green-700'
+                : 'bg-gray-900 hover:bg-gray-700 text-white'
+            }`}
+          >
+            {copied ? <Check size={13} /> : <Copy size={13} />}
+            {copied ? 'Copied!' : 'Copy text'}
+          </button>
+        </div>
       </div>
     </div>
   )

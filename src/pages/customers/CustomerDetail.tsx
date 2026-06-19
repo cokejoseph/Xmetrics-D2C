@@ -1,5 +1,5 @@
 import { useParams, Link } from 'react-router-dom'
-import { ArrowLeft, Phone, Mail, MapPin } from 'lucide-react'
+import { ArrowLeft, Phone, Mail, MapPin, MessageCircle } from 'lucide-react'
 import { useAppStore } from '../../stores/appStore'
 import { Card } from '../../components/ui'
 import { FulfillmentBadge, PaymentBadge, ChannelBadge } from '../../components/shared/StatusBadge'
@@ -25,6 +25,14 @@ export default function CustomerDetail() {
   const avgOrderValue = customer.total_orders > 0 ? customer.total_spent / customer.total_orders : 0
   const rtoCount = customerOrders.filter(o => o.fulfillment_status === 'RTO_INITIATED').length
   const rtoRate = customerOrders.length > 0 ? (rtoCount / customerOrders.length) * 100 : 0
+
+  const lastOrder = customerOrders[0]
+  const daysSinceLastOrder = lastOrder
+    ? Math.floor((Date.now() - new Date(lastOrder.created_at).getTime()) / 86400000)
+    : null
+  const showNudge = daysSinceLastOrder !== null && daysSinceLastOrder >= 14
+
+  const nudgeMessage = `Hi ${customer.name}! 👋 It's been ${daysSinceLastOrder} days since your last order with us. We'd love to have you back — check out what's new! 😊`
 
   return (
     <div className="space-y-4">
@@ -80,6 +88,29 @@ export default function CustomerDetail() {
               <Stat label="RTO Rate" value={`${Math.round(rtoRate)}%`} />
             </div>
           </Card>
+
+          {/* Reorder nudge */}
+          {showNudge && (
+            <Card className="p-4 bg-emerald-50 border-emerald-200">
+              <div className="flex items-center gap-2 mb-2">
+                <MessageCircle size={15} className="text-emerald-600" />
+                <h2 className="text-sm font-semibold text-emerald-900">Reorder Nudge</h2>
+              </div>
+              <p className="text-xs text-emerald-800 mb-3 leading-relaxed">
+                Last ordered <strong>{daysSinceLastOrder} days ago</strong>. A WhatsApp nudge may bring them back.
+              </p>
+              <button
+                onClick={() => window.open(
+                  `https://wa.me/${customer.phone.replace(/\D/g, '')}?text=${encodeURIComponent(nudgeMessage)}`,
+                  '_blank'
+                )}
+                className="w-full flex items-center justify-center gap-2 px-3 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold rounded-xl transition-colors"
+              >
+                <MessageCircle size={13} />
+                Send WhatsApp nudge
+              </button>
+            </Card>
+          )}
 
         </div>
 

@@ -3,6 +3,7 @@ import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-route
 import { useAuthStore } from './stores/authStore'
 import { useAppStore } from './stores/appStore'
 import AppLayout from './components/layout/AppLayout'
+import SettingsLayout from './components/layout/SettingsLayout'
 import LandingPage from './pages/landing/LandingPage'
 import CustomCursor from './components/layout/CustomCursor'
 import ToastProvider from './components/layout/ToastProvider'
@@ -142,11 +143,14 @@ export default function App() {
                 <Route path="/returns" element={<Returns />} />
                 <Route path="/briefs" element={<DailyBrief />} />
                 <Route path="/briefs/history" element={<BriefHistory />} />
-                <Route path="/settings/brand" element={<BrandSettings />} />
-                <Route path="/settings/integrations" element={<IntegrationsSettings />} />
-                <Route path="/settings/warehouses" element={<WarehousesSettings />} />
-                <Route path="/settings/team" element={<TeamSettings />} />
-                <Route path="/settings/billing" element={<BillingSettings />} />
+                <Route path="/settings" element={<Navigate to="/settings/brand" replace />} />
+                <Route path="/settings" element={<SettingsLayout />}>
+                  <Route path="brand" element={<BrandSettings />} />
+                  <Route path="integrations" element={<IntegrationsSettings />} />
+                  <Route path="warehouses" element={<WarehousesSettings />} />
+                  <Route path="team" element={<TeamSettings />} />
+                  <Route path="billing" element={<BillingSettings />} />
+                </Route>
               </Route>
 
               {/* 404 catch-all */}

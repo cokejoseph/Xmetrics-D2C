@@ -156,13 +156,14 @@ export default function OrderDetail() {
                 <Truck size={16} className="text-gray-400" />
                 <h2 className="text-sm font-semibold text-gray-900">Shipment</h2>
               </div>
-              <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center justify-between mb-4">
                 <div>
                   <p className="text-sm font-medium text-gray-900">{shipment.courier}</p>
                   <p className="text-xs text-gray-500 font-mono">AWB: {shipment.awb_number}</p>
                 </div>
                 <ShipmentStatusBadge status={shipment.status} />
               </div>
+              <ShipmentTimeline status={shipment.status} />
             </Card>
           )}
 
@@ -308,6 +309,73 @@ function PLRow({ label, value, positive = false }: { label: string; value: numbe
     <div className="flex justify-between items-center text-sm">
       <span className="text-gray-600">{label}</span>
       <span className={positive ? 'font-medium text-gray-900' : 'text-gray-600'}>{display}</span>
+    </div>
+  )
+}
+
+const SHIP_STAGES = [
+  'LABEL_CREATED',
+  'PICKUP_SCHEDULED',
+  'PICKED_UP',
+  'IN_TRANSIT',
+  'OUT_FOR_DELIVERY',
+  'DELIVERED',
+] as const
+
+const SHIP_LABELS: Record<string, string> = {
+  LABEL_CREATED: 'Label Created',
+  PICKUP_SCHEDULED: 'Pickup Scheduled',
+  PICKED_UP: 'Picked Up',
+  IN_TRANSIT: 'In Transit',
+  OUT_FOR_DELIVERY: 'Out for Delivery',
+  DELIVERED: 'Delivered',
+}
+
+function ShipmentTimeline({ status }: { status: string }) {
+  const isRTO = status === 'RTO_INITIATED' || status === 'RTO_DELIVERED' || status === 'LOST'
+  const activeIndex = isRTO ? -1 : SHIP_STAGES.indexOf(status as typeof SHIP_STAGES[number])
+
+  if (isRTO) {
+    return (
+      <div className="flex items-center gap-2 px-3 py-2 bg-red-50 rounded-xl">
+        <div className="w-2.5 h-2.5 rounded-full bg-red-500 shrink-0" />
+        <span className="text-xs font-medium text-red-700">
+          {status === 'LOST' ? 'Package Lost' : status === 'RTO_DELIVERED' ? 'RTO Delivered' : 'RTO Initiated — returning to sender'}
+        </span>
+      </div>
+    )
+  }
+
+  return (
+    <div className="flex items-start gap-0 overflow-x-auto pb-1">
+      {SHIP_STAGES.map((stage, i) => {
+        const done = i < activeIndex
+        const current = i === activeIndex
+        return (
+          <div key={stage} className="flex-1 flex flex-col items-center min-w-[60px]">
+            <div className="flex items-center w-full">
+              {i > 0 && (
+                <div className={`flex-1 h-0.5 ${done || current ? 'bg-brand-600' : 'bg-gray-200'}`} />
+              )}
+              <div className={`w-3 h-3 rounded-full shrink-0 border-2 transition-colors ${
+                current
+                  ? 'bg-brand-600 border-brand-600 ring-2 ring-brand-200'
+                  : done
+                    ? 'bg-brand-600 border-brand-600'
+                    : 'bg-white border-gray-300'
+              }`} />
+              {i < SHIP_STAGES.length - 1 && (
+                <div className={`flex-1 h-0.5 ${done ? 'bg-brand-600' : 'bg-gray-200'}`} />
+              )}
+            </div>
+            <p className={`text-[10px] text-center mt-1 leading-tight px-0.5 ${
+              current ? 'text-brand-700 font-semibold' : done ? 'text-brand-500' : 'text-gray-400'
+            }`}>
+              {SHIP_LABELS[stage]}
+            </p>
+          </div>
+        )
+      })}
     </div>
   )
 }

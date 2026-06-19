@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { CheckCircle, Zap } from 'lucide-react'
 import { useAppStore } from '../../stores/appStore'
+import { DEMO_MODE } from '../../lib/supabase'
 import { Card, Button } from '../../components/ui'
 import { RazorpayCheckout } from '../../components/shared/RazorpayCheckout'
 import type { PlanType } from '../../types'
@@ -85,7 +86,7 @@ export default function Billing() {
   const { currentPlan } = useAppStore()
   const [searchParams] = useSearchParams()
   const planFromUrl = searchParams.get('plan')?.toUpperCase() as PlanType | null
-  const isFoundingAccess = searchParams.get('founding') === 'true'
+  const isFoundingAccess = (DEMO_MODE && currentPlan === 'GROWTH') || searchParams.get('founding') === 'true'
   const defaultSelected = (planFromUrl && PLANS.find(p => p.key === planFromUrl) ? planFromUrl : null) ?? currentPlan ?? 'GROWTH'
   const [selected, setSelected] = useState<PlanType>(defaultSelected)
   const [payStatus, setPayStatus] = useState<{ ok: boolean; message: string } | null>(null)

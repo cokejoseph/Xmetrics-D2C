@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useAuthStore } from '../../stores/authStore'
+import { DEMO_MODE } from '../../lib/supabase'
 import { Button, Input } from '../../components/ui'
 import AuthShell from './AuthShell'
 
@@ -56,6 +57,11 @@ export default function Login() {
         <Button type="submit" className="w-full" disabled={loading}>
           {loading ? 'Signing in…' : 'Sign In'}
         </Button>
+        {DEMO_MODE && (
+          <p className="text-xs text-center text-gray-400 mt-1">
+            Demo mode · sign in with any credentials
+          </p>
+        )}
       </form>
 
       <p className="mt-6 text-center text-sm text-gray-500">
