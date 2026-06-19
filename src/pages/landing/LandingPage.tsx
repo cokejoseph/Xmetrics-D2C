@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
 import { Link } from 'react-router-dom'
+import { SparklesCore } from '../../components/ui/sparkles'
 import {
   TrendingDown, Zap, MessageSquare,
   Check, ChevronDown, ArrowRight, Shield, Clock, X as XIcon,
@@ -76,54 +77,6 @@ function SpotlightCard({ className = '', children }: { className?: string; child
   )
 }
 
-// ─── Particle network — dark hero backdrop ────────────────────────────────────
-function ParticleField() {
-  const canvasRef = useRef<HTMLCanvasElement>(null)
-  useEffect(() => {
-    const canvas = canvasRef.current
-    if (!canvas) return
-    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return
-    const ctx = canvas.getContext('2d')
-    if (!ctx) return
-    const dpr = Math.min(window.devicePixelRatio || 1, 2)
-    const resize = () => { canvas.width = canvas.offsetWidth * dpr; canvas.height = canvas.offsetHeight * dpr }
-    resize()
-    window.addEventListener('resize', resize)
-    const N = 48
-    const pts = Array.from({ length: N }, () => ({
-      x: Math.random() * canvas.width, y: Math.random() * canvas.height,
-      vx: (Math.random() - 0.5) * 0.18 * dpr, vy: (Math.random() - 0.5) * 0.18 * dpr,
-      r: (Math.random() * 1.4 + 0.5) * dpr,
-    }))
-    const LINK = 130 * dpr
-    let raf = 0
-    const tick = () => {
-      ctx.clearRect(0, 0, canvas.width, canvas.height)
-      for (const p of pts) {
-        p.x += p.vx; p.y += p.vy
-        if (p.x < 0 || p.x > canvas.width) p.vx *= -1
-        if (p.y < 0 || p.y > canvas.height) p.vy *= -1
-      }
-      for (let i = 0; i < N; i++) {
-        for (let j = i + 1; j < N; j++) {
-          const dx = pts[i].x - pts[j].x, dy = pts[i].y - pts[j].y
-          const d = Math.hypot(dx, dy)
-          if (d < LINK) {
-            ctx.strokeStyle = `rgba(147,197,253,${(1 - d / LINK) * 0.26})`
-            ctx.lineWidth = 0.6 * dpr
-            ctx.beginPath(); ctx.moveTo(pts[i].x, pts[i].y); ctx.lineTo(pts[j].x, pts[j].y); ctx.stroke()
-          }
-        }
-      }
-      ctx.fillStyle = 'rgba(186,230,253,0.65)'
-      for (const p of pts) { ctx.beginPath(); ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2); ctx.fill() }
-      raf = requestAnimationFrame(tick)
-    }
-    raf = requestAnimationFrame(tick)
-    return () => { cancelAnimationFrame(raf); window.removeEventListener('resize', resize) }
-  }, [])
-  return <canvas ref={canvasRef} className="absolute inset-0 w-full h-full opacity-55 pointer-events-none" />
-}
 
 // ─── Magnetic CTA ─────────────────────────────────────────────────────────────
 function MagneticLink({ to, className = '', children }: { to: string; className?: string; children: React.ReactNode }) {
@@ -716,7 +669,16 @@ export default function LandingPage() {
       >
         <div className="absolute -top-32 -left-32 w-[480px] h-[480px] bg-brand-500/30 rounded-full blur-3xl animate-aurora" />
         <div className="absolute top-1/3 -right-40 w-[520px] h-[520px] bg-sky-500/25 rounded-full blur-3xl animate-aurora-2" />
-        <ParticleField />
+        <SparklesCore
+          id="hero-sparkles"
+          background="transparent"
+          minSize={0.6}
+          maxSize={1.8}
+          particleDensity={60}
+          particleColor="#bae6fd"
+          speed={2}
+          className="absolute inset-0 w-full h-full pointer-events-none"
+        />
         <div className="absolute inset-0 opacity-[0.04]"
           style={{ backgroundImage: 'radial-gradient(circle, white 1px, transparent 1px)', backgroundSize: '32px 32px' }} />
         <div className="pointer-events-none absolute inset-0"
