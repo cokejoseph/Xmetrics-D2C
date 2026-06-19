@@ -22,7 +22,7 @@ export default function AppLayout() {
           {/* key re-mounts on every route change → triggers animate-page-enter */}
           <div
             key={location.pathname}
-            className="max-w-[1400px] mx-auto px-5 py-6 pb-20 lg:pb-6 animate-page-enter"
+            className="max-w-[1400px] mx-auto px-5 py-6 animate-page-enter"
           >
             <Outlet />
           </div>

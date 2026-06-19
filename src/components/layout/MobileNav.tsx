@@ -11,7 +11,7 @@ const NAV = [
 
 export default function MobileNav() {
   return (
-    <nav className="lg:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-gray-100 flex z-20 safe-bottom">
+    <nav className="hidden fixed bottom-0 left-0 right-0 bg-white border-t border-gray-100 flex z-20 safe-bottom">
       {NAV.map(item => (
         <NavLink
           key={item.to}
