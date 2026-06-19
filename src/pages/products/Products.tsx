@@ -44,7 +44,7 @@ export default function Products() {
           const isLow = product.inventory_count < product.reorder_threshold
 
           return (
-            <Card key={product.id} className="p-4">
+            <Card key={product.id} className="p-4 hover:shadow-md hover:-translate-y-0.5 transition-all duration-200">
               <div className="flex items-start justify-between mb-3">
                 <div className="flex items-center justify-center">
                   <Package size={18} className="text-gray-400" />

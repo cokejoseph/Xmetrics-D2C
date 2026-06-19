@@ -20,7 +20,7 @@ export function Button({
   return (
     <button
       className={cn(
-        'inline-flex items-center justify-center gap-2 font-medium rounded-lg transition-colors active:scale-[0.98] disabled:opacity-40 disabled:cursor-not-allowed',
+        'inline-flex items-center justify-center gap-2 font-medium rounded-lg transition-all duration-150 active:scale-[0.98] disabled:opacity-40 disabled:cursor-not-allowed',
         {
           'bg-brand-600 text-white hover:bg-brand-500 active:bg-brand-700': variant === 'primary',
           'bg-white text-gray-700 border border-gray-200 hover:bg-gray-50': variant === 'secondary',

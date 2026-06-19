@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react'
-import { Search, ChevronRight, MessageCircle, Copy, Check, X } from 'lucide-react'
+import { Search, MessageCircle, Copy, Check, X, History } from 'lucide-react'
 import { useAppStore } from '../../stores/appStore'
 import { generateDailyBrief, getOrderDates, dayLabel, buildWhatsAppText } from '../../lib/briefEngine'
 import { Card, Input } from '../../components/ui'
@@ -66,10 +66,15 @@ export default function BriefHistory() {
       {/* Detail panel */}
       <div className="flex-1 min-w-0">
         {!selectedBrief && (
-          <div className="flex items-center justify-center h-64 text-gray-400">
-            <div className="text-center">
-              <ChevronRight size={32} className="mx-auto mb-2 opacity-30" />
-              <p className="text-sm">Select a brief to view details</p>
+          <div className="flex items-center justify-center h-64">
+            <div className="text-center space-y-3">
+              <div className="w-12 h-12 mx-auto rounded-2xl bg-gray-100 dark:bg-white/5 flex items-center justify-center">
+                <History size={20} className="text-gray-400" />
+              </div>
+              <div>
+                <p className="text-sm font-medium text-gray-500">Select a day to view its brief</p>
+                <p className="text-xs text-gray-400 mt-0.5">P&L, channels, top products, and actions</p>
+              </div>
             </div>
           </div>
         )}

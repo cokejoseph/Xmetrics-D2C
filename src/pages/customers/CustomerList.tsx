@@ -4,6 +4,15 @@ import { Search } from 'lucide-react'
 import { useAppStore } from '../../stores/appStore'
 import { Card, Input } from '../../components/ui'
 
+function tagStyle(tag: string): string {
+  if (tag === 'vip') return 'bg-amber-50 text-amber-700'
+  if (tag === 'repeat') return 'bg-blue-50 text-blue-600'
+  if (tag === 'new') return 'bg-emerald-50 text-emerald-700'
+  if (tag === 'cod-risk') return 'bg-orange-50 text-orange-600'
+  if (tag === 'rto-history') return 'bg-red-50 text-red-600'
+  return 'bg-gray-100 text-gray-600'
+}
+
 export default function CustomerList() {
   const { customers } = useAppStore()
   const [search, setSearch] = useState('')
@@ -64,7 +73,7 @@ export default function CustomerList() {
                   <td className="px-4 py-3 hidden lg:table-cell">
                     <div className="flex gap-1 flex-wrap">
                       {customer.tags.map(tag => (
-                        <span key={tag} className="px-1.5 py-0.5 bg-gray-100 text-gray-600 rounded text-[10px] font-medium">
+                        <span key={tag} className={`px-1.5 py-0.5 rounded text-[10px] font-medium ${tagStyle(tag)}`}>
                           {tag}
                         </span>
                       ))}

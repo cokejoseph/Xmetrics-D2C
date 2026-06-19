@@ -1,8 +1,94 @@
-import { useState } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { Link } from 'react-router-dom'
+import { ChevronDown, Check } from 'lucide-react'
 import { useAppStore } from '../../stores/appStore'
 import { Card } from '../../components/ui'
 import { PaymentMethodBadge } from '../../components/shared/StatusBadge'
+import { cn } from '../../components/ui'
+
+// ── Reusable pill dropdown ────────────────────────────────────────────────────
+
+interface FilterOption<T extends string> {
+  value: T
+  label: string
+}
+
+function FilterPill<T extends string>({
+  value,
+  onChange,
+  options,
+  placeholder,
+}: {
+  value: T | ''
+  onChange: (v: T | '') => void
+  options: FilterOption<T>[]
+  placeholder: string
+}) {
+  const [open, setOpen] = useState(false)
+  const ref = useRef<HTMLDivElement>(null)
+  const selected = options.find(o => o.value === value)
+
+  useEffect(() => {
+    function onClickOutside(e: MouseEvent) {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false)
+    }
+    if (open) document.addEventListener('mousedown', onClickOutside)
+    return () => document.removeEventListener('mousedown', onClickOutside)
+  }, [open])
+
+  return (
+    <div ref={ref} className="relative">
+      <button
+        onClick={() => setOpen(o => !o)}
+        className={cn(
+          'flex items-center gap-1.5 h-8 px-3 rounded-lg border text-sm font-medium transition-all duration-150',
+          value
+            ? 'border-brand-300 bg-brand-50 text-brand-700 dark:border-brand-700/50 dark:bg-brand-900/20 dark:text-brand-400'
+            : 'border-gray-200 bg-white text-gray-600 hover:border-gray-300 hover:bg-gray-50 dark:border-white/10 dark:bg-white/5 dark:text-gray-300 dark:hover:bg-white/8'
+        )}
+      >
+        {selected?.label ?? placeholder}
+        <ChevronDown
+          size={13}
+          className={`text-current opacity-60 transition-transform duration-150 ${open ? 'rotate-180' : ''}`}
+        />
+      </button>
+
+      {open && (
+        <div className="absolute top-full left-0 mt-1.5 z-30 bg-white dark:bg-[#1e1e24] border border-gray-100 dark:border-white/[0.08] rounded-xl shadow-lg shadow-black/8 py-1 min-w-[148px] animate-dropdown-in">
+          <button
+            onClick={() => { onChange('' as T | ''); setOpen(false) }}
+            className={cn(
+              'w-full text-left px-3 py-2 text-[13px] flex items-center justify-between hover:bg-gray-50 dark:hover:bg-white/5 transition-colors',
+              !value ? 'font-medium text-gray-900 dark:text-white' : 'text-gray-500 dark:text-gray-400'
+            )}
+          >
+            {placeholder}
+            {!value && <Check size={12} className="text-brand-600" />}
+          </button>
+          <div className="my-1 border-t border-gray-100 dark:border-white/[0.06]" />
+          {options.map(opt => (
+            <button
+              key={opt.value}
+              onClick={() => { onChange(opt.value); setOpen(false) }}
+              className={cn(
+                'w-full text-left px-3 py-2 text-[13px] flex items-center justify-between hover:bg-gray-50 dark:hover:bg-white/5 transition-colors',
+                value === opt.value
+                  ? 'font-medium text-brand-600 dark:text-brand-400'
+                  : 'text-gray-600 dark:text-gray-300'
+              )}
+            >
+              {opt.label}
+              {value === opt.value && <Check size={12} className="text-brand-600 dark:text-brand-400" />}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
+
+// ── Page ──────────────────────────────────────────────────────────────────────
 
 export default function Payments() {
   const { payments, orders } = useAppStore()
@@ -34,7 +120,36 @@ export default function Payments() {
 
   return (
     <div className="space-y-4">
-      <h1 className="text-lg font-semibold text-gray-900">Payments</h1>
+      <div className="flex items-center justify-between">
+        <h1 className="text-lg font-semibold text-gray-900">Payments</h1>
+        <div className="flex items-center gap-2">
+          <FilterPill
+            value={filterStatus}
+            onChange={setFilterStatus}
+            placeholder="All Statuses"
+            options={[
+              { value: 'PAID', label: 'Paid' },
+              { value: 'PENDING', label: 'Pending' },
+              { value: 'FAILED', label: 'Failed' },
+              { value: 'REFUNDED', label: 'Refunded' },
+              { value: 'SETTLED', label: 'Settled' },
+            ]}
+          />
+          <FilterPill
+            value={filterMethod}
+            onChange={setFilterMethod}
+            placeholder="All Methods"
+            options={[
+              { value: 'COD', label: 'COD' },
+              { value: 'UPI', label: 'UPI' },
+              { value: 'CARD', label: 'Card' },
+              { value: 'NETBANKING', label: 'Netbanking' },
+              { value: 'WALLET', label: 'Wallet' },
+              { value: 'PREPAID', label: 'Prepaid' },
+            ]}
+          />
+        </div>
+      </div>
 
       {/* KPIs */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
@@ -54,37 +169,6 @@ export default function Payments() {
           <p className="text-xs text-gray-500 mt-1">require attention</p>
         </Card>
       </div>
-
-      {/* Filters */}
-      <Card className="p-4">
-        <div className="flex gap-3">
-          <select
-            value={filterStatus}
-            onChange={e => setFilterStatus(e.target.value)}
-            className="input-field w-36"
-          >
-            <option value="">All Statuses</option>
-            <option value="PAID">Paid</option>
-            <option value="PENDING">Pending</option>
-            <option value="FAILED">Failed</option>
-            <option value="REFUNDED">Refunded</option>
-            <option value="SETTLED">Settled</option>
-          </select>
-          <select
-            value={filterMethod}
-            onChange={e => setFilterMethod(e.target.value)}
-            className="input-field w-36"
-          >
-            <option value="">All Methods</option>
-            <option value="COD">COD</option>
-            <option value="UPI">UPI</option>
-            <option value="CARD">Card</option>
-            <option value="NETBANKING">Netbanking</option>
-            <option value="WALLET">Wallet</option>
-            <option value="PREPAID">Prepaid</option>
-          </select>
-        </div>
-      </Card>
 
       {/* Table */}
       <Card>
