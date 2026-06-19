@@ -55,7 +55,7 @@ function useNotifications(): AppNotification[] {
         id: `ord-${o.id}`,
         type: 'order',
         title: `High RTO Risk — ${o.order_number}`,
-        subtitle: `RTO score ${o.rto_score}/100 · ${o.payment_method}`,
+        subtitle: `RTO score ${o.rto_risk_score}/100 · ${o.payment_method}`,
         time: timeAgo(o.created_at),
         href: '/orders',
         read: false,

@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect, useMemo, useCallback } from 'react'
 import {
   Search, X, User, ShoppingBag, Package, AlertTriangle,
-  ChevronRight, Truck, ArrowUpRight,
+  Truck, ArrowUpRight,
 } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import { useAppStore } from '../../stores/appStore'
@@ -454,7 +454,6 @@ export default function GlobalSearch() {
             navCounter++
             const idx = navCounter
             const isActive = activeIdx === idx
-            const url = getUrl(item)
 
             return (
               <button
