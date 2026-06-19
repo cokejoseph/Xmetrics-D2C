@@ -8,17 +8,17 @@ export function buildSKUForecast(products: Product[], orders: Order[]): {
   const today = new Date()
   const thirtyDaysAgo = subDays(today, 30)
 
+  // Compute once outside the map to avoid O(n*m) filter
+  const recentOrders = orders.filter(
+    o =>
+      parseISO(o.created_at) >= thirtyDaysAgo &&
+      o.payment_status === 'PAID' &&
+      o.fulfillment_status !== 'CANCELLED'
+  )
+
   const forecasts: SKUForecast[] = products
     .filter(p => p.is_active)
     .map(product => {
-      // Collect sold units in last 30 days
-      const recentOrders = orders.filter(
-        o =>
-          parseISO(o.created_at) >= thirtyDaysAgo &&
-          o.payment_status === 'PAID' &&
-          o.fulfillment_status !== 'CANCELLED'
-      )
-
       let totalUnitsSold30d = 0
       for (const order of recentOrders) {
         for (const item of order.items ?? []) {
@@ -40,38 +40,21 @@ export function buildSKUForecast(products: Product[], orders: Order[]): {
         daysOfStock = 0
         reorderQuantity = Math.round(avgDailyDemand * 45)
       } else if (avgDailyDemand === 0) {
-        if (totalUnitsSold30d === 0) {
-          status = 'DEAD_STOCK'
-          daysOfStock = Infinity
-        } else {
-          status = 'INSUFFICIENT_DATA'
-          daysOfStock = Infinity
-        }
+        status = totalUnitsSold30d === 0 ? 'DEAD_STOCK' : 'INSUFFICIENT_DATA'
+        daysOfStock = Infinity
         reorderQuantity = 0
       } else {
         daysOfStock = Math.round(product.inventory_count / avgDailyDemand)
-        predictedStockoutDate = format(
-          addDays(today, daysOfStock),
-          'yyyy-MM-dd'
-        )
-        reorderQuantity = Math.max(
-          0,
-          Math.round(avgDailyDemand * 45 - product.inventory_count)
-        )
+        predictedStockoutDate = format(addDays(today, daysOfStock), 'yyyy-MM-dd')
+        reorderQuantity = Math.max(0, Math.round(avgDailyDemand * 45 - product.inventory_count))
 
-        // reorder_threshold is a unit count — convert to days-of-stock equivalent
-        // so we can compare apples-to-apples with daysOfStock
         const thresholdDays = avgDailyDemand > 0
           ? Math.round(product.reorder_threshold / avgDailyDemand)
-          : 14 // fallback: 14 days if no demand data
+          : 14
 
-        if (daysOfStock < thresholdDays) {
-          status = 'REORDER_NOW'
-        } else if (daysOfStock < thresholdDays * 2) {
-          status = 'REORDER_SOON'
-        } else {
-          status = 'IN_STOCK'
-        }
+        status = daysOfStock < thresholdDays ? 'REORDER_NOW'
+          : daysOfStock < thresholdDays * 2 ? 'REORDER_SOON'
+          : 'IN_STOCK'
       }
 
       return {
@@ -91,11 +74,11 @@ export function buildSKUForecast(products: Product[], orders: Order[]): {
 
   const summary: ForecastSummary = {
     out_of_stock_count: forecasts.filter(f => f.status === 'OUT_OF_STOCK').length,
-    reorder_now_count: forecasts.filter(f => f.status === 'REORDER_NOW').length,
+    reorder_now_count:  forecasts.filter(f => f.status === 'REORDER_NOW').length,
     reorder_soon_count: forecasts.filter(f => f.status === 'REORDER_SOON').length,
-    in_stock_count: forecasts.filter(f => f.status === 'IN_STOCK').length,
-    dead_stock_count: forecasts.filter(f => f.status === 'DEAD_STOCK').length,
-    total_skus: forecasts.length,
+    in_stock_count:     forecasts.filter(f => f.status === 'IN_STOCK').length,
+    dead_stock_count:   forecasts.filter(f => f.status === 'DEAD_STOCK').length,
+    total_skus:         forecasts.length,
   }
 
   return { forecasts, summary }

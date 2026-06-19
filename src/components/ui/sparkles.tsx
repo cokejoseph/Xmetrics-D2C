@@ -28,7 +28,7 @@ function SparklesInner({ id, className, background, minSize, maxSize, speed, par
   }, [controls])
 
   return (
-    <motion.div animate={controls} className={cn('opacity-0', className)}>
+    <motion.div initial={{ opacity: 0 }} animate={controls} className={cn(className)}>
       {loaded && (
         <Particles
           id={id ?? generatedId}
@@ -39,36 +39,36 @@ function SparklesInner({ id, className, background, minSize, maxSize, speed, par
             fullScreen: { enable: false, zIndex: 0 },
             fpsLimit: 120,
             particles: {
-              color: { value: particleColor ?? '#bae6fd' },
+              color: { value: particleColor ?? '#93c5fd' },
               links: {
-                color: particleColor ?? '#bae6fd',
-                distance: 120,
+                color: particleColor ?? '#93c5fd',
+                distance: 140,
                 enable: true,
-                opacity: 0.2,
-                width: 0.6,
+                opacity: 0.5,
+                width: 1,
               },
               move: {
                 direction: 'none',
                 enable: true,
                 outModes: { default: 'out' },
                 random: false,
-                speed: { min: 0.1, max: 0.8 },
+                speed: { min: 0.2, max: 1.2 },
                 straight: false,
               },
               number: {
                 density: { enable: true, width: 800, height: 800 },
-                value: particleDensity ?? 60,
+                value: particleDensity ?? 100,
               },
               opacity: {
-                value: { min: 0.1, max: 0.8 },
+                value: { min: 0.4, max: 1.0 },
                 animation: {
                   enable: true,
-                  speed: speed ?? 2,
+                  speed: speed ?? 1,
                   sync: false,
                 },
               },
               shape: { type: 'circle' },
-              size: { value: { min: minSize ?? 0.6, max: maxSize ?? 2 } },
+              size: { value: { min: minSize ?? 1, max: maxSize ?? 3 } },
             },
             detectRetina: true,
           }}

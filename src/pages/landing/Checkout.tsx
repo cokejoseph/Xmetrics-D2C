@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
+import { BeamsBackground } from '@/components/ui/beams-background'
 import { Check, Shield, Zap, Lock } from 'lucide-react'
 import { loadRazorpayScript } from '../../lib/razorpay'
 import { callEdgeFunction, DEMO_MODE } from '../../lib/supabase'
@@ -77,14 +78,13 @@ export default function Checkout() {
   const [done, setDone] = useState(false)
   const navigate = useNavigate()
 
-  const monthlyPrice = plan.monthlyPrice
-  const yearlyPrice  = plan.monthlyPrice * 10   // 2 months free
-  const yearlyMonthly = Math.round(yearlyPrice / 12)
-  const yearlySaving  = plan.monthlyPrice * 12 - yearlyPrice
+  const monthlyPrice  = plan.monthlyPrice          // ₹2,999/mo
+  const yearlyMonthly = monthlyPrice - 500          // ₹2,499/mo when annual
+  const yearlyPrice   = yearlyMonthly * 12          // ₹29,988/yr (actual charge)
+  const yearlySaving  = monthlyPrice * 12 - yearlyPrice  // ₹6,000 saved vs monthly
 
-  const activePrice    = billing === 'MONTHLY' ? monthlyPrice : yearlyPrice
-  const priceDisplay   = formatINR(activePrice)
-  const periodLabel    = billing === 'MONTHLY' ? '/mo' : '/yr'
+  const activePrice   = billing === 'MONTHLY' ? monthlyPrice : yearlyPrice  // for payment
+  const displayPrice  = billing === 'MONTHLY' ? monthlyPrice : yearlyMonthly // always show /mo
 
   const handlePay = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -167,48 +167,49 @@ export default function Checkout() {
   }
 
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen bg-[#0a1230] relative overflow-hidden">
+      <BeamsBackground intensity="subtle" />
       {/* Top bar */}
-      <div className="border-b border-gray-100">
+      <div className="relative z-10 border-b border-white/10">
         <div className="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between">
           <Link to="/" className="flex items-center gap-2.5">
             <div className="w-8 h-8 rounded-lg bg-white flex items-center justify-center shadow-sm overflow-hidden p-0.5">
               <img src="/logo.svg" alt="Xmetrics" className="w-full h-full object-contain" />
             </div>
-            <span className="font-semibold text-gray-900 text-lg">Xmetrics</span>
+            <span className="font-semibold text-white text-lg">Xmetrics</span>
           </Link>
-          <Link to="/" className="text-sm text-gray-500 hover:text-gray-900 transition-colors">← Back to website</Link>
+          <Link to="/" className="text-sm text-white/60 hover:text-white transition-colors">← Back to website</Link>
         </div>
       </div>
 
-      <div className="max-w-6xl mx-auto px-6 py-16">
+      <div className="relative z-10 max-w-6xl mx-auto px-6 py-16">
         <div className="grid lg:grid-cols-[1fr_400px] gap-12 items-start">
 
           {/* Left — plan details */}
           <div>
             {plan.badge && (
-              <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-brand-50 border border-brand-200 rounded-full mb-6">
-                <Zap size={11} className="text-brand-600" />
-                <span className="text-xs font-semibold text-brand-700 uppercase tracking-wide">{plan.badge}</span>
+              <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-white/10 border border-white/20 rounded-full mb-6">
+                <Zap size={11} className="text-white/80" />
+                <span className="text-xs font-semibold text-white/80 uppercase tracking-wide">{plan.badge}</span>
               </div>
             )}
 
-            <h1 className="text-4xl font-bold text-gray-900 leading-tight mb-2">
+            <h1 className="text-4xl font-bold text-white leading-tight mb-2">
               {plan.name} Plan
             </h1>
-            <p className="text-lg text-gray-500 mb-8 leading-relaxed">
+            <p className="text-lg text-white/60 mb-8 leading-relaxed">
               Get full access to Xmetrics on the {plan.name} plan. Pay now and create your account immediately after. No trial limits, no waiting.
             </p>
 
             {/* Billing toggle */}
             <div className="mb-8">
-              <div className="inline-flex items-center bg-gray-100 rounded-xl p-1 gap-1">
+              <div className="inline-flex items-center bg-white/10 rounded-xl p-1 gap-1">
                 <button
                   onClick={() => setBilling('MONTHLY')}
                   className={`px-5 py-2 rounded-lg text-sm font-semibold transition-all ${
                     billing === 'MONTHLY'
                       ? 'bg-white text-gray-900 shadow-sm'
-                      : 'text-gray-500 hover:text-gray-700'
+                      : 'text-white/60 hover:text-white/80'
                   }`}
                 >
                   Monthly
@@ -218,12 +219,12 @@ export default function Checkout() {
                   className={`px-5 py-2 rounded-lg text-sm font-semibold transition-all flex items-center gap-2 ${
                     billing === 'YEARLY'
                       ? 'bg-white text-gray-900 shadow-sm'
-                      : 'text-gray-500 hover:text-gray-700'
+                      : 'text-white/60 hover:text-white/80'
                   }`}
                 >
                   Yearly
                   <span className="text-[10px] font-bold bg-green-500 text-white px-2 py-0.5 rounded-full">
-                    2 MONTHS FREE
+                    SAVE ₹500/MO
                   </span>
                 </button>
               </div>
@@ -232,83 +233,54 @@ export default function Checkout() {
             {/* Price */}
             <div className="mb-8">
               {plan.originalMonthlyPrice && (
-                <div className="inline-flex items-center gap-2 bg-amber-50 border border-amber-200 rounded-full px-3 py-1 mb-3">
+                <div className="inline-flex items-center gap-2 bg-amber-500/20 border border-amber-400/30 rounded-full px-3 py-1 mb-3">
                   <span className="w-1.5 h-1.5 rounded-full bg-amber-400" />
-                  <span className="text-xs font-semibold text-amber-700">Founding rate: locked at this price for life</span>
+                  <span className="text-xs font-semibold text-amber-300">Founding rate: locked at this price for life</span>
                 </div>
               )}
-              <p className="text-sm text-gray-400 mb-1">{billing === 'MONTHLY' ? 'Monthly price' : 'Yearly price'}</p>
+              {/* Big monthly-equivalent price */}
               <div className="flex items-end gap-3">
-                <span className="text-5xl font-bold text-gray-900">{priceDisplay}</span>
-                <span className="text-lg text-gray-500 mb-1">{periodLabel}</span>
-                {plan.originalMonthlyPrice && (
-                  <span className="text-xl text-gray-300 line-through mb-1">
-                    {formatINR(billing === 'MONTHLY' ? plan.originalMonthlyPrice : plan.originalMonthlyPrice * 10)}
-                  </span>
-                )}
+                <span className="text-6xl font-bold text-white">{formatINR(displayPrice)}</span>
+                <div className="mb-1.5 flex flex-col items-start gap-0.5">
+                  {plan.originalMonthlyPrice && (
+                    <span className="text-sm text-white/30 line-through">{formatINR(plan.originalMonthlyPrice)}</span>
+                  )}
+                  <span className="text-lg text-white/60">/mo</span>
+                </div>
               </div>
-              {plan.originalMonthlyPrice && (
-                <p className="text-sm text-amber-600 font-medium mt-1">
-                  Save {formatINR((billing === 'MONTHLY' ? plan.originalMonthlyPrice : plan.originalMonthlyPrice * 10) - activePrice)} vs regular price
-                </p>
-              )}
+
+              {/* Yearly total below */}
               {billing === 'YEARLY' ? (
-                <div className="mt-1 space-y-0.5">
-                  <p className="text-sm text-green-600 font-medium">+ save {formatINR(yearlySaving)} vs monthly billing (2 months free)</p>
-                  <p className="text-xs text-gray-400">Equivalent to {formatINR(yearlyMonthly)}/mo billed annually</p>
+                <div className="mt-2 space-y-0.5">
+                  <p className="text-sm font-semibold text-white/80">= {formatINR(yearlyPrice)} billed annually</p>
+                  <p className="text-sm text-green-400 font-medium">Save {formatINR(yearlySaving)}/yr vs monthly</p>
                 </div>
               ) : (
-                <p className="text-sm text-gray-400 mt-1">
-                  Switch to yearly and save {formatINR(yearlySaving)} more, 2 months free
+                <p className="text-sm text-white/40 mt-2">
+                  Switch to yearly — save {formatINR(yearlySaving)}/yr (₹500/mo off)
                 </p>
               )}
             </div>
 
             {/* Features */}
             <div className="mb-8">
-              <p className="text-sm font-semibold text-gray-900 mb-4">What's included:</p>
+              <p className="text-sm font-semibold text-white mb-4">What's included:</p>
               <div className="grid sm:grid-cols-2 gap-2.5">
                 {plan.features.map((f, i) => (
                   <div key={i} className="flex items-start gap-2.5">
-                    <Check size={14} className="mt-0.5 text-green-500 shrink-0" />
-                    <span className="text-sm text-gray-600">{f}</span>
+                    <Check size={14} className="mt-0.5 text-green-400 shrink-0" />
+                    <span className="text-sm text-white/70">{f}</span>
                   </div>
                 ))}
               </div>
             </div>
 
             {/* Trust signals */}
-            <div className="flex flex-wrap gap-5 text-xs text-gray-500">
-              <span className="flex items-center gap-1.5"><Shield size={12} className="text-green-500" /> Secured by Razorpay</span>
-              <span className="flex items-center gap-1.5"><Zap size={12} className="text-amber-500" /> Access in under 5 minutes</span>
+            <div className="flex flex-wrap gap-5 text-xs text-white/50">
+              <span className="flex items-center gap-1.5"><Shield size={12} className="text-green-400" /> Secured by Razorpay</span>
+              <span className="flex items-center gap-1.5"><Zap size={12} className="text-amber-400" /> Access in under 5 minutes</span>
             </div>
 
-            {/* Plan switcher */}
-            <div className="mt-8 pt-8 border-t border-gray-100">
-              <p className="text-sm font-medium text-gray-500 mb-4">Wrong plan? Switch:</p>
-              <div className="grid grid-cols-3 gap-3">
-                {Object.entries(PLAN_DATA).map(([key, p]) => {
-                  const isActive = key === planKey
-                  const price = billing === 'MONTHLY' ? p.monthlyPrice : p.monthlyPrice * 10
-                  return (
-                    <Link
-                      key={key}
-                      to={`/checkout?plan=${key}`}
-                      className={`flex flex-col items-center px-4 py-3 rounded-xl border-2 transition-all text-center ${
-                        isActive
-                          ? 'border-brand-600 bg-brand-50 text-brand-700'
-                          : 'border-gray-200 hover:border-brand-300 text-gray-600 hover:text-brand-600'
-                      }`}
-                    >
-                      <span className="text-sm font-bold">{p.name}</span>
-                      <span className="text-xs mt-0.5 opacity-75">
-                        {formatINR(price)}{billing === 'MONTHLY' ? '/mo' : '/yr'}
-                      </span>
-                    </Link>
-                  )
-                })}
-              </div>
-            </div>
           </div>
 
           {/* Right — checkout form */}
@@ -354,19 +326,22 @@ export default function Checkout() {
                       <p className="text-xs text-gray-500 font-medium">
                         {plan.name} Plan · {billing === 'MONTHLY' ? 'Monthly' : 'Yearly'}
                         {billing === 'YEARLY' && (
-                          <span className="ml-2 text-green-600 font-semibold">2 months free</span>
+                          <span className="ml-2 text-green-600 font-semibold">Save ₹500/mo</span>
                         )}
                       </p>
                       <div className="flex items-baseline gap-2 mt-0.5">
                         <p className="text-2xl font-bold text-gray-900">
-                          {priceDisplay}<span className="text-sm font-normal text-gray-500">{periodLabel}</span>
+                          {formatINR(displayPrice)}<span className="text-sm font-normal text-gray-500">/mo</span>
                         </p>
                         {plan.originalMonthlyPrice && (
                           <span className="text-sm text-gray-300 line-through">
-                            {formatINR(billing === 'MONTHLY' ? plan.originalMonthlyPrice : plan.originalMonthlyPrice * 10)}{periodLabel}
+                            {formatINR(plan.originalMonthlyPrice)}/mo
                           </span>
                         )}
                       </div>
+                      {billing === 'YEARLY' && (
+                        <p className="text-xs text-gray-500 mt-0.5">= {formatINR(yearlyPrice)}/yr billed annually</p>
+                      )}
                     </div>
                     <div className="text-right">
                       <p className="text-xs text-gray-400">Razorpay secured</p>
@@ -414,7 +389,7 @@ export default function Checkout() {
                       ) : (
                         <>
                           <Lock size={14} />
-                          Pay {priceDisplay} &amp; get access
+                          Pay {formatINR(activePrice)} &amp; get access
                         </>
                       )}
                     </button>

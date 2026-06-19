@@ -80,7 +80,7 @@ export default function OrderList() {
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <h1 className="text-xl font-semibold text-gray-900">Orders</h1>
+        <h1 className="text-lg font-semibold text-gray-900">Orders</h1>
         <Link to="/orders/new">
           <Button size="sm"><Plus size={14} /> New Order</Button>
         </Link>
@@ -89,7 +89,7 @@ export default function OrderList() {
       {/* Risk banner */}
       {highRiskPending > 0 && (
         <div
-          className="flex items-center gap-3 p-3 bg-amber-50 border border-amber-200 rounded-xl text-amber-800 text-sm cursor-pointer"
+          className="flex items-center gap-3 p-3 bg-amber-50 border border-amber-200 rounded-md text-amber-800 text-sm cursor-pointer"
           onClick={() => { setTab('review'); setSelected([]) }}
         >
           <AlertTriangle size={16} />
@@ -99,7 +99,7 @@ export default function OrderList() {
       )}
 
       {/* Tabs */}
-      <div className="flex gap-1 bg-gray-100 p-1 rounded-xl w-fit">
+      <div className="flex gap-6 border-b border-gray-100">
         <TabBtn active={tab === 'all'} onClick={() => { setTab('all'); setSelected([]) }}>
           All Orders
         </TabBtn>
@@ -113,11 +113,11 @@ export default function OrderList() {
 
       {/* Bulk action bar — Start Packing (ready tab only) */}
       {tab === 'ready' && selected.length > 0 && (
-        <div className="flex items-center gap-3 px-4 py-3 bg-brand-600 text-white rounded-xl shadow-lg">
+        <div className="flex items-center gap-3 px-4 py-3 bg-brand-600 text-white rounded-md">
           <span className="text-sm font-medium">{selected.length} order{selected.length > 1 ? 's' : ''} selected</span>
           <button
             onClick={handleStartPacking}
-            className="flex items-center gap-1.5 ml-auto px-3 py-1.5 bg-white text-brand-700 text-sm font-semibold rounded-lg hover:bg-brand-50 transition-colors"
+            className="flex items-center gap-1.5 ml-auto px-3 py-1.5 bg-white text-brand-700 text-sm font-medium rounded-md hover:bg-brand-50 transition-colors"
           >
             <PackageOpen size={14} /> Start Packing
           </button>
@@ -127,18 +127,18 @@ export default function OrderList() {
 
       {/* Review Queue bulk actions */}
       {tab === 'review' && selected.length > 0 && (
-        <div className="flex items-center gap-3 px-4 py-3 bg-gray-800 text-white rounded-xl shadow-lg">
+        <div className="flex items-center gap-3 px-4 py-3 bg-gray-800 text-white rounded-md">
           <span className="text-sm font-medium">{selected.length} order{selected.length > 1 ? 's' : ''} selected</span>
           <div className="flex gap-2 ml-auto">
             <button
               onClick={() => { selected.forEach(id => approveOrder(id)); setSelected([]) }}
-              className="px-3 py-1.5 bg-green-500 text-white text-sm font-semibold rounded-lg hover:bg-green-400 transition-colors"
+              className="px-3 py-1.5 bg-green-500 text-white text-sm font-medium rounded-md hover:bg-green-400 transition-colors"
             >
               Approve All
             </button>
             <button
               onClick={() => { selected.forEach(id => holdOrder(id)); setSelected([]) }}
-              className="px-3 py-1.5 bg-amber-500 text-white text-sm font-semibold rounded-lg hover:bg-amber-400 transition-colors"
+              className="px-3 py-1.5 bg-amber-500 text-white text-sm font-medium rounded-md hover:bg-amber-400 transition-colors"
             >
               Hold All
             </button>
@@ -213,16 +213,16 @@ export default function OrderList() {
                       className="rounded"
                     />
                   </th>
-                  <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">Order</th>
-                  <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">Customer</th>
-                  <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide hidden sm:table-cell">Channel</th>
-                  <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">Amount</th>
-                  <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide hidden md:table-cell">Payment</th>
-                  <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide hidden md:table-cell">Status</th>
-                  <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">RTO</th>
-                  <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide hidden lg:table-cell">Date</th>
+                  <th className="px-4 py-3 text-left text-[11px] font-medium text-gray-400 uppercase tracking-wider">Order</th>
+                  <th className="px-4 py-3 text-left text-[11px] font-medium text-gray-400 uppercase tracking-wider">Customer</th>
+                  <th className="px-4 py-3 text-left text-[11px] font-medium text-gray-400 uppercase tracking-wider hidden sm:table-cell">Channel</th>
+                  <th className="px-4 py-3 text-left text-[11px] font-medium text-gray-400 uppercase tracking-wider">Amount</th>
+                  <th className="px-4 py-3 text-left text-[11px] font-medium text-gray-400 uppercase tracking-wider hidden md:table-cell">Payment</th>
+                  <th className="px-4 py-3 text-left text-[11px] font-medium text-gray-400 uppercase tracking-wider hidden md:table-cell">Status</th>
+                  <th className="px-4 py-3 text-left text-[11px] font-medium text-gray-400 uppercase tracking-wider">RTO</th>
+                  <th className="px-4 py-3 text-left text-[11px] font-medium text-gray-400 uppercase tracking-wider hidden lg:table-cell">Date</th>
                   {tab === 'review' && (
-                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">Action</th>
+                    <th className="px-4 py-3 text-left text-[11px] font-medium text-gray-400 uppercase tracking-wider">Action</th>
                   )}
                 </tr>
               </thead>
@@ -313,10 +313,10 @@ function OrderRow({
         <td className="px-4 py-3">
           {order.rto_review_status === 'PENDING' || order.rto_review_status === 'HELD' ? (
             <div className="flex gap-1">
-              <button onClick={onApprove} className="px-2 py-1 text-xs font-medium text-green-700 bg-green-50 rounded-lg hover:bg-green-100 transition-colors">
+              <button onClick={onApprove} className="px-2 py-1 text-xs font-medium text-green-700 bg-green-50 rounded-md hover:bg-green-100 transition-colors">
                 Approve
               </button>
-              <button onClick={onHold} className="px-2 py-1 text-xs font-medium text-amber-700 bg-amber-50 rounded-lg hover:bg-amber-100 transition-colors">
+              <button onClick={onHold} className="px-2 py-1 text-xs font-medium text-amber-700 bg-amber-50 rounded-md hover:bg-amber-100 transition-colors">
                 Hold
               </button>
             </div>
@@ -341,14 +341,12 @@ function TabBtn({
   return (
     <button
       onClick={onClick}
-      className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
-        active ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'
-      }`}
+      className={`tab-line ${active ? 'active' : ''} flex items-center gap-1.5`}
     >
       {children}
       {badge != null && badge > 0 ? (
-        <span className={`min-w-[18px] h-[18px] px-1 rounded-full text-white text-[10px] font-semibold flex items-center justify-center ${
-          badgeDanger ? 'bg-red-500' : 'bg-brand-600'
+        <span className={`text-[10px] font-medium tabular-nums ${
+          badgeDanger ? 'text-red-500' : 'text-gray-400'
         }`}>
           {badge}
         </span>

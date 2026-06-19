@@ -75,29 +75,21 @@ export default function Fulfillment() {
 
   return (
     <div className="space-y-4">
-      <h1 className="text-xl font-semibold text-gray-900">Fulfillment</h1>
+      <h1 className="text-lg font-semibold text-gray-900">Fulfillment</h1>
 
       {/* Tabs */}
-      <div className="flex gap-1 overflow-x-auto pb-1">
+      <div className="flex gap-6 border-b border-gray-100 overflow-x-auto">
         {TABS.map(t => {
           const count = getTabOrders(orders, t.key).length
           return (
             <button
               key={t.key}
               onClick={() => { setTab(t.key); setSelected([]); setShowPickupDate(false) }}
-              className={`flex items-center gap-1.5 px-3 py-2 rounded-xl text-sm font-medium whitespace-nowrap transition-colors ${
-                tab === t.key
-                  ? 'bg-brand-600 text-white'
-                  : 'bg-white text-gray-600 hover:bg-gray-50 border border-gray-100'
-              }`}
+              className={`tab-line flex items-center gap-1.5 ${tab === t.key ? 'active' : ''}`}
             >
               {t.label}
               {count > 0 && (
-                <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-semibold ${
-                  tab === t.key ? 'bg-white/20 text-white' : 'bg-gray-100 text-gray-600'
-                }`}>
-                  {count}
-                </span>
+                <span className="text-[10px] font-medium text-gray-400 tabular-nums">{count}</span>
               )}
             </button>
           )
@@ -130,7 +122,7 @@ export default function Fulfillment() {
                   value={pickupDate}
                   min={new Date().toISOString().slice(0, 10)}
                   onChange={e => setPickupDate(e.target.value)}
-                  className="px-3 py-1.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500"
+                  className="px-3 py-1.5 border border-gray-200 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500"
                 />
                 <Button size="sm" onClick={handleSchedulePickup} disabled={!pickupDate}>
                   <CheckCircle size={14} /> Confirm Pickup
@@ -153,17 +145,17 @@ export default function Fulfillment() {
                     className="rounded"
                   />
                 </th>
-                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">Order</th>
-                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">Customer</th>
-                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide hidden sm:table-cell">Channel</th>
-                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">Amount</th>
-                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide hidden md:table-cell">Payment</th>
-                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">Status</th>
+                <th className="px-4 py-3 text-left text-[11px] font-medium text-gray-400 uppercase tracking-wider">Order</th>
+                <th className="px-4 py-3 text-left text-[11px] font-medium text-gray-400 uppercase tracking-wider">Customer</th>
+                <th className="px-4 py-3 text-left text-[11px] font-medium text-gray-400 uppercase tracking-wider hidden sm:table-cell">Channel</th>
+                <th className="px-4 py-3 text-left text-[11px] font-medium text-gray-400 uppercase tracking-wider">Amount</th>
+                <th className="px-4 py-3 text-left text-[11px] font-medium text-gray-400 uppercase tracking-wider hidden md:table-cell">Payment</th>
+                <th className="px-4 py-3 text-left text-[11px] font-medium text-gray-400 uppercase tracking-wider">Status</th>
                 {(tab === 'pickup') && (
-                  <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide hidden lg:table-cell">Pickup Date</th>
+                  <th className="px-4 py-3 text-left text-[11px] font-medium text-gray-400 uppercase tracking-wider hidden lg:table-cell">Pickup Date</th>
                 )}
                 {(tab === 'transit' || tab === 'delivered' || tab === 'rto') && (
-                  <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide hidden lg:table-cell">AWB</th>
+                  <th className="px-4 py-3 text-left text-[11px] font-medium text-gray-400 uppercase tracking-wider hidden lg:table-cell">AWB</th>
                 )}
               </tr>
             </thead>
@@ -191,7 +183,7 @@ export default function Fulfillment() {
                       <ChannelBadge channel={order.channel} />
                     </td>
                     <td className="px-4 py-3">
-                      <span className="text-sm font-medium">₹{(order.gross_amount - order.discount_amount).toLocaleString('en-IN')}</span>
+                      <span className="text-sm font-medium text-gray-900">₹{(order.gross_amount - order.discount_amount).toLocaleString('en-IN')}</span>
                     </td>
                     <td className="px-4 py-3 hidden md:table-cell">
                       <PaymentMethodBadge method={order.payment_method} />

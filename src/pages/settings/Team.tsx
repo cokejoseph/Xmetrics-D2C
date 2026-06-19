@@ -32,7 +32,7 @@ export default function Team() {
   return (
     <div className="space-y-6 max-w-3xl">
       <div className="flex items-center justify-between">
-        <h1 className="text-xl font-semibold text-gray-900">Team</h1>
+        <h1 className="text-lg font-semibold text-gray-900">Team</h1>
         <div className="flex gap-2">
           <Button variant="secondary" size="sm" onClick={() => setShowMatrix(true)}>
             <Shield size={14} /> RBAC Matrix
@@ -48,10 +48,10 @@ export default function Team() {
           <table className="w-full">
             <thead>
               <tr className="border-b border-gray-100">
-                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">Member</th>
-                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">Role</th>
-                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide hidden sm:table-cell">Joined</th>
-                <th className="px-4 py-3 text-right text-xs font-semibold text-gray-500 uppercase tracking-wide">Actions</th>
+                <th className="px-4 py-3 text-left text-[11px] font-medium text-gray-400 uppercase tracking-wider">Member</th>
+                <th className="px-4 py-3 text-left text-[11px] font-medium text-gray-400 uppercase tracking-wider">Role</th>
+                <th className="px-4 py-3 text-left text-[11px] font-medium text-gray-400 uppercase tracking-wider hidden sm:table-cell">Joined</th>
+                <th className="px-4 py-3 text-right text-[11px] font-medium text-gray-400 uppercase tracking-wider">Actions</th>
               </tr>
             </thead>
             <tbody>
@@ -111,7 +111,7 @@ export default function Team() {
       <Modal open={showInvite} onClose={() => setShowInvite(false)} title="Invite Team Member">
         <div className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Full Name</label>
+            <label className="block text-xs font-medium text-gray-500 mb-1">Full Name</label>
             <Input
               value={inviteForm.name}
               onChange={e => setInviteForm(f => ({ ...f, name: e.target.value }))}
@@ -119,7 +119,7 @@ export default function Team() {
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Email Address</label>
+            <label className="block text-xs font-medium text-gray-500 mb-1">Email Address</label>
             <Input
               type="email"
               value={inviteForm.email}
@@ -128,7 +128,7 @@ export default function Team() {
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Role</label>
+            <label className="block text-xs font-medium text-gray-500 mb-1">Role</label>
             <Select
               value={inviteForm.role}
               onChange={e => setInviteForm(f => ({ ...f, role: e.target.value as Role }))}
@@ -156,9 +156,9 @@ export default function Team() {
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-gray-100">
-                <th className="py-2 text-left font-semibold text-gray-700">Permission</th>
+                <th className="py-2 text-left font-medium text-gray-700">Permission</th>
                 {(['OWNER', 'ADMIN', 'EDITOR', 'VIEWER'] as Role[]).map(r => (
-                  <th key={r} className="py-2 text-center font-semibold text-gray-700">{r}</th>
+                  <th key={r} className="py-2 text-center font-medium text-gray-700">{r}</th>
                 ))}
               </tr>
             </thead>

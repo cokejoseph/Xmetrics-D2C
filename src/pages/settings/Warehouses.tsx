@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { MapPin, Plus, Star } from 'lucide-react'
+import { MapPin, Plus } from 'lucide-react'
 import { useAppStore } from '../../stores/appStore'
 import { Card, Button, Modal, Input } from '../../components/ui'
 
@@ -22,7 +22,7 @@ export default function Warehouses() {
   return (
     <div className="space-y-6 max-w-3xl">
       <div className="flex items-center justify-between">
-        <h1 className="text-xl font-semibold text-gray-900">Warehouses</h1>
+        <h1 className="text-lg font-semibold text-gray-900">Warehouses</h1>
         <Button size="sm" onClick={() => setShowAdd(true)}>
           <Plus size={14} /> Add Warehouse
         </Button>
@@ -33,15 +33,15 @@ export default function Warehouses() {
           <Card key={wh.id} className={`p-5 ${wh.is_primary ? 'ring-1 ring-brand-600' : ''}`}>
             <div className="flex items-start justify-between mb-3">
               <div className="flex items-center gap-2">
-                <div className="w-8 h-8 rounded-lg bg-brand-50 flex items-center justify-center">
-                  <MapPin size={14} className="text-brand-600" />
+                <div className="flex items-center justify-center">
+                  <MapPin size={14} className="text-gray-400" />
                 </div>
                 <div>
-                  <h3 className="text-sm font-semibold text-gray-900">{wh.name}</h3>
+                  <h3 className="text-sm font-medium text-gray-900">{wh.name}</h3>
                   {wh.is_primary && (
                     <div className="flex items-center gap-1 mt-0.5">
-                      <Star size={10} className="text-amber-500 fill-amber-500" />
-                      <span className="text-[10px] text-amber-600 font-semibold">Primary</span>
+                      <span className="w-1.5 h-1.5 rounded-full bg-green-400" />
+                      <span className="text-[10px] text-gray-500 font-medium">Primary</span>
                     </div>
                   )}
                 </div>
@@ -78,7 +78,7 @@ export default function Warehouses() {
         <div className="space-y-4">
           <div className="grid grid-cols-2 gap-4">
             <div className="col-span-2">
-              <label className="block text-sm font-medium text-gray-700 mb-1">Warehouse Name</label>
+              <label className="block text-xs font-medium text-gray-500 mb-1">Warehouse Name</label>
               <Input
                 value={form.name}
                 onChange={e => setForm(f => ({ ...f, name: e.target.value }))}
@@ -86,7 +86,7 @@ export default function Warehouses() {
               />
             </div>
             <div className="col-span-2">
-              <label className="block text-sm font-medium text-gray-700 mb-1">Address</label>
+              <label className="block text-xs font-medium text-gray-500 mb-1">Address</label>
               <Input
                 value={form.address}
                 onChange={e => setForm(f => ({ ...f, address: e.target.value }))}
@@ -94,7 +94,7 @@ export default function Warehouses() {
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">City</label>
+              <label className="block text-xs font-medium text-gray-500 mb-1">City</label>
               <Input
                 value={form.city}
                 onChange={e => setForm(f => ({ ...f, city: e.target.value }))}
@@ -102,7 +102,7 @@ export default function Warehouses() {
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">State</label>
+              <label className="block text-xs font-medium text-gray-500 mb-1">State</label>
               <Input
                 value={form.state}
                 onChange={e => setForm(f => ({ ...f, state: e.target.value }))}
@@ -110,7 +110,7 @@ export default function Warehouses() {
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Pincode</label>
+              <label className="block text-xs font-medium text-gray-500 mb-1">Pincode</label>
               <Input
                 value={form.pincode}
                 onChange={e => setForm(f => ({ ...f, pincode: e.target.value }))}
@@ -119,7 +119,7 @@ export default function Warehouses() {
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Contact Name</label>
+              <label className="block text-xs font-medium text-gray-500 mb-1">Contact Name</label>
               <Input
                 value={form.contact_name}
                 onChange={e => setForm(f => ({ ...f, contact_name: e.target.value }))}
@@ -127,7 +127,7 @@ export default function Warehouses() {
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Contact Phone</label>
+              <label className="block text-xs font-medium text-gray-500 mb-1">Contact Phone</label>
               <Input
                 value={form.contact_phone}
                 onChange={e => setForm(f => ({ ...f, contact_phone: e.target.value }))}

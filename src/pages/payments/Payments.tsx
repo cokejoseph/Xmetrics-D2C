@@ -19,33 +19,38 @@ export default function Payments() {
     return true
   }).sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
 
-  const statusColors: Record<string, string> = {
-    PAID: 'bg-green-100 text-green-700',
-    PENDING: 'bg-amber-100 text-amber-700',
-    FAILED: 'bg-red-100 text-red-700',
-    REFUNDED: 'bg-blue-100 text-blue-700',
-    SETTLED: 'bg-emerald-100 text-emerald-700',
+  const statusDot: Record<string, string> = {
+    PAID: 'bg-green-400', PENDING: 'bg-amber-400', FAILED: 'bg-red-400',
+    REFUNDED: 'bg-blue-400', SETTLED: 'bg-green-400',
+  }
+  const statusText: Record<string, string> = {
+    PAID: 'text-green-600', PENDING: 'text-amber-600', FAILED: 'text-red-500',
+    REFUNDED: 'text-blue-600', SETTLED: 'text-green-600',
+  }
+  const statusLabel: Record<string, string> = {
+    PAID: 'Paid', PENDING: 'Pending', FAILED: 'Failed',
+    REFUNDED: 'Refunded', SETTLED: 'Settled',
   }
 
   return (
     <div className="space-y-4">
-      <h1 className="text-xl font-semibold text-gray-900">Payments</h1>
+      <h1 className="text-lg font-semibold text-gray-900">Payments</h1>
 
       {/* KPIs */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <Card className="p-4">
-          <p className="text-xs text-gray-500 mb-1">Total Collected</p>
-          <p className="text-2xl font-bold text-gray-900">₹{Math.round(totalCollected).toLocaleString('en-IN')}</p>
+          <p className="text-[11px] font-medium text-gray-400 uppercase tracking-wider mb-1">Total Collected</p>
+          <p className="text-2xl font-semibold text-gray-900">₹{Math.round(totalCollected).toLocaleString('en-IN')}</p>
           <p className="text-xs text-green-600 mt-1">{payments.filter(p => p.status === 'PAID').length} payments</p>
         </Card>
         <Card className="p-4">
-          <p className="text-xs text-gray-500 mb-1">COD Pending</p>
-          <p className="text-2xl font-bold text-gray-900">{codPending}</p>
+          <p className="text-[11px] font-medium text-gray-400 uppercase tracking-wider mb-1">COD Pending</p>
+          <p className="text-2xl font-semibold text-gray-900">{codPending}</p>
           <p className="text-xs text-amber-600 mt-1">orders awaiting payment</p>
         </Card>
         <Card className="p-4">
-          <p className="text-xs text-gray-500 mb-1">Failed Payments</p>
-          <p className="text-2xl font-bold text-red-600">{failedCount}</p>
+          <p className="text-[11px] font-medium text-gray-400 uppercase tracking-wider mb-1">Failed Payments</p>
+          <p className="text-2xl font-semibold text-red-600">{failedCount}</p>
           <p className="text-xs text-gray-500 mt-1">require attention</p>
         </Card>
       </div>
@@ -87,13 +92,13 @@ export default function Payments() {
           <table className="w-full">
             <thead>
               <tr className="border-b border-gray-100">
-                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">Order</th>
-                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide hidden sm:table-cell">Customer</th>
-                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">Method</th>
-                <th className="px-4 py-3 text-right text-xs font-semibold text-gray-500 uppercase tracking-wide">Amount</th>
-                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">Status</th>
-                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide hidden md:table-cell">Gateway Ref</th>
-                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide hidden lg:table-cell">Date</th>
+                <th className="px-4 py-3 text-left text-[11px] font-medium text-gray-400 uppercase tracking-wider">Order</th>
+                <th className="px-4 py-3 text-left text-[11px] font-medium text-gray-400 uppercase tracking-wider hidden sm:table-cell">Customer</th>
+                <th className="px-4 py-3 text-left text-[11px] font-medium text-gray-400 uppercase tracking-wider">Method</th>
+                <th className="px-4 py-3 text-right text-[11px] font-medium text-gray-400 uppercase tracking-wider">Amount</th>
+                <th className="px-4 py-3 text-left text-[11px] font-medium text-gray-400 uppercase tracking-wider">Status</th>
+                <th className="px-4 py-3 text-left text-[11px] font-medium text-gray-400 uppercase tracking-wider hidden md:table-cell">Gateway Ref</th>
+                <th className="px-4 py-3 text-left text-[11px] font-medium text-gray-400 uppercase tracking-wider hidden lg:table-cell">Date</th>
               </tr>
             </thead>
             <tbody className="stagger-rows">
@@ -118,8 +123,9 @@ export default function Payments() {
                       <span className="text-sm font-medium text-gray-900">₹{payment.amount.toLocaleString('en-IN')}</span>
                     </td>
                     <td className="px-4 py-3">
-                      <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-semibold ${statusColors[payment.status] ?? 'bg-gray-100 text-gray-600'}`}>
-                        {payment.status}
+                      <span className="inline-flex items-center gap-1.5">
+                        <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${statusDot[payment.status] ?? 'bg-gray-300'}`} />
+                        <span className={`text-[11px] font-medium ${statusText[payment.status] ?? 'text-gray-500'}`}>{statusLabel[payment.status] ?? payment.status}</span>
                       </span>
                     </td>
                     <td className="px-4 py-3 hidden md:table-cell">

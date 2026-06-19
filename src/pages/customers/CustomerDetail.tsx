@@ -41,7 +41,7 @@ export default function CustomerDetail() {
           <ArrowLeft size={16} />
         </Link>
         <div>
-          <h1 className="text-xl font-semibold text-gray-900">{customer.name}</h1>
+          <h1 className="text-lg font-semibold text-gray-900">{customer.name}</h1>
           <div className="flex gap-1 mt-0.5">
             {customer.tags.map(tag => (
               <span key={tag} className="px-1.5 py-0.5 bg-gray-100 text-gray-600 rounded text-[10px] font-medium">
@@ -56,7 +56,7 @@ export default function CustomerDetail() {
         <div className="space-y-4">
           {/* Contact */}
           <Card className="p-4">
-            <h2 className="text-sm font-semibold text-gray-900 mb-3">Contact</h2>
+            <h2 className="text-sm font-medium text-gray-900 mb-3">Contact</h2>
             <div className="space-y-2">
               <div className="flex items-center gap-2 text-sm text-gray-700">
                 <Phone size={14} className="text-gray-400" /> {customer.phone}
@@ -80,7 +80,7 @@ export default function CustomerDetail() {
 
           {/* Stats */}
           <Card className="p-4">
-            <h2 className="text-sm font-semibold text-gray-900 mb-3">Stats</h2>
+            <h2 className="text-sm font-medium text-gray-900 mb-3">Stats</h2>
             <div className="grid grid-cols-2 gap-3">
               <Stat label="Total Orders" value={String(customer.total_orders)} />
               <Stat label="Lifetime Value" value={`₹${customer.total_spent.toLocaleString('en-IN')}`} />
@@ -91,12 +91,12 @@ export default function CustomerDetail() {
 
           {/* Reorder nudge */}
           {showNudge && (
-            <Card className="p-4 bg-emerald-50 border-emerald-200">
+            <Card className="p-4 bg-gray-50 border border-gray-100">
               <div className="flex items-center gap-2 mb-2">
-                <MessageCircle size={15} className="text-emerald-600" />
-                <h2 className="text-sm font-semibold text-emerald-900">Reorder Nudge</h2>
+                <MessageCircle size={15} className="text-gray-400" />
+                <h2 className="text-sm font-medium text-gray-700">Reorder Nudge</h2>
               </div>
-              <p className="text-xs text-emerald-800 mb-3 leading-relaxed">
+              <p className="text-xs text-gray-600 mb-3 leading-relaxed">
                 Last ordered <strong>{daysSinceLastOrder} days ago</strong>. A WhatsApp nudge may bring them back.
               </p>
               <button
@@ -104,7 +104,7 @@ export default function CustomerDetail() {
                   `https://wa.me/${customer.phone.replace(/\D/g, '')}?text=${encodeURIComponent(nudgeMessage)}`,
                   '_blank'
                 )}
-                className="w-full flex items-center justify-center gap-2 px-3 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold rounded-xl transition-colors"
+                className="w-full flex items-center justify-center gap-2 px-3 py-2 bg-brand-600 hover:bg-brand-700 text-white text-xs font-medium rounded-md transition-colors"
               >
                 <MessageCircle size={13} />
                 Send WhatsApp nudge
@@ -118,18 +118,18 @@ export default function CustomerDetail() {
         <div className="lg:col-span-2">
           <Card>
             <div className="px-4 py-3 border-b border-gray-100">
-              <h2 className="text-sm font-semibold text-gray-900">Order History ({customerOrders.length})</h2>
+              <h2 className="text-sm font-medium text-gray-900">Order History ({customerOrders.length})</h2>
             </div>
             <div className="overflow-x-auto">
               <table className="w-full">
                 <thead>
                   <tr className="border-b border-gray-100">
-                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">Order</th>
-                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide hidden sm:table-cell">Channel</th>
-                    <th className="px-4 py-3 text-right text-xs font-semibold text-gray-500 uppercase tracking-wide">Amount</th>
-                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide hidden sm:table-cell">Payment</th>
-                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">Status</th>
-                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide hidden md:table-cell">Date</th>
+                    <th className="px-4 py-3 text-left text-[11px] font-medium text-gray-400 uppercase tracking-wider">Order</th>
+                    <th className="px-4 py-3 text-left text-[11px] font-medium text-gray-400 uppercase tracking-wider hidden sm:table-cell">Channel</th>
+                    <th className="px-4 py-3 text-right text-[11px] font-medium text-gray-400 uppercase tracking-wider">Amount</th>
+                    <th className="px-4 py-3 text-left text-[11px] font-medium text-gray-400 uppercase tracking-wider hidden sm:table-cell">Payment</th>
+                    <th className="px-4 py-3 text-left text-[11px] font-medium text-gray-400 uppercase tracking-wider">Status</th>
+                    <th className="px-4 py-3 text-left text-[11px] font-medium text-gray-400 uppercase tracking-wider hidden md:table-cell">Date</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -170,7 +170,7 @@ export default function CustomerDetail() {
 function Stat({ label, value }: { label: string; value: string }) {
   return (
     <div>
-      <p className="text-lg font-bold text-gray-900">{value}</p>
+      <p className="text-lg font-medium text-gray-900">{value}</p>
       <p className="text-xs text-gray-500">{label}</p>
     </div>
   )

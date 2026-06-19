@@ -1,44 +1,261 @@
-import { useState, useMemo } from 'react'
-import { ChevronUp, ChevronDown, Search } from 'lucide-react'
+import { useState, useMemo, useRef, useEffect } from 'react'
+import { ChevronUp, ChevronDown, Search, ChevronDown as ChevronDownIcon, Check } from 'lucide-react'
 import { useAppStore } from '../../stores/appStore'
 import { buildSKUForecast } from '../../lib/forecastEngine'
 import { Card, Input } from '../../components/ui'
 import { RevenueAreaChart, OrdersBarChart, StatusDonut, ChannelBarChart } from '../../components/charts'
-import type { ForecastStatus } from '../../types'
+import type { Order, ForecastStatus } from '../../types'
 
-const FORECAST_STATUS_STYLE: Record<ForecastStatus, { label: string; cls: string }> = {
-  OUT_OF_STOCK:      { label: 'Out of Stock',       cls: 'bg-red-100 text-red-700' },
-  REORDER_NOW:       { label: 'Reorder Now',         cls: 'bg-orange-100 text-orange-700' },
-  REORDER_SOON:      { label: 'Reorder Soon',        cls: 'bg-amber-100 text-amber-700' },
-  IN_STOCK:          { label: 'In Stock',             cls: 'bg-green-100 text-green-700' },
-  DEAD_STOCK:        { label: 'Dead Stock',           cls: 'bg-gray-100 text-gray-500' },
-  INSUFFICIENT_DATA: { label: 'Insufficient Data',   cls: 'bg-blue-100 text-blue-700' },
-  UNPREDICTABLE:     { label: 'Unpredictable',       cls: 'bg-purple-100 text-purple-700' },
+// ── Period filter ─────────────────────────────────────────────────────────────
+
+type Period = 'today' | 'this_week' | 'prev_week' | 'last_7d' | 'this_month' | 'last_30d' | 'last_3m' | 'last_6m' | 'yearly'
+type Granularity = 'hour' | 'day' | 'week' | 'month'
+
+const PERIOD_OPTIONS: { value: Period; label: string; granularity: Granularity; shortLabel: string }[] = [
+  { value: 'yearly',    label: 'This Year',     shortLabel: 'this year',     granularity: 'month' },
+  { value: 'last_6m',  label: 'Last 6 Months', shortLabel: 'last 6 months', granularity: 'week'  },
+  { value: 'last_3m',  label: 'Last 3 Months', shortLabel: 'last 3 months', granularity: 'week'  },
+  { value: 'last_30d', label: 'Previous Month',  shortLabel: 'previous month', granularity: 'day'   },
+  { value: 'this_month',label: 'This Month',    shortLabel: 'this month',     granularity: 'day'   },
+  { value: 'prev_week',label: 'Previous Week',  shortLabel: 'previous week',  granularity: 'day'   },
+  { value: 'this_week',label: 'This Week',      shortLabel: 'this week',     granularity: 'day'   },
+  { value: 'today',    label: 'Today',          shortLabel: 'today',         granularity: 'hour'  },
+]
+
+function getDateRange(period: Period): { from: Date; to: Date } {
+  const now = new Date()
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate())
+  const tomorrow = new Date(today); tomorrow.setDate(tomorrow.getDate() + 1)
+
+  switch (period) {
+    case 'today':
+      return { from: today, to: tomorrow }
+    case 'this_week': {
+      const dow = today.getDay()
+      const monday = new Date(today); monday.setDate(today.getDate() - (dow === 0 ? 6 : dow - 1))
+      return { from: monday, to: tomorrow }
+    }
+    case 'prev_week': {
+      const dow = today.getDay()
+      const thisMonday = new Date(today); thisMonday.setDate(today.getDate() - (dow === 0 ? 6 : dow - 1))
+      const prevMonday = new Date(thisMonday); prevMonday.setDate(thisMonday.getDate() - 7)
+      return { from: prevMonday, to: thisMonday }
+    }
+    case 'last_7d': {
+      const from = new Date(today); from.setDate(today.getDate() - 6)
+      return { from, to: tomorrow }
+    }
+    case 'this_month':
+      return { from: new Date(today.getFullYear(), today.getMonth(), 1), to: tomorrow }
+    case 'last_30d': {
+      const from = new Date(today); from.setDate(today.getDate() - 29)
+      return { from, to: tomorrow }
+    }
+    case 'last_3m': {
+      const from = new Date(today); from.setMonth(today.getMonth() - 3)
+      return { from, to: tomorrow }
+    }
+    case 'last_6m': {
+      const from = new Date(today); from.setMonth(today.getMonth() - 6)
+      return { from, to: tomorrow }
+    }
+    case 'yearly':
+      return { from: new Date(today.getFullYear(), 0, 1), to: tomorrow }
+  }
+}
+
+function buildChartData(
+  orders: Order[],
+  from: Date,
+  to: Date,
+  granularity: Granularity,
+): { label: string; revenue: number; orders: number }[] {
+  const buckets: { label: string; from: Date; to: Date }[] = []
+
+  if (granularity === 'hour') {
+    for (let h = 0; h < 24; h++) {
+      const start = new Date(from); start.setHours(h, 0, 0, 0)
+      const end   = new Date(from); end.setHours(h + 1, 0, 0, 0)
+      buckets.push({ label: `${h}:00`, from: start, to: end })
+    }
+  } else if (granularity === 'day') {
+    const cursor = new Date(from)
+    while (cursor < to) {
+      const start = new Date(cursor)
+      const end   = new Date(cursor); end.setDate(cursor.getDate() + 1)
+      buckets.push({ label: String(start.getDate()), from: start, to: end })
+      cursor.setDate(cursor.getDate() + 1)
+    }
+  } else if (granularity === 'week') {
+    const cursor = new Date(from)
+    while (cursor < to) {
+      const start = new Date(cursor)
+      const end   = new Date(cursor); end.setDate(cursor.getDate() + 7)
+      buckets.push({ label: start.toLocaleDateString('en-IN', { day: '2-digit', month: 'short' }), from: start, to: new Date(Math.min(end.getTime(), to.getTime())) })
+      cursor.setDate(cursor.getDate() + 7)
+    }
+  } else {
+    const cursor = new Date(from.getFullYear(), from.getMonth(), 1)
+    while (cursor < to) {
+      const start = new Date(cursor)
+      const end   = new Date(cursor.getFullYear(), cursor.getMonth() + 1, 1)
+      buckets.push({ label: start.toLocaleDateString('en-IN', { month: 'short' }), from: start, to: end })
+      cursor.setMonth(cursor.getMonth() + 1)
+    }
+  }
+
+  return buckets.map(b => {
+    const bOrders = orders.filter(o => {
+      const t = new Date(o.created_at)
+      return t >= b.from && t < b.to
+    })
+    return {
+      label: b.label,
+      revenue: bOrders.filter(o => o.payment_status === 'PAID').reduce((s, o) => s + o.gross_amount - o.discount_amount, 0),
+      orders: bOrders.length,
+    }
+  })
+}
+
+// ── Lookups ───────────────────────────────────────────────────────────────────
+
+const CHANNEL_LABELS: Record<string, string> = {
+  SHOPIFY: 'Shopify', WHATSAPP: 'WhatsApp', MANUAL: 'Manual',
+  AMAZON: 'Amazon', FLIPKART: 'Flipkart', WOOCOMMERCE: 'WooCommerce', MEESHO: 'Meesho',
+}
+
+const METHOD_LABELS: Record<string, string> = {
+  COD: 'COD', UPI: 'UPI', CARD: 'Card', NETBANKING: 'Netbanking', WALLET: 'Wallet', PREPAID: 'Prepaid',
+}
+
+const FORECAST_STATUS_STYLE: Record<ForecastStatus, { label: string; dot: string; text: string }> = {
+  OUT_OF_STOCK:      { label: 'Out of Stock',      dot: 'bg-red-500',    text: 'text-red-600' },
+  REORDER_NOW:       { label: 'Reorder Now',        dot: 'bg-orange-400', text: 'text-orange-600' },
+  REORDER_SOON:      { label: 'Reorder Soon',       dot: 'bg-amber-400',  text: 'text-amber-600' },
+  IN_STOCK:          { label: 'In Stock',            dot: 'bg-green-400',  text: 'text-green-600' },
+  DEAD_STOCK:        { label: 'Dead Stock',          dot: 'bg-gray-300',   text: 'text-gray-400' },
+  INSUFFICIENT_DATA: { label: 'Insufficient Data',  dot: 'bg-gray-300',   text: 'text-gray-400' },
+  UNPREDICTABLE:     { label: 'Unpredictable',      dot: 'bg-gray-300',   text: 'text-gray-400' },
 }
 
 type TabType = 'overview' | 'forecast' | 'pincode'
 type PincodeSortKey = 'orders' | 'revenue' | 'aov' | 'rto_rate'
 
+// ── Period picker dropdown ────────────────────────────────────────────────────
+
+function PeriodPicker({ value, onChange }: { value: Period; onChange: (v: Period) => void }) {
+  const [open, setOpen] = useState(false)
+  const ref = useRef<HTMLDivElement>(null)
+  const current = PERIOD_OPTIONS.find(o => o.value === value)!
+
+  useEffect(() => {
+    if (!open) return
+    const handler = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false)
+    }
+    document.addEventListener('mousedown', handler)
+    return () => document.removeEventListener('mousedown', handler)
+  }, [open])
+
+  return (
+    <div className="relative" ref={ref}>
+      <button
+        onClick={() => setOpen(o => !o)}
+        className="inline-flex items-center gap-1.5 pl-3 pr-2.5 py-1.5 text-sm font-medium border border-gray-200 rounded-lg bg-white text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-brand-600/20 cursor-pointer transition-colors"
+      >
+        {current.label}
+        <ChevronDownIcon size={13} className={`text-gray-400 transition-transform duration-150 ${open ? 'rotate-180' : ''}`} />
+      </button>
+      {open && (
+        <div className="absolute right-0 top-full mt-1 z-50 w-44 overflow-hidden rounded-lg border border-gray-100 bg-white p-1 shadow-lg shadow-black/5">
+          <p className="px-2 py-1.5 text-[11px] font-medium text-gray-400 uppercase tracking-wider">Time Period</p>
+          <div className="my-1 h-px -mx-1 bg-gray-100" />
+          {PERIOD_OPTIONS.map(o => (
+            <button
+              key={o.value}
+              onClick={() => { onChange(o.value); setOpen(false) }}
+              className={`w-full flex items-center gap-2 px-2 py-1.5 text-sm rounded-md cursor-pointer transition-colors text-left ${
+                value === o.value ? 'text-brand-600 font-medium bg-blue-50' : 'text-gray-700 hover:bg-gray-50'
+              }`}
+            >
+              {o.label}
+              {value === o.value && <Check size={13} className="ml-auto text-brand-600 shrink-0" />}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
+
+// ── Main component ────────────────────────────────────────────────────────────
+
 export default function Analytics() {
-  const [tab, setTab] = useState<TabType>('overview')
+  const [tab, setTab]                     = useState<TabType>('overview')
+  const [period, setPeriod]               = useState<Period>('last_30d')
   const [pincodeSearch, setPincodeSearch] = useState('')
-  const [pincodeSort, setPincodeSort] = useState<PincodeSortKey>('orders')
+  const [pincodeSort, setPincodeSort]     = useState<PincodeSortKey>('orders')
   const [pincodeSortAsc, setPincodeSortAsc] = useState(false)
   const { orders, products } = useAppStore()
 
   const { forecasts, summary } = useMemo(() => buildSKUForecast(products, orders), [products, orders])
 
-  const totalRevenue = orders.filter(o => o.payment_status === 'PAID').reduce((s, o) => s + o.gross_amount - o.discount_amount, 0)
-  const rtoOrders = orders.filter(o => o.fulfillment_status === 'RTO_INITIATED')
-  const deliveredOrders = orders.filter(o => o.fulfillment_status === 'DELIVERED')
-  const rtoRate = (deliveredOrders.length + rtoOrders.length) > 0
+  const periodMeta = PERIOD_OPTIONS.find(o => o.value === period)!
+  const { from, to } = useMemo(() => getDateRange(period), [period])
+
+  const filteredOrders = useMemo(
+    () => orders.filter(o => { const t = new Date(o.created_at); return t >= from && t < to }),
+    [orders, from, to],
+  )
+
+  // ── KPIs ─────────────────────────────────────────────────────────────────────
+  const paidOrders  = filteredOrders.filter(o => o.payment_status === 'PAID')
+  const totalRevenue = paidOrders.reduce((s, o) => s + o.gross_amount - o.discount_amount, 0)
+  const aov          = paidOrders.length > 0 ? Math.round(totalRevenue / paidOrders.length) : 0
+  const rtoOrders    = filteredOrders.filter(o => o.fulfillment_status === 'RTO_INITIATED')
+  const deliveredOrders = filteredOrders.filter(o => o.fulfillment_status === 'DELIVERED')
+  const rtoRate      = (deliveredOrders.length + rtoOrders.length) > 0
     ? (rtoOrders.length / (deliveredOrders.length + rtoOrders.length) * 100)
     : 0
   const rtoLoss = rtoOrders.reduce((s, o) => s + (o.gross_amount - o.discount_amount) * 0.15, 0)
 
+  const cogs = useMemo(() =>
+    filteredOrders.filter(o => o.payment_status === 'PAID').reduce((s, o) =>
+      s + (o.items ?? []).reduce((is, item) =>
+        is + (item.cost_price ?? item.product?.cost_price ?? 0) * item.quantity, 0), 0),
+  [filteredOrders])
+  const grossMarginPct = totalRevenue > 0 ? ((totalRevenue - cogs) / totalRevenue * 100) : 0
+
+  // ── COD vs Prepaid ────────────────────────────────────────────────────────────
+  const codOrders      = filteredOrders.filter(o => o.payment_method === 'COD')
+  const prepaidOrders  = filteredOrders.filter(o => o.payment_method !== 'COD')
+  const codPct         = filteredOrders.length > 0 ? Math.round(codOrders.length / filteredOrders.length * 100) : 0
+  // Use order value (not just paid) — COD is collected at delivery, so payment_status won't be PAID yet
+  const codOrderValue     = codOrders.reduce((s, o) => s + o.gross_amount - o.discount_amount, 0)
+  const prepaidOrderValue = prepaidOrders.reduce((s, o) => s + o.gross_amount - o.discount_amount, 0)
+
+  // ── Payment method breakdown ──────────────────────────────────────────────────
+  const paymentMethodData = useMemo(() => {
+    const map = new Map<string, { orders: number; revenue: number }>()
+    for (const o of filteredOrders) {
+      const e = map.get(o.payment_method) ?? { orders: 0, revenue: 0 }
+      map.set(o.payment_method, {
+        orders: e.orders + 1,
+        revenue: e.revenue + (o.payment_status === 'PAID' ? o.gross_amount - o.discount_amount : 0),
+      })
+    }
+    return Array.from(map.entries())
+      .map(([method, d]) => ({ method, orders: d.orders, revenue: d.revenue, pct: filteredOrders.length > 0 ? Math.round(d.orders / filteredOrders.length * 100) : 0 }))
+      .sort((a, b) => b.orders - a.orders)
+  }, [filteredOrders])
+
+  // ── Charts ────────────────────────────────────────────────────────────────────
+  const chartData       = useMemo(() => buildChartData(filteredOrders, from, to, periodMeta.granularity), [filteredOrders, from, to, periodMeta.granularity])
+  const ordersChartData = chartData.map(r => ({ label: r.label, orders: r.orders }))
+
   const channelData = useMemo(() => {
     const map = new Map<string, { orders: number; revenue: number; rto: number }>()
-    for (const o of orders) {
+    for (const o of filteredOrders) {
       const e = map.get(o.channel) ?? { orders: 0, revenue: 0, rto: 0 }
       map.set(o.channel, {
         orders: e.orders + 1,
@@ -46,17 +263,66 @@ export default function Analytics() {
         rto: e.rto + (o.fulfillment_status === 'RTO_INITIATED' ? 1 : 0),
       })
     }
-    return Array.from(map.entries()).map(([channel, data]) => ({
+    return Array.from(map.entries()).map(([channel, d]) => ({
       channel,
-      orders: data.orders,
-      revenue: data.revenue,
-      rto_rate: data.orders > 0 ? (data.rto / data.orders * 100).toFixed(1) : '0',
+      orders: d.orders,
+      revenue: d.revenue,
+      rto_rate: d.orders > 0 ? (d.rto / d.orders * 100).toFixed(1) : '0',
     }))
+  }, [filteredOrders])
+
+  const statusCounts = useMemo(() => {
+    const map = new Map<string, number>()
+    for (const o of filteredOrders) map.set(o.fulfillment_status, (map.get(o.fulfillment_status) ?? 0) + 1)
+    return Array.from(map.entries()).map(([name, value]) => ({ name, value }))
+  }, [filteredOrders])
+
+  // ── Product performance ───────────────────────────────────────────────────────
+  const productPerformance = useMemo(() => {
+    const map = new Map<string, { name: string; sku: string; units: number; revenue: number }>()
+    for (const o of filteredOrders.filter(o => o.payment_status === 'PAID')) {
+      for (const item of o.items ?? []) {
+        const key  = item.product_id ?? item.sku
+        const name = item.product?.name ?? item.product_name ?? item.sku
+        const e    = map.get(key) ?? { name, sku: item.sku, units: 0, revenue: 0 }
+        map.set(key, { name: e.name, sku: e.sku, units: e.units + item.quantity, revenue: e.revenue + item.unit_price * item.quantity })
+      }
+    }
+    return Array.from(map.values()).sort((a, b) => b.revenue - a.revenue).slice(0, 10)
+  }, [filteredOrders])
+
+  // ── Customer insights ─────────────────────────────────────────────────────────
+  const firstOrderDateByCustomer = useMemo(() => {
+    const map = new Map<string, Date>()
+    for (const o of orders) {
+      if (!o.customer_id) continue
+      const d    = new Date(o.created_at)
+      const prev = map.get(o.customer_id)
+      if (!prev || d < prev) map.set(o.customer_id, d)
+    }
+    return map
   }, [orders])
 
+  const customerInsights = useMemo(() => {
+    const uniqueIds = new Set(
+      filteredOrders.map(o => o.customer_id).filter((id): id is string => !!id)
+    )
+    const newIds = new Set([...uniqueIds].filter(id => {
+      const first = firstOrderDateByCustomer.get(id)
+      return first && first >= from
+    }))
+    return {
+      unique:      uniqueIds.size,
+      newCount:    newIds.size,
+      returning:   uniqueIds.size - newIds.size,
+      repeatRate:  uniqueIds.size > 0 ? Math.round((uniqueIds.size - newIds.size) / uniqueIds.size * 100) : 0,
+    }
+  }, [filteredOrders, firstOrderDateByCustomer, from])
+
+  // ── Pincode intelligence ──────────────────────────────────────────────────────
   const pincodeData = useMemo(() => {
     const map = new Map<string, { city: string; state: string; orders: number; revenue: number; rto: number }>()
-    for (const o of orders) {
+    for (const o of filteredOrders) {
       const pin = o.shipping_address.pincode
       if (!pin) continue
       const e = map.get(pin) ?? { city: o.shipping_address.city, state: o.shipping_address.state, orders: 0, revenue: 0, rto: 0 }
@@ -73,7 +339,7 @@ export default function Analytics() {
       rto_count: d.rto,
       rto_rate: d.orders > 0 ? (d.rto / d.orders) * 100 : 0,
     }))
-  }, [orders])
+  }, [filteredOrders])
 
   const filteredPincodes = useMemo(() => {
     let list = pincodeData
@@ -85,184 +351,394 @@ export default function Analytics() {
   }, [pincodeData, pincodeSearch, pincodeSort, pincodeSortAsc])
 
   const pincodeSummary = useMemo(() => ({
-    total: pincodeData.length,
-    high_rto: pincodeData.filter(p => p.rto_rate >= 30).length,
-    zero_rto: pincodeData.filter(p => p.rto_rate === 0 && p.orders >= 2).length,
+    total:       pincodeData.length,
+    high_rto:    pincodeData.filter(p => p.rto_rate >= 30).length,
+    zero_rto:    pincodeData.filter(p => p.rto_rate === 0 && p.orders >= 2).length,
     top_revenue: pincodeData.reduce((max, p) => p.revenue > max.revenue ? p : max, pincodeData[0] ?? { pincode: '—', revenue: 0, city: '' }),
   }), [pincodeData])
 
-  const revenueChartData = useMemo(() => {
-    const days = 14
-    const now = new Date()
-    return Array.from({ length: days }, (_, i) => {
-      const d = new Date(now)
-      d.setDate(d.getDate() - (days - 1 - i))
-      const dateStr = d.toISOString().slice(0, 10)
-      const label = d.toLocaleDateString('en-IN', { day: '2-digit', month: 'short' })
-      const dayOrders = orders.filter(o => o.created_at.startsWith(dateStr))
-      return {
-        label,
-        revenue: dayOrders.reduce((s, o) => s + o.gross_amount - o.discount_amount, 0),
-        orders: dayOrders.length,
-      }
-    })
-  }, [orders])
-
-  const dailyOrders = revenueChartData.map(r => ({ label: r.label, orders: r.orders }))
-
-  const statusCounts = useMemo(() => {
-    const map = new Map<string, number>()
-    for (const o of orders) map.set(o.fulfillment_status, (map.get(o.fulfillment_status) ?? 0) + 1)
-    return Array.from(map.entries()).map(([name, value]) => ({ name, value }))
-  }, [orders])
+  const granularityLabel: Record<Granularity, string> = {
+    hour: 'Hourly', day: 'Daily', week: 'Weekly', month: 'Monthly',
+  }
 
   const TABS: { key: TabType; label: string }[] = [
     { key: 'overview', label: 'Overview' },
     { key: 'forecast', label: 'Demand Forecast' },
-    { key: 'pincode', label: 'Pincode Intelligence' },
+    { key: 'pincode',  label: 'Pincode Intelligence' },
   ]
+
+  const onPincodeSort = (k: PincodeSortKey) => {
+    if (pincodeSort === k) setPincodeSortAsc(p => !p)
+    else { setPincodeSort(k); setPincodeSortAsc(false) }
+  }
+
+  const totalProductRevenue = productPerformance.reduce((s, p) => s + p.revenue, 0)
 
   return (
     <div className="space-y-4">
-      <h1 className="text-xl font-semibold text-gray-900">Analytics</h1>
+      <div className="flex items-center justify-between">
+        <h1 className="text-lg font-semibold text-gray-900">Analytics</h1>
+        {tab !== 'forecast' && (
+          <PeriodPicker value={period} onChange={setPeriod} />
+        )}
+      </div>
 
-      <div className="flex gap-1 bg-gray-100 p-1 rounded-xl w-fit">
+      <div className="flex gap-6 border-b border-gray-100">
         {TABS.map(t => (
-          <button
-            key={t.key}
-            onClick={() => setTab(t.key)}
-            className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
-              tab === t.key ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'
-            }`}
-          >
+          <button key={t.key} onClick={() => setTab(t.key)} className={`tab-line ${tab === t.key ? 'active' : ''}`}>
             {t.label}
           </button>
         ))}
       </div>
 
+      {/* ── Overview Tab ─────────────────────────────────────────────────────── */}
       {tab === 'overview' && (
         <div className="space-y-4">
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-            <Card className="p-4"><p className="text-xs text-gray-500 mb-1">Total Revenue</p><p className="text-2xl font-bold text-gray-900">₹{Math.round(totalRevenue / 1000)}k</p></Card>
-            <Card className="p-4"><p className="text-xs text-gray-500 mb-1">Total Orders</p><p className="text-2xl font-bold text-gray-900">{orders.length}</p></Card>
-            <Card className="p-4"><p className="text-xs text-gray-500 mb-1">RTO Rate</p><p className="text-2xl font-bold text-red-600">{rtoRate.toFixed(1)}%</p></Card>
-            <Card className="p-4"><p className="text-xs text-gray-500 mb-1">RTO Loss</p><p className="text-2xl font-bold text-orange-600">₹{Math.round(rtoLoss).toLocaleString('en-IN')}</p></Card>
+
+          {/* KPIs — 6 cards */}
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
+            <Card className="p-4">
+              <p className="text-[11px] font-medium text-gray-400 uppercase tracking-wider mb-1">Revenue</p>
+              <p className="text-2xl font-semibold text-gray-900">₹{totalRevenue >= 1000 ? `${Math.round(totalRevenue / 1000)}k` : Math.round(totalRevenue)}</p>
+              <p className="text-[10px] text-gray-400 mt-0.5">{periodMeta.shortLabel}</p>
+            </Card>
+            <Card className="p-4">
+              <p className="text-[11px] font-medium text-gray-400 uppercase tracking-wider mb-1">Orders</p>
+              <p className="text-2xl font-semibold text-gray-900">{filteredOrders.length}</p>
+              <p className="text-[10px] text-gray-400 mt-0.5">{periodMeta.shortLabel}</p>
+            </Card>
+            <Card className="p-4">
+              <p className="text-[11px] font-medium text-gray-400 uppercase tracking-wider mb-1">Avg Order Value</p>
+              <p className="text-2xl font-semibold text-gray-900">₹{aov.toLocaleString('en-IN')}</p>
+              <p className="text-[10px] text-gray-400 mt-0.5">paid orders</p>
+            </Card>
+            <Card className="p-4">
+              <p className="text-[11px] font-medium text-gray-400 uppercase tracking-wider mb-1">RTO Rate</p>
+              <p className="text-2xl font-semibold text-red-600">{rtoRate.toFixed(1)}%</p>
+              <p className="text-[10px] text-gray-400 mt-0.5">{periodMeta.shortLabel}</p>
+            </Card>
+            <Card className="p-4">
+              <p className="text-[11px] font-medium text-gray-400 uppercase tracking-wider mb-1">Gross Margin</p>
+              <p className="text-2xl font-semibold text-green-600">{cogs > 0 ? `${grossMarginPct.toFixed(1)}%` : '—'}</p>
+              <p className="text-[10px] text-gray-400 mt-0.5">after COGS</p>
+            </Card>
+            <Card className="p-4">
+              <p className="text-[11px] font-medium text-gray-400 uppercase tracking-wider mb-1">RTO Loss</p>
+              <p className="text-2xl font-semibold text-gray-900">₹{Math.round(rtoLoss).toLocaleString('en-IN')}</p>
+              <p className="text-[10px] text-gray-400 mt-0.5">est. 15% of value</p>
+            </Card>
           </div>
 
+          {/* Charts */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
             <Card className="p-5">
-              <h3 className="text-sm font-semibold text-gray-900 mb-4">Revenue Trend (14 days)</h3>
-              <RevenueAreaChart data={revenueChartData} />
+              <h3 className="text-sm font-semibold text-gray-900">Revenue Trend</h3>
+              <p className="text-xs text-gray-400 mt-0.5 mb-4">{granularityLabel[periodMeta.granularity]} revenue — {periodMeta.label}</p>
+              <RevenueAreaChart data={chartData} />
             </Card>
             <Card className="p-5">
-              <h3 className="text-sm font-semibold text-gray-900 mb-4">Daily Orders</h3>
-              <OrdersBarChart data={dailyOrders} />
+              <h3 className="text-sm font-semibold text-gray-900">{granularityLabel[periodMeta.granularity]} Orders</h3>
+              <p className="text-xs text-gray-400 mt-0.5 mb-4">Order count — {periodMeta.label}</p>
+              <OrdersBarChart data={ordersChartData} />
             </Card>
             <Card className="p-5">
-              <h3 className="text-sm font-semibold text-gray-900 mb-2">Order Status Mix</h3>
+              <h3 className="text-sm font-semibold text-gray-900">Order Status Mix</h3>
+              <p className="text-xs text-gray-400 mt-0.5 mb-3">Fulfillment distribution — {periodMeta.label}</p>
               <StatusDonut data={statusCounts} />
             </Card>
             <Card className="p-5">
-              <h3 className="text-sm font-semibold text-gray-900 mb-4">Channel Performance</h3>
-              <ChannelBarChart data={channelData} />
+              <h3 className="text-sm font-semibold text-gray-900">Channel Performance</h3>
+              <p className="text-xs text-gray-400 mt-0.5 mb-4">Orders by channel — {periodMeta.label}</p>
+              <ChannelBarChart data={channelData.map(c => ({ ...c, channel: CHANNEL_LABELS[c.channel] ?? c.channel }))} />
             </Card>
           </div>
 
+          {/* COD vs Prepaid */}
+          <Card className="p-5">
+            <div className="flex items-center justify-between mb-4">
+              <div>
+                <h3 className="text-sm font-semibold text-gray-900">COD vs Prepaid</h3>
+                <p className="text-xs text-gray-400 mt-0.5">Payment collection mode split — {periodMeta.shortLabel}</p>
+              </div>
+              {filteredOrders.length > 0 && (
+                <div className="text-right">
+                  <p className="text-sm font-semibold text-gray-700">{filteredOrders.length} orders</p>
+                </div>
+              )}
+            </div>
+            {filteredOrders.length === 0 ? (
+              <p className="text-sm text-gray-400 text-center py-4">No orders in this period</p>
+            ) : (
+              <>
+                <div className="flex items-center gap-3 mb-3">
+                  <span className="text-xs font-medium text-amber-600 w-10 text-right shrink-0">{codPct}%</span>
+                  <div className="flex-1 h-3 bg-gray-100 rounded-full overflow-hidden flex">
+                    <div className="bg-amber-400 h-full transition-all duration-500" style={{ width: `${codPct}%` }} />
+                    <div className="bg-brand-600 h-full flex-1 transition-all duration-500" />
+                  </div>
+                  <span className="text-xs font-medium text-brand-600 w-10 shrink-0">{100 - codPct}%</span>
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="bg-amber-50 rounded-lg p-3 text-center">
+                    <p className="text-xs text-amber-600 font-medium uppercase tracking-wider mb-1">COD</p>
+                    <p className="text-lg font-semibold text-amber-700">₹{codOrderValue >= 1000 ? `${Math.round(codOrderValue / 1000)}k` : Math.round(codOrderValue)}</p>
+                    <p className="text-[11px] text-gray-500 mt-0.5">{codOrders.length} orders · {codPct}%</p>
+                  </div>
+                  <div className="rounded-lg p-3 text-center" style={{ backgroundColor: '#EFF6FF' }}>
+                    <p className="text-xs text-blue-600 font-medium uppercase tracking-wider mb-1">Prepaid</p>
+                    <p className="text-lg font-semibold text-blue-700">₹{prepaidOrderValue >= 1000 ? `${Math.round(prepaidOrderValue / 1000)}k` : Math.round(prepaidOrderValue)}</p>
+                    <p className="text-[11px] text-gray-500 mt-0.5">{prepaidOrders.length} orders · {100 - codPct}%</p>
+                  </div>
+                </div>
+              </>
+            )}
+          </Card>
+
+          {/* Channel + Payment Method breakdown */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            <Card>
+              <div className="px-4 py-3 border-b border-gray-100">
+                <h3 className="text-[11px] font-medium text-gray-400 uppercase tracking-wider">Channel Breakdown</h3>
+              </div>
+              {channelData.length === 0 ? (
+                <p className="px-4 py-10 text-center text-sm text-gray-400">No orders in this period</p>
+              ) : (
+                <div className="overflow-x-auto">
+                  <table className="w-full">
+                    <thead>
+                      <tr className="border-b border-gray-100">
+                        <th className="px-4 py-3 text-left text-[11px] font-medium text-gray-400 uppercase tracking-wider">Channel</th>
+                        <th className="px-4 py-3 text-right text-[11px] font-medium text-gray-400 uppercase tracking-wider">Orders</th>
+                        <th className="px-4 py-3 text-right text-[11px] font-medium text-gray-400 uppercase tracking-wider">Revenue</th>
+                        <th className="px-4 py-3 text-right text-[11px] font-medium text-gray-400 uppercase tracking-wider">RTO</th>
+                      </tr>
+                    </thead>
+                    <tbody className="stagger-rows">
+                      {[...channelData].sort((a, b) => b.orders - a.orders).map(c => (
+                        <tr key={c.channel} className="border-b border-gray-50 hover:bg-gray-50/50">
+                          <td className="px-4 py-3 text-sm font-medium text-gray-900">{CHANNEL_LABELS[c.channel] ?? c.channel}</td>
+                          <td className="px-4 py-3 text-right text-sm text-gray-700">{c.orders}</td>
+                          <td className="px-4 py-3 text-right text-sm text-gray-700">₹{Math.round(c.revenue).toLocaleString('en-IN')}</td>
+                          <td className="px-4 py-3 text-right text-sm text-gray-700">{c.rto_rate}%</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </Card>
+
+            <Card>
+              <div className="px-4 py-3 border-b border-gray-100">
+                <h3 className="text-[11px] font-medium text-gray-400 uppercase tracking-wider">Payment Method Breakdown</h3>
+              </div>
+              {paymentMethodData.length === 0 ? (
+                <p className="px-4 py-10 text-center text-sm text-gray-400">No orders in this period</p>
+              ) : (
+                <div className="overflow-x-auto">
+                  <table className="w-full">
+                    <thead>
+                      <tr className="border-b border-gray-100">
+                        <th className="px-4 py-3 text-left text-[11px] font-medium text-gray-400 uppercase tracking-wider">Method</th>
+                        <th className="px-4 py-3 text-right text-[11px] font-medium text-gray-400 uppercase tracking-wider">Orders</th>
+                        <th className="px-4 py-3 text-right text-[11px] font-medium text-gray-400 uppercase tracking-wider">Share</th>
+                        <th className="px-4 py-3 text-right text-[11px] font-medium text-gray-400 uppercase tracking-wider">Revenue</th>
+                      </tr>
+                    </thead>
+                    <tbody className="stagger-rows">
+                      {paymentMethodData.map(m => (
+                        <tr key={m.method} className="border-b border-gray-50 hover:bg-gray-50/50">
+                          <td className="px-4 py-3 text-sm font-medium text-gray-900">{METHOD_LABELS[m.method] ?? m.method}</td>
+                          <td className="px-4 py-3 text-right text-sm text-gray-700">{m.orders}</td>
+                          <td className="px-4 py-3 text-right">
+                            <div className="flex items-center justify-end gap-2">
+                              <div className="w-12 h-1.5 bg-gray-100 rounded-full overflow-hidden">
+                                <div className="h-full bg-brand-600 rounded-full" style={{ width: `${m.pct}%` }} />
+                              </div>
+                              <span className="text-xs text-gray-500 w-8 text-right">{m.pct}%</span>
+                            </div>
+                          </td>
+                          <td className="px-4 py-3 text-right text-sm text-gray-700">₹{Math.round(m.revenue).toLocaleString('en-IN')}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </Card>
+          </div>
+
+          {/* Product Performance */}
           <Card>
             <div className="px-4 py-3 border-b border-gray-100">
-              <h3 className="text-sm font-semibold text-gray-900">Channel Breakdown</h3>
+              <h3 className="text-[11px] font-medium text-gray-400 uppercase tracking-wider">Top Products by Revenue</h3>
+              <p className="text-[10px] text-gray-400 mt-0.5">Paid orders only — {periodMeta.shortLabel}</p>
             </div>
-            <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead>
-                  <tr className="border-b border-gray-100">
-                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">Channel</th>
-                    <th className="px-4 py-3 text-right text-xs font-semibold text-gray-500 uppercase tracking-wide">Orders</th>
-                    <th className="px-4 py-3 text-right text-xs font-semibold text-gray-500 uppercase tracking-wide">Revenue</th>
-                    <th className="px-4 py-3 text-right text-xs font-semibold text-gray-500 uppercase tracking-wide">RTO Rate</th>
-                  </tr>
-                </thead>
-                <tbody className="stagger-rows">
-                  {channelData.sort((a, b) => b.orders - a.orders).map(c => (
-                    <tr key={c.channel} className="border-b border-gray-50">
-                      <td className="px-4 py-3 text-sm font-medium text-gray-900">{c.channel}</td>
-                      <td className="px-4 py-3 text-right text-sm text-gray-700">{c.orders}</td>
-                      <td className="px-4 py-3 text-right text-sm text-gray-700">₹{Math.round(c.revenue).toLocaleString('en-IN')}</td>
-                      <td className="px-4 py-3 text-right text-sm text-gray-700">{c.rto_rate}%</td>
+            {productPerformance.length === 0 ? (
+              <p className="px-4 py-10 text-center text-sm text-gray-400">No paid orders in this period</p>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full">
+                  <thead>
+                    <tr className="border-b border-gray-100">
+                      <th className="px-4 py-3 text-left text-[11px] font-medium text-gray-400 uppercase tracking-wider w-8">#</th>
+                      <th className="px-4 py-3 text-left text-[11px] font-medium text-gray-400 uppercase tracking-wider">Product</th>
+                      <th className="px-4 py-3 text-right text-[11px] font-medium text-gray-400 uppercase tracking-wider hidden sm:table-cell">Units</th>
+                      <th className="px-4 py-3 text-right text-[11px] font-medium text-gray-400 uppercase tracking-wider">Revenue</th>
+                      <th className="px-4 py-3 text-right text-[11px] font-medium text-gray-400 uppercase tracking-wider hidden md:table-cell">% of Total</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+                  </thead>
+                  <tbody className="stagger-rows">
+                    {productPerformance.map((p, i) => {
+                      const pct = totalProductRevenue > 0 ? (p.revenue / totalProductRevenue * 100) : 0
+                      return (
+                        <tr key={p.sku} className="border-b border-gray-50 hover:bg-gray-50/50">
+                          <td className="px-4 py-3 text-xs text-gray-400 font-mono">{i + 1}</td>
+                          <td className="px-4 py-3">
+                            <p className="text-sm font-medium text-gray-900">{p.name}</p>
+                            <p className="text-xs text-gray-400">{p.sku}</p>
+                          </td>
+                          <td className="px-4 py-3 text-right text-sm text-gray-700 hidden sm:table-cell">{p.units}</td>
+                          <td className="px-4 py-3 text-right text-sm font-medium text-gray-900">₹{Math.round(p.revenue).toLocaleString('en-IN')}</td>
+                          <td className="px-4 py-3 hidden md:table-cell">
+                            <div className="flex items-center justify-end gap-2">
+                              <div className="w-16 h-1.5 bg-gray-100 rounded-full overflow-hidden">
+                                <div className="h-full bg-brand-600 rounded-full" style={{ width: `${pct}%` }} />
+                              </div>
+                              <span className="text-xs text-gray-500 w-8 text-right">{pct.toFixed(1)}%</span>
+                            </div>
+                          </td>
+                        </tr>
+                      )
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            )}
           </Card>
+
+          {/* Customer Insights */}
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+            <Card className="p-4">
+              <p className="text-[11px] font-medium text-gray-400 uppercase tracking-wider mb-1">Unique Buyers</p>
+              <p className="text-2xl font-semibold text-gray-900">{customerInsights.unique}</p>
+              <p className="text-[10px] text-gray-400 mt-0.5">{periodMeta.shortLabel}</p>
+            </Card>
+            <Card className="p-4">
+              <p className="text-[11px] font-medium text-gray-400 uppercase tracking-wider mb-1">New Customers</p>
+              <p className="text-2xl font-semibold text-brand-600">{customerInsights.newCount}</p>
+              <p className="text-[10px] text-gray-400 mt-0.5">first order in period</p>
+            </Card>
+            <Card className="p-4">
+              <p className="text-[11px] font-medium text-gray-400 uppercase tracking-wider mb-1">Returning</p>
+              <p className="text-2xl font-semibold text-green-600">{customerInsights.returning}</p>
+              <p className="text-[10px] text-gray-400 mt-0.5">repeat customers</p>
+            </Card>
+            <Card className="p-4">
+              <p className="text-[11px] font-medium text-gray-400 uppercase tracking-wider mb-1">Repeat Rate</p>
+              <p className="text-2xl font-semibold text-gray-900">{customerInsights.repeatRate}%</p>
+              <p className="text-[10px] text-gray-400 mt-0.5">of buyers are repeat</p>
+            </Card>
+          </div>
+
         </div>
       )}
 
+      {/* ── Pincode Tab ──────────────────────────────────────────────────────── */}
       {tab === 'pincode' && (
         <div className="space-y-4">
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-            <Card className="p-4"><p className="text-xs text-gray-500 mb-1">Pincodes Reached</p><p className="text-2xl font-bold text-gray-900">{pincodeSummary.total}</p></Card>
-            <Card className="p-4"><p className="text-xs text-gray-500 mb-1">High RTO Zones</p><p className="text-2xl font-bold text-red-600">{pincodeSummary.high_rto}</p><p className="text-[10px] text-gray-400">≥30% RTO rate</p></Card>
-            <Card className="p-4"><p className="text-xs text-gray-500 mb-1">Zero RTO Zones</p><p className="text-2xl font-bold text-green-600">{pincodeSummary.zero_rto}</p><p className="text-[10px] text-gray-400">2+ orders, 0% RTO</p></Card>
-            <Card className="p-4"><p className="text-xs text-gray-500 mb-1">Top Revenue Zone</p><p className="text-xl font-bold text-gray-900">{pincodeSummary.top_revenue?.pincode ?? '—'}</p><p className="text-[10px] text-gray-400">{pincodeSummary.top_revenue?.city}</p></Card>
+            <Card className="p-4">
+              <p className="text-[11px] font-medium text-gray-400 uppercase tracking-wider mb-1">Pincodes Reached</p>
+              <p className="text-2xl font-semibold text-gray-900">{pincodeSummary.total}</p>
+              <p className="text-[10px] text-gray-400 mt-0.5">{periodMeta.shortLabel}</p>
+            </Card>
+            <Card className="p-4">
+              <p className="text-[11px] font-medium text-gray-400 uppercase tracking-wider mb-1">High RTO Zones</p>
+              <p className="text-2xl font-semibold text-red-600">{pincodeSummary.high_rto}</p>
+              <p className="text-[10px] text-gray-400">≥30% RTO rate</p>
+            </Card>
+            <Card className="p-4">
+              <p className="text-[11px] font-medium text-gray-400 uppercase tracking-wider mb-1">Zero RTO Zones</p>
+              <p className="text-2xl font-semibold text-green-600">{pincodeSummary.zero_rto}</p>
+              <p className="text-[10px] text-gray-400">2+ orders, 0% RTO</p>
+            </Card>
+            <Card className="p-4">
+              <p className="text-[11px] font-medium text-gray-400 uppercase tracking-wider mb-1">Top Revenue Zone</p>
+              <p className="text-xl font-semibold text-gray-900">{pincodeSummary.top_revenue?.pincode ?? '—'}</p>
+              <p className="text-[10px] text-gray-400">{pincodeSummary.top_revenue?.city}</p>
+            </Card>
           </div>
 
           <Card>
             <div className="px-4 py-3 border-b border-gray-100 flex items-center gap-3">
-              <h3 className="text-sm font-semibold text-gray-900 flex-1">Pincode Performance</h3>
+              <h3 className="text-[11px] font-medium text-gray-400 uppercase tracking-wider flex-1">Pincode Performance</h3>
               <div className="relative w-56">
                 <Search size={12} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-400" />
                 <Input value={pincodeSearch} onChange={e => setPincodeSearch(e.target.value)} placeholder="Search pincode or city…" className="pl-7 py-1.5 text-xs h-8" />
               </div>
             </div>
-            <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead>
-                  <tr className="border-b border-gray-100">
-                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">Pincode</th>
-                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide hidden sm:table-cell">City / State</th>
-                    <SortTh label="Orders" col="orders" sort={pincodeSort} asc={pincodeSortAsc} onSort={k => { if (pincodeSort === k) setPincodeSortAsc(p => !p); else { setPincodeSort(k); setPincodeSortAsc(false) } }} />
-                    <SortTh label="Revenue" col="revenue" sort={pincodeSort} asc={pincodeSortAsc} onSort={k => { if (pincodeSort === k) setPincodeSortAsc(p => !p); else { setPincodeSort(k); setPincodeSortAsc(false) } }} />
-                    <SortTh label="Avg Order" col="aov" sort={pincodeSort} asc={pincodeSortAsc} onSort={k => { if (pincodeSort === k) setPincodeSortAsc(p => !p); else { setPincodeSort(k); setPincodeSortAsc(false) } }} />
-                    <SortTh label="RTO Rate" col="rto_rate" sort={pincodeSort} asc={pincodeSortAsc} onSort={k => { if (pincodeSort === k) setPincodeSortAsc(p => !p); else { setPincodeSort(k); setPincodeSortAsc(false) } }} />
-                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">Risk</th>
-                  </tr>
-                </thead>
-                <tbody className="stagger-rows">
-                  {filteredPincodes.map(p => {
-                    const riskColor = p.rto_rate >= 30 ? 'bg-red-100 text-red-700' : p.rto_rate >= 15 ? 'bg-amber-100 text-amber-700' : 'bg-green-100 text-green-700'
-                    const riskLabel = p.rto_rate >= 30 ? 'High' : p.rto_rate >= 15 ? 'Medium' : 'Low'
-                    return (
-                      <tr key={p.pincode} className="border-b border-gray-50 hover:bg-gray-50/50">
-                        <td className="px-4 py-3"><span className="text-sm font-mono font-semibold text-gray-900">{p.pincode}</span></td>
-                        <td className="px-4 py-3 hidden sm:table-cell"><p className="text-sm text-gray-700">{p.city}</p><p className="text-xs text-gray-400">{p.state}</p></td>
-                        <td className="px-4 py-3 text-right text-sm text-gray-700">{p.orders}</td>
-                        <td className="px-4 py-3 text-right text-sm text-gray-700">₹{p.revenue.toLocaleString('en-IN')}</td>
-                        <td className="px-4 py-3 text-right text-sm text-gray-700">₹{p.aov.toLocaleString('en-IN')}</td>
-                        <td className="px-4 py-3 text-right"><span className="text-sm text-gray-700">{p.rto_rate.toFixed(0)}%</span>{p.rto_count > 0 && <span className="text-[10px] text-gray-400 ml-1">({p.rto_count})</span>}</td>
-                        <td className="px-4 py-3"><span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold ${riskColor}`}>{riskLabel}</span></td>
-                      </tr>
-                    )
-                  })}
-                  {filteredPincodes.length === 0 && (
-                    <tr><td colSpan={7} className="px-4 py-10 text-center text-sm text-gray-500">No pincodes match your search</td></tr>
-                  )}
-                </tbody>
-              </table>
-            </div>
+            {filteredPincodes.length === 0 ? (
+              <p className="px-4 py-10 text-center text-sm text-gray-400">
+                {pincodeSearch ? 'No pincodes match your search' : 'No orders in this period'}
+              </p>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full">
+                  <thead>
+                    <tr className="border-b border-gray-100">
+                      <th className="px-4 py-3 text-left text-[11px] font-medium text-gray-400 uppercase tracking-wider">Pincode</th>
+                      <th className="px-4 py-3 text-left text-[11px] font-medium text-gray-400 uppercase tracking-wider hidden sm:table-cell">City / State</th>
+                      <SortTh label="Orders"  col="orders"   sort={pincodeSort} asc={pincodeSortAsc} onSort={onPincodeSort} />
+                      <SortTh label="Revenue" col="revenue"  sort={pincodeSort} asc={pincodeSortAsc} onSort={onPincodeSort} />
+                      <SortTh label="Avg Order" col="aov"    sort={pincodeSort} asc={pincodeSortAsc} onSort={onPincodeSort} />
+                      <SortTh label="RTO Rate" col="rto_rate" sort={pincodeSort} asc={pincodeSortAsc} onSort={onPincodeSort} />
+                      <th className="px-4 py-3 text-left text-[11px] font-medium text-gray-400 uppercase tracking-wider">Risk</th>
+                    </tr>
+                  </thead>
+                  <tbody className="stagger-rows">
+                    {filteredPincodes.map(p => {
+                      const riskDot   = p.rto_rate >= 30 ? 'bg-red-400' : p.rto_rate >= 15 ? 'bg-amber-400' : 'bg-green-400'
+                      const riskText  = p.rto_rate >= 30 ? 'text-red-500' : p.rto_rate >= 15 ? 'text-amber-600' : 'text-green-600'
+                      const riskLabel = p.rto_rate >= 30 ? 'High' : p.rto_rate >= 15 ? 'Medium' : 'Low'
+                      return (
+                        <tr key={p.pincode} className="border-b border-gray-50 hover:bg-gray-50/50">
+                          <td className="px-4 py-3"><span className="text-sm font-mono font-medium text-gray-900">{p.pincode}</span></td>
+                          <td className="px-4 py-3 hidden sm:table-cell"><p className="text-sm text-gray-700">{p.city}</p><p className="text-xs text-gray-400">{p.state}</p></td>
+                          <td className="px-4 py-3 text-right text-sm text-gray-700">{p.orders}</td>
+                          <td className="px-4 py-3 text-right text-sm text-gray-700">₹{p.revenue.toLocaleString('en-IN')}</td>
+                          <td className="px-4 py-3 text-right text-sm text-gray-700">₹{p.aov.toLocaleString('en-IN')}</td>
+                          <td className="px-4 py-3 text-right">
+                            <span className="text-sm text-gray-700">{p.rto_rate.toFixed(1)}%</span>
+                            {p.rto_count > 0 && <span className="text-[10px] text-gray-400 ml-1">({p.rto_count})</span>}
+                          </td>
+                          <td className="px-4 py-3">
+                            <span className="inline-flex items-center gap-1.5">
+                              <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${riskDot}`} />
+                              <span className={`text-[11px] font-medium ${riskText}`}>{riskLabel}</span>
+                            </span>
+                          </td>
+                        </tr>
+                      )
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            )}
             <div className="px-4 py-3 border-t border-gray-100 text-xs text-gray-500">{filteredPincodes.length} of {pincodeData.length} pincodes</div>
           </Card>
         </div>
       )}
 
+      {/* ── Forecast Tab ─────────────────────────────────────────────────────── */}
       {tab === 'forecast' && (
         <div className="space-y-4">
           <div className="grid grid-cols-2 lg:grid-cols-5 gap-3">
-            <SumCard label="Out of Stock" value={summary.out_of_stock_count} cls="text-red-600" />
-            <SumCard label="Reorder Now" value={summary.reorder_now_count} cls="text-orange-600" />
-            <SumCard label="Reorder Soon" value={summary.reorder_soon_count} cls="text-amber-600" />
-            <SumCard label="In Stock" value={summary.in_stock_count} cls="text-green-600" />
-            <SumCard label="Dead Stock" value={summary.dead_stock_count} cls="text-gray-400" />
+            <SumCard label="Out of Stock"  value={summary.out_of_stock_count}  cls="text-red-600" />
+            <SumCard label="Reorder Now"   value={summary.reorder_now_count}   cls="text-orange-600" />
+            <SumCard label="Reorder Soon"  value={summary.reorder_soon_count}  cls="text-amber-600" />
+            <SumCard label="In Stock"      value={summary.in_stock_count}      cls="text-green-600" />
+            <SumCard label="Dead Stock"    value={summary.dead_stock_count}    cls="text-gray-400" />
           </div>
 
           <Card>
@@ -270,19 +746,19 @@ export default function Analytics() {
               <table className="w-full">
                 <thead>
                   <tr className="border-b border-gray-100">
-                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">Product</th>
-                    <th className="px-4 py-3 text-right text-xs font-semibold text-gray-500 uppercase tracking-wide">Stock</th>
-                    <th className="px-4 py-3 text-right text-xs font-semibold text-gray-500 uppercase tracking-wide hidden sm:table-cell">Daily Demand</th>
-                    <th className="px-4 py-3 text-right text-xs font-semibold text-gray-500 uppercase tracking-wide hidden md:table-cell">Days Left</th>
-                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide hidden md:table-cell">Stockout</th>
-                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">Status</th>
-                    <th className="px-4 py-3 text-right text-xs font-semibold text-gray-500 uppercase tracking-wide hidden lg:table-cell">Reorder Qty</th>
+                    <th className="px-4 py-3 text-left text-[11px] font-medium text-gray-400 uppercase tracking-wider">Product</th>
+                    <th className="px-4 py-3 text-right text-[11px] font-medium text-gray-400 uppercase tracking-wider">Stock</th>
+                    <th className="px-4 py-3 text-right text-[11px] font-medium text-gray-400 uppercase tracking-wider hidden sm:table-cell">Daily Demand</th>
+                    <th className="px-4 py-3 text-right text-[11px] font-medium text-gray-400 uppercase tracking-wider hidden md:table-cell">Days Left</th>
+                    <th className="px-4 py-3 text-left text-[11px] font-medium text-gray-400 uppercase tracking-wider hidden md:table-cell">Stockout</th>
+                    <th className="px-4 py-3 text-left text-[11px] font-medium text-gray-400 uppercase tracking-wider">Status</th>
+                    <th className="px-4 py-3 text-right text-[11px] font-medium text-gray-400 uppercase tracking-wider hidden lg:table-cell">Reorder Qty</th>
                   </tr>
                 </thead>
                 <tbody className="stagger-rows">
-                  {forecasts.sort((a, b) => {
-                    const order: ForecastStatus[] = ['OUT_OF_STOCK', 'REORDER_NOW', 'REORDER_SOON', 'IN_STOCK', 'DEAD_STOCK', 'INSUFFICIENT_DATA', 'UNPREDICTABLE']
-                    return order.indexOf(a.status) - order.indexOf(b.status)
+                  {[...forecasts].sort((a, b) => {
+                    const ord: ForecastStatus[] = ['OUT_OF_STOCK', 'REORDER_NOW', 'REORDER_SOON', 'IN_STOCK', 'DEAD_STOCK', 'INSUFFICIENT_DATA', 'UNPREDICTABLE']
+                    return ord.indexOf(a.status) - ord.indexOf(b.status)
                   }).map(f => {
                     const s = FORECAST_STATUS_STYLE[f.status]
                     return (
@@ -292,7 +768,12 @@ export default function Analytics() {
                         <td className="px-4 py-3 text-right text-sm text-gray-700 hidden sm:table-cell">{f.avg_daily_demand}/day</td>
                         <td className="px-4 py-3 text-right text-sm text-gray-700 hidden md:table-cell">{f.days_of_stock >= 999 ? '∞' : f.days_of_stock}</td>
                         <td className="px-4 py-3 text-xs text-gray-500 hidden md:table-cell">{f.predicted_stockout_date ?? '—'}</td>
-                        <td className="px-4 py-3"><span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold ${s.cls}`}>{s.label}</span></td>
+                        <td className="px-4 py-3">
+                          <span className="inline-flex items-center gap-1.5">
+                            <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${s.dot}`} />
+                            <span className={`text-[11px] font-medium ${s.text}`}>{s.label}</span>
+                          </span>
+                        </td>
                         <td className="px-4 py-3 text-right text-sm text-gray-700 hidden lg:table-cell">{f.reorder_quantity > 0 ? f.reorder_quantity : '—'}</td>
                       </tr>
                     )
@@ -310,8 +791,8 @@ export default function Analytics() {
 function SumCard({ label, value, cls }: { label: string; value: number; cls: string }) {
   return (
     <Card className="p-4 text-center">
-      <p className={`text-2xl font-bold ${cls}`}>{value}</p>
-      <p className="text-xs text-gray-500 mt-0.5">{label}</p>
+      <p className={`text-2xl font-semibold ${cls}`}>{value}</p>
+      <p className="text-[11px] font-medium text-gray-400 uppercase tracking-wider mt-0.5">{label}</p>
     </Card>
   )
 }
@@ -319,7 +800,7 @@ function SumCard({ label, value, cls }: { label: string; value: number; cls: str
 function SortTh({ label, col, sort, asc, onSort }: { label: string; col: PincodeSortKey; sort: PincodeSortKey; asc: boolean; onSort: (k: PincodeSortKey) => void }) {
   const active = sort === col
   return (
-    <th className="px-4 py-3 text-right text-xs font-semibold text-gray-500 uppercase tracking-wide cursor-pointer select-none hover:text-gray-700" onClick={() => onSort(col)}>
+    <th className="px-4 py-3 text-right text-[11px] font-medium text-gray-400 uppercase tracking-wider cursor-pointer select-none hover:text-gray-700" onClick={() => onSort(col)}>
       <span className="inline-flex items-center gap-0.5 justify-end">
         {label}
         {active ? asc ? <ChevronUp size={11} /> : <ChevronDown size={11} /> : <ChevronDown size={11} className="opacity-30" />}

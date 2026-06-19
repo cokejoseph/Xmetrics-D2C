@@ -2,18 +2,17 @@ import { NavLink, useNavigate } from 'react-router-dom'
 import {
   LayoutDashboard, ShoppingBag, Truck, CreditCard,
   AlertTriangle, Package, Users, BarChart3, Settings,
-  History, LogOut, ChevronDown, ChevronRight, Sun, Moon, RotateCcw,
+  History, LogOut, RotateCcw,
 } from 'lucide-react'
-import { useState } from 'react'
 import { useAppStore } from '../../stores/appStore'
 import { useAuthStore } from '../../stores/authStore'
 import { useThemeStore } from '../../stores/themeStore'
+import { ThemeToggle } from '../ui/theme-toggle'
 import { buildSKUForecast } from '../../lib/forecastEngine'
 
 export default function Sidebar() {
-  const [settingsOpen, setSettingsOpen] = useState(false)
-  const { orders, exceptions, products, cleanup } = useAppStore()
-  const { signOut } = useAuthStore()
+  const { orders, exceptions, products, currentBrand, cleanup } = useAppStore()
+  const { user, signOut } = useAuthStore()
   const { dark, toggle } = useThemeStore()
   const navigate = useNavigate()
 
@@ -24,142 +23,109 @@ export default function Sidebar() {
   const analyticsBadge = forecastSummary.reorder_now_count + forecastSummary.out_of_stock_count
 
   const handleSignOut = async () => {
-    cleanup()          // unsubscribe from realtime channels before sign-out
+    cleanup()
     await signOut()
     navigate('/login')
   }
 
+  const userEmail = user?.email ?? 'demo@xmetrics.app'
+  const userName = userEmail.split('@')[0]
+  const userInitial = userName[0]?.toUpperCase() ?? 'U'
+
   return (
-    <aside className="flex w-[220px] shrink-0 flex-col h-screen bg-sidebar-bg border-r border-white/[0.06]">
+    <aside className="flex w-[220px] shrink-0 flex-col h-screen bg-white dark:bg-[#0f0f1a] border-r border-gray-100 dark:border-white/[0.06]">
       {/* Logo */}
-      <div className="px-4 py-5 border-b border-white/5">
-        <div className="flex items-center gap-2">
-          <div className="w-8 h-8 rounded-xl bg-white flex items-center justify-center shadow-sm overflow-hidden p-0.5">
-            <img src="/logo.svg" alt="Xmetrics" className="w-full h-full object-contain" />
+      <div className="px-4 py-4 border-b border-gray-100 dark:border-white/[0.05]">
+        <div className="flex items-center gap-2.5">
+          <div className="w-8 h-8 rounded-xl bg-brand-600 flex items-center justify-center overflow-hidden shadow-sm">
+            <img src="/logo.svg" alt="Xmetrics" className="w-5 h-5 object-contain brightness-0 invert" />
           </div>
-          <span className="text-white font-semibold text-base tracking-tight">Xmetrics</span>
+          <span className="text-gray-900 dark:text-white font-semibold text-[15px] tracking-tight">Xmetrics</span>
         </div>
       </div>
 
-      {/* Brand pill */}
-      <BrandPill />
+      {/* Brand indicator */}
+      {currentBrand && (
+        <div className="mx-3 mt-3 mb-1 px-3 py-2 rounded-lg bg-gray-50 dark:bg-white/5 border border-gray-100 dark:border-white/10">
+          <p className="text-gray-800 dark:text-white text-xs font-medium truncate">{currentBrand.name}</p>
+          <p className="text-gray-400 dark:text-gray-500 text-[10px] mt-0.5">{currentBrand.market_type}</p>
+        </div>
+      )}
 
       {/* Nav */}
-      <nav className="flex-1 px-2 py-3 overflow-y-auto space-y-0.5">
-        <p className="px-3 py-1.5 text-[10px] font-semibold uppercase tracking-widest text-sidebar-text/40">
-          Workspace
+      <nav className="flex-1 px-2 py-2 overflow-y-auto">
+        <p className="px-3 py-2 text-[10px] font-semibold uppercase tracking-widest text-gray-400 dark:text-gray-600">
+          Menu
         </p>
 
-        <SidebarItem to="/dashboard" icon={<LayoutDashboard size={16} />} label="Dashboard" />
-        <SidebarItem to="/orders" icon={<ShoppingBag size={16} />} label="Orders" badge={ordersBadge} />
-        <SidebarItem to="/payments" icon={<CreditCard size={16} />} label="Payments" />
-        <SidebarItem to="/exceptions" icon={<AlertTriangle size={16} />} label="Exceptions" badge={exceptionsBadge} />
-        <SidebarItem to="/fulfillment" icon={<Truck size={16} />} label="Fulfillment" />
-        <SidebarItem to="/customers" icon={<Users size={16} />} label="Customers" />
-        <SidebarItem to="/products" icon={<Package size={16} />} label="Products" />
-        <SidebarItem to="/analytics" icon={<BarChart3 size={16} />} label="Analytics" badge={analyticsBadge} />
-        <SidebarItem to="/returns" icon={<RotateCcw size={16} />} label="Returns" />
+        <div className="space-y-0.5">
+          <SidebarItem to="/dashboard"   icon={<LayoutDashboard size={15} />} label="Dashboard" />
+          <SidebarItem to="/orders"      icon={<ShoppingBag size={15} />}     label="Orders"     badge={ordersBadge} />
+          <SidebarItem to="/payments"    icon={<CreditCard size={15} />}      label="Payments" />
+          <SidebarItem to="/exceptions"  icon={<AlertTriangle size={15} />}   label="Exceptions" badge={exceptionsBadge} badgeDanger />
+          <SidebarItem to="/fulfillment" icon={<Truck size={15} />}           label="Fulfillment" />
+          <SidebarItem to="/customers"   icon={<Users size={15} />}           label="Customers" />
+          <SidebarItem to="/products"    icon={<Package size={15} />}         label="Products" />
+          <SidebarItem to="/analytics"   icon={<BarChart3 size={15} />}       label="Analytics"  badge={analyticsBadge} />
+          <SidebarItem to="/returns"     icon={<RotateCcw size={15} />}       label="Returns" />
+        </div>
 
-        <div className="pt-4">
-          <p className="px-3 py-1.5 text-[10px] font-semibold uppercase tracking-widest text-sidebar-text/40">
-            Account
-          </p>
-
-          {/* Settings expandable */}
-          <button
-            onClick={() => setSettingsOpen(v => !v)}
-            className="sidebar-nav-item w-full"
-          >
-            <Settings size={16} />
-            <span className="flex-1 text-left">Settings</span>
-            {settingsOpen ? <ChevronDown size={12} /> : <ChevronRight size={12} />}
-          </button>
-
-          {settingsOpen && (
-            <div className="ml-7 mt-0.5 space-y-0.5">
-              <SubItem to="/settings/brand" label="Brand" />
-              <SubItem to="/settings/integrations" label="Integrations" />
-              <SubItem to="/settings/warehouses" label="Warehouses" />
-              <SubItem to="/settings/team" label="Team" />
-              <SubItem to="/settings/billing" label="Billing" />
-            </div>
-          )}
-
-          <SidebarItem to="/briefs/history" icon={<History size={16} />} label="Brief History" />
+        <div className="mt-4 pt-4 border-t border-gray-100 dark:border-white/[0.05] space-y-0.5">
+          <SidebarItem to="/settings/brand"  icon={<Settings size={15} />} label="Settings" />
+          <SidebarItem to="/briefs/history"  icon={<History size={15} />}  label="Brief History" />
         </div>
       </nav>
 
-      {/* Theme toggle + Sign out */}
-      <div className="px-2 pb-4 border-t border-white/5 pt-3 space-y-0.5">
-        <button
-          onClick={toggle}
-          className="sidebar-nav-item w-full"
-        >
-          {dark ? <Moon size={16} /> : <Sun size={16} />}
-          <span>{dark ? 'Dark Mode' : 'Light Mode'}</span>
-        </button>
+      {/* Bottom: theme + user */}
+      <div className="border-t border-gray-100 dark:border-white/[0.05] px-2 py-3 space-y-1">
+        <div className="flex items-center justify-center px-3 py-2">
+          <ThemeToggle isDark={dark} onToggle={toggle} />
+        </div>
+
         <button
           onClick={handleSignOut}
-          className="sidebar-nav-item w-full text-red-400 hover:text-red-300 hover:bg-red-900/20"
+          className="flex items-center gap-2.5 px-3 py-2 w-full rounded-lg text-sm font-medium text-red-500 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 hover:text-red-600 dark:hover:text-red-300 transition-colors cursor-pointer"
         >
-          <LogOut size={16} />
+          <LogOut size={15} />
           <span>Sign Out</span>
         </button>
+
+        {/* User */}
+        <div className="flex items-center gap-2.5 px-3 py-2 mt-1 rounded-lg hover:bg-gray-50 dark:hover:bg-white/5 transition-colors cursor-default">
+          <div className="w-7 h-7 rounded-full bg-brand-600 flex items-center justify-center text-white text-[11px] font-semibold shrink-0">
+            {userInitial}
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="text-xs font-medium text-gray-800 dark:text-gray-200 truncate capitalize">{userName}</p>
+            <p className="text-[10px] text-gray-400 dark:text-gray-600 truncate">{userEmail}</p>
+          </div>
+        </div>
       </div>
     </aside>
   )
 }
 
-function BrandPill() {
-  const { currentBrand } = useAppStore()
-  if (!currentBrand) return null
-  return (
-    <div className="mx-3 my-2 px-3 py-2 rounded-lg bg-white/5 border border-white/10 cursor-pointer hover:bg-white/10 transition-colors">
-      <p className="text-white text-sm font-medium truncate">{currentBrand.name}</p>
-      <p className="text-sidebar-text text-xs">{currentBrand.market_type}</p>
-    </div>
-  )
-}
-
 function SidebarItem({
-  to, icon, label, badge,
+  to, icon, label, badge, badgeDanger,
 }: {
   to: string
   icon: React.ReactNode
   label: string
   badge?: number
+  badgeDanger?: boolean
 }) {
   return (
     <NavLink
       to={to}
-      className={({ isActive }) =>
-        `sidebar-nav-item ${isActive ? 'active' : ''}`
-      }
+      className={({ isActive }) => `sidebar-nav-item ${isActive ? 'active' : ''}`}
     >
       {icon}
       <span className="flex-1">{label}</span>
-      {badge && badge > 0 ? (
-        <span className="min-w-[18px] h-[18px] px-1 rounded-full bg-brand-600 text-white text-[10px] font-semibold flex items-center justify-center">
+      {badge != null && badge > 0 ? (
+        <span className={`text-[10px] font-semibold tabular-nums ${badgeDanger ? 'text-red-500' : 'text-gray-400'}`}>
           {badge > 99 ? '99+' : badge}
         </span>
       ) : null}
-    </NavLink>
-  )
-}
-
-function SubItem({ to, label }: { to: string; label: string }) {
-  return (
-    <NavLink
-      to={to}
-      className={({ isActive }) =>
-        `block px-3 py-1.5 rounded-md text-xs font-medium transition-colors ${
-          isActive
-            ? 'text-white bg-sidebar-active'
-            : 'text-sidebar-text hover:text-sidebar-text-active hover:bg-sidebar-hover'
-        }`
-      }
-    >
-      {label}
     </NavLink>
   )
 }

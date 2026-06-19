@@ -33,14 +33,14 @@ export default function BrandSettings() {
 
   return (
     <div className="space-y-6 max-w-2xl">
-      <h1 className="text-xl font-semibold text-gray-900">Brand Settings</h1>
+      <h1 className="text-lg font-semibold text-gray-900">Brand Settings</h1>
 
       <Card className="p-6 space-y-5">
-        <h2 className="text-sm font-semibold text-gray-900">Brand Identity</h2>
+        <h2 className="text-[11px] font-medium text-gray-400 uppercase tracking-wider">Brand Identity</h2>
 
         <div className="grid grid-cols-2 gap-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Brand Name</label>
+            <label className="block text-xs font-medium text-gray-500 mb-1">Brand Name</label>
             <Input
               value={form.name}
               onChange={e => setForm(f => ({ ...f, name: e.target.value }))}
@@ -48,7 +48,7 @@ export default function BrandSettings() {
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Market Type</label>
+            <label className="block text-xs font-medium text-gray-500 mb-1">Market Type</label>
             <Select
               value={form.market_type}
               onChange={e => setForm(f => ({ ...f, market_type: e.target.value as Brand['market_type'] }))}
@@ -59,7 +59,7 @@ export default function BrandSettings() {
             </Select>
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Website URL</label>
+            <label className="block text-xs font-medium text-gray-500 mb-1">Website URL</label>
             <Input
               value={form.website_url}
               onChange={e => setForm(f => ({ ...f, website_url: e.target.value }))}
@@ -67,7 +67,7 @@ export default function BrandSettings() {
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Business Type</label>
+            <label className="block text-xs font-medium text-gray-500 mb-1">Business Type</label>
             <Input
               value={form.business_type}
               onChange={e => setForm(f => ({ ...f, business_type: e.target.value }))}
@@ -78,11 +78,11 @@ export default function BrandSettings() {
       </Card>
 
       <Card className="p-6 space-y-5">
-        <h2 className="text-sm font-semibold text-gray-900">Business Metrics</h2>
+        <h2 className="text-[11px] font-medium text-gray-400 uppercase tracking-wider">Business Metrics</h2>
 
         <div className="grid grid-cols-2 gap-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Currency</label>
+            <label className="block text-xs font-medium text-gray-500 mb-1">Currency</label>
             <Select
               value={form.currency}
               onChange={e => setForm(f => ({ ...f, currency: e.target.value }))}
@@ -93,7 +93,7 @@ export default function BrandSettings() {
             </Select>
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Monthly Order Volume</label>
+            <label className="block text-xs font-medium text-gray-500 mb-1">Monthly Order Volume</label>
             <Input
               type="number"
               value={form.monthly_order_volume}
@@ -102,7 +102,7 @@ export default function BrandSettings() {
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Average Order Value (₹)</label>
+            <label className="block text-xs font-medium text-gray-500 mb-1">Average Order Value (₹)</label>
             <Input
               type="number"
               value={form.average_order_value}

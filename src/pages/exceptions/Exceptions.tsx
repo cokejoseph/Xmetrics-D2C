@@ -27,10 +27,10 @@ export default function Exceptions() {
 
   return (
     <div className="space-y-4">
-      <h1 className="text-xl font-semibold text-gray-900">Exceptions</h1>
+      <h1 className="text-lg font-semibold text-gray-900">Exceptions</h1>
 
       {criticalCount > 0 && (
-        <div className="flex items-center gap-3 p-4 bg-red-50 border border-red-200 rounded-xl text-red-800">
+        <div className="flex items-center gap-3 p-4 bg-red-50 border border-red-200 rounded-md text-red-800">
           <AlertOctagon size={18} className="shrink-0" />
           <p className="text-sm font-medium">
             {criticalCount} critical exception{criticalCount > 1 ? 's' : ''} require immediate attention
@@ -40,7 +40,7 @@ export default function Exceptions() {
 
       {/* Unresolved */}
       <div>
-        <h2 className="text-sm font-semibold text-gray-700 mb-3">
+        <h2 className="text-sm font-medium text-gray-700 mb-3">
           Unresolved <span className="text-gray-400 font-normal">({unresolved.length})</span>
         </h2>
         <div className="space-y-3 stagger-children">
@@ -69,7 +69,7 @@ export default function Exceptions() {
       {/* Resolved */}
       {resolved.length > 0 && (
         <div>
-          <h2 className="text-sm font-semibold text-gray-700 mb-3">
+          <h2 className="text-sm font-medium text-gray-700 mb-3">
             Resolved / Dismissed <span className="text-gray-400 font-normal">({resolved.length})</span>
           </h2>
           <div className="space-y-3 opacity-50">
@@ -97,13 +97,13 @@ function ExceptionCard({
       <div className="flex items-start gap-4">
         <div className="flex flex-col gap-1.5 shrink-0 pt-0.5">
           <SeverityBadge severity={exception.severity} />
-          <span className="text-[10px] font-semibold uppercase tracking-wide text-gray-400">
+          <span className="text-[10px] font-medium uppercase tracking-wide text-gray-400">
             {TYPE_LABELS[exception.type] ?? exception.type}
           </span>
         </div>
 
         <div className="flex-1 min-w-0">
-          <p className="text-sm font-semibold text-gray-900">{exception.title}</p>
+          <p className="text-sm font-medium text-gray-900">{exception.title}</p>
           <p className="text-xs text-gray-600 mt-0.5">{exception.description}</p>
           <div className="flex items-center gap-3 mt-2">
             {exception.order_id && (

@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from 'react'
 import { Link } from 'react-router-dom'
 import {
   RotateCcw, Search, RefreshCw, Truck, CheckCircle2,
-  Clock, XCircle, PackageCheck, X, ChevronDown,
+  XCircle, X, ChevronDown,
 } from 'lucide-react'
 import { useAppStore } from '../../stores/appStore'
 import { Card, Button, Input, Modal } from '../../components/ui'
@@ -113,31 +113,40 @@ const DEMO_RETURNS: Return[] = [
 
 // ── KPI row ───────────────────────────────────────────────────────────────────
 
-function KPICard({ label, value, sub, icon, color }: {
+function KPICard({ label, value, sub }: {
   label: string; value: string | number; sub?: string;
-  icon: React.ReactNode; color: string
+  icon?: React.ReactNode; color?: string
 }) {
   return (
     <Card className="p-4">
-      <div className="flex items-start justify-between">
-        <div>
-          <p className="text-xs text-gray-500 font-medium mb-1">{label}</p>
-          <p className="text-2xl font-bold text-gray-900">{value}</p>
-          {sub && <p className="text-xs text-gray-400 mt-0.5">{sub}</p>}
-        </div>
-        <div className={`p-2 rounded-lg ${color}`}>{icon}</div>
-      </div>
+      <p className="text-[11px] font-medium text-gray-400 uppercase tracking-wider mb-1">{label}</p>
+      <p className="text-2xl font-semibold text-gray-900">{value}</p>
+      {sub && <p className="text-xs text-gray-400 mt-0.5">{sub}</p>}
     </Card>
   )
 }
 
 // ── Status badge ──────────────────────────────────────────────────────────────
 
+const RETURN_STATUS_DOTS: Record<string, { dot: string; text: string }> = {
+  PENDING_APPROVAL:  { dot: 'bg-amber-400',  text: 'text-amber-600' },
+  APPROVED:          { dot: 'bg-blue-400',   text: 'text-blue-600' },
+  LABEL_GENERATED:   { dot: 'bg-sky-400',    text: 'text-sky-600' },
+  IN_TRANSIT:        { dot: 'bg-violet-400', text: 'text-violet-600' },
+  RECEIVED:          { dot: 'bg-indigo-400', text: 'text-indigo-600' },
+  REFUND_INITIATED:  { dot: 'bg-purple-400', text: 'text-purple-600' },
+  COMPLETED:         { dot: 'bg-green-400',  text: 'text-green-600' },
+  AUTO_DENIED:       { dot: 'bg-red-400',    text: 'text-red-500' },
+  LOST:              { dot: 'bg-gray-300',   text: 'text-gray-400' },
+}
+
 function StatusBadge({ status }: { status: ReturnStatus }) {
   const cfg = RETURN_STATUS_CONFIG[status]
+  const d = RETURN_STATUS_DOTS[status] ?? { dot: 'bg-gray-300', text: 'text-gray-400' }
   return (
-    <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-medium border ${cfg.color}`}>
-      {cfg.label}
+    <span className="inline-flex items-center gap-1.5">
+      <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${d.dot}`} />
+      <span className={`text-[11px] font-medium ${d.text}`}>{cfg?.label ?? status}</span>
     </span>
   )
 }
@@ -188,7 +197,7 @@ function ApproveRefundModal({
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">Item condition received</label>
+          <label className="block text-xs font-medium text-gray-500 mb-2">Item condition received</label>
           <div className="grid grid-cols-3 gap-2">
             {conditions.map(c => (
               <button
@@ -218,13 +227,13 @@ function ApproveRefundModal({
         </div>
 
         {ret.refund_method === 'COD_REVERSAL' && (
-          <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg text-sm text-blue-800">
+          <div className="p-3 bg-gray-50 border border-gray-100 rounded-md text-sm text-gray-700">
             COD order — exception will be created for manual bank transfer / UPI refund
           </div>
         )}
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Notes (optional)</label>
+          <label className="block text-xs font-medium text-gray-500 mb-1">Notes (optional)</label>
           <textarea
             value={notes}
             onChange={e => setNotes(e.target.value)}
@@ -300,7 +309,7 @@ function InitiateReturnModal({ onClose, onDone }: { onClose: () => void; onDone:
     <Modal open onClose={onClose} title="Initiate Return">
       <div className="space-y-4">
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Order</label>
+          <label className="block text-xs font-medium text-gray-500 mb-1">Order</label>
           <select
             value={orderId}
             onChange={e => setOrderId(e.target.value)}
@@ -316,7 +325,7 @@ function InitiateReturnModal({ onClose, onDone }: { onClose: () => void; onDone:
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Return reason</label>
+          <label className="block text-xs font-medium text-gray-500 mb-1">Return reason</label>
           <div className="space-y-1.5">
             {reasons.map(r => (
               <label key={r} className="flex items-center gap-2 cursor-pointer">
@@ -328,7 +337,7 @@ function InitiateReturnModal({ onClose, onDone }: { onClose: () => void; onDone:
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Customer comment (optional)</label>
+          <label className="block text-xs font-medium text-gray-500 mb-1">Customer comment (optional)</label>
           <textarea
             value={comment}
             onChange={e => setComment(e.target.value)}
@@ -506,7 +515,7 @@ export default function Returns() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-xl font-semibold text-gray-900">Returns</h1>
+          <h1 className="text-lg font-semibold text-gray-900">Returns</h1>
           <p className="text-sm text-gray-500 mt-0.5">Manage return requests, labels, and refunds</p>
         </div>
         <div className="flex gap-2">
@@ -526,29 +535,21 @@ export default function Returns() {
           label="Pending Approval"
           value={pendingCount}
           sub="awaiting ops review"
-          icon={<Clock size={16} className="text-amber-600" />}
-          color="bg-amber-50"
         />
         <KPICard
           label="Active Returns"
           value={activeCount}
           sub="approved or in transit"
-          icon={<Truck size={16} className="text-blue-600" />}
-          color="bg-blue-50"
         />
         <KPICard
           label="Awaiting Inspection"
           value={receivedCount}
           sub="received at warehouse"
-          icon={<PackageCheck size={16} className="text-teal-600" />}
-          color="bg-teal-50"
         />
         <KPICard
           label="Refunds Issued"
           value={`₹${totalRefund.toLocaleString('en-IN', { maximumFractionDigits: 0 })}`}
           sub="completed + initiated"
-          icon={<CheckCircle2 size={16} className="text-green-600" />}
-          color="bg-green-50"
         />
       </div>
 
@@ -599,15 +600,15 @@ export default function Returns() {
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
-                <tr className="border-b border-gray-100 text-xs text-gray-500 font-medium">
-                  <th className="text-left px-4 py-3">Order</th>
-                  <th className="text-left px-4 py-3">Customer</th>
-                  <th className="text-left px-4 py-3">Reason</th>
-                  <th className="text-left px-4 py-3">Status</th>
-                  <th className="text-left px-4 py-3">AWB</th>
-                  <th className="text-right px-4 py-3">Refund</th>
-                  <th className="text-left px-4 py-3">Date</th>
-                  <th className="text-right px-4 py-3">Action</th>
+                <tr className="border-b border-gray-100">
+                  <th className="text-left px-4 py-3 text-[11px] font-medium text-gray-400 uppercase tracking-wider">Order</th>
+                  <th className="text-left px-4 py-3 text-[11px] font-medium text-gray-400 uppercase tracking-wider">Customer</th>
+                  <th className="text-left px-4 py-3 text-[11px] font-medium text-gray-400 uppercase tracking-wider">Reason</th>
+                  <th className="text-left px-4 py-3 text-[11px] font-medium text-gray-400 uppercase tracking-wider">Status</th>
+                  <th className="text-left px-4 py-3 text-[11px] font-medium text-gray-400 uppercase tracking-wider">AWB</th>
+                  <th className="text-right px-4 py-3 text-[11px] font-medium text-gray-400 uppercase tracking-wider">Refund</th>
+                  <th className="text-left px-4 py-3 text-[11px] font-medium text-gray-400 uppercase tracking-wider">Date</th>
+                  <th className="text-right px-4 py-3 text-[11px] font-medium text-gray-400 uppercase tracking-wider">Action</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-50">
@@ -630,7 +631,7 @@ export default function Returns() {
 
                       {/* Customer */}
                       <td className="px-4 py-3">
-                        <span className="text-gray-800 font-medium">{custName}</span>
+                        <span className="text-sm text-gray-600">{custName}</span>
                       </td>
 
                       {/* Reason */}
@@ -671,7 +672,7 @@ export default function Returns() {
 
                       {/* Refund */}
                       <td className="px-4 py-3 text-right">
-                        <span className="font-medium text-gray-800">
+                        <span className="text-sm font-medium text-gray-900">
                           {ret.refund_amount ? `₹${ret.refund_amount.toLocaleString('en-IN')}` : '—'}
                         </span>
                         {ret.refund_method && (

@@ -19,14 +19,14 @@ export default {
           50:  '#EFF6FF',
         },
         sidebar: {
-          bg:           '#000000',
-          hover:        '#1a1a1a',
-          active:       '#252525',
-          text:         '#9CA3AF',
-          'text-active':'#FFFFFF',
+          bg:           '#FFFFFF',
+          hover:        '#F5F7FF',
+          active:       '#EFF6FF',
+          text:         '#6B7280',
+          'text-active':'#2563EB',
         },
         page: {
-          bg: '#F7F8FC',
+          bg: '#F8F9FB',
         },
         severity: {
           critical: '#ef4444',

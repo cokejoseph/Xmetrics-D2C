@@ -30,7 +30,7 @@ export default function Products() {
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <h1 className="text-xl font-semibold text-gray-900">Products</h1>
+        <h1 className="text-lg font-semibold text-gray-900">Products</h1>
         <Button size="sm" onClick={() => setShowAdd(true)}>
           <Plus size={14} /> Add Product
         </Button>
@@ -46,32 +46,32 @@ export default function Products() {
           return (
             <Card key={product.id} className="p-4">
               <div className="flex items-start justify-between mb-3">
-                <div className="w-10 h-10 rounded-xl bg-brand-50 flex items-center justify-center">
-                  <Package size={18} className="text-brand-600" />
+                <div className="flex items-center justify-center">
+                  <Package size={18} className="text-gray-400" />
                 </div>
                 <div className="flex gap-1">
                   {isLow && (
-                    <span className="px-1.5 py-0.5 bg-red-100 text-red-700 text-[10px] font-semibold rounded-full">
+                    <span className="px-1.5 py-0.5 bg-red-100 text-red-700 text-[10px] font-medium rounded-md">
                       {product.inventory_count === 0 ? 'OUT OF STOCK' : 'LOW'}
                     </span>
                   )}
                 </div>
               </div>
 
-              <h3 className="text-sm font-semibold text-gray-900 mb-0.5">{product.name}</h3>
+              <h3 className="text-sm font-medium text-gray-900 mb-0.5">{product.name}</h3>
               <p className="text-xs text-gray-500 mb-3">SKU: {product.sku} · {product.category}</p>
 
               <div className="grid grid-cols-3 gap-2 text-center border-t border-gray-100 pt-3">
                 <div>
-                  <p className="text-sm font-bold text-gray-900">₹{product.selling_price}</p>
+                  <p className="text-sm font-medium text-gray-900">₹{product.selling_price}</p>
                   <p className="text-[10px] text-gray-500">Price</p>
                 </div>
                 <div>
-                  <p className="text-sm font-bold text-gray-900">{Math.round(margin)}%</p>
+                  <p className="text-sm font-medium text-gray-900">{Math.round(margin)}%</p>
                   <p className="text-[10px] text-gray-500">Margin</p>
                 </div>
                 <div>
-                  <p className={`text-sm font-bold ${isLow ? 'text-red-600' : 'text-gray-900'}`}>
+                  <p className={`text-sm font-medium ${isLow ? 'text-red-600' : 'text-gray-900'}`}>
                     {product.inventory_count}
                   </p>
                   <p className="text-[10px] text-gray-500">In Stock</p>
@@ -94,11 +94,11 @@ export default function Products() {
 
       {inactiveProducts.length > 0 && (
         <div>
-          <h2 className="text-sm font-semibold text-gray-500 mb-3">Inactive ({inactiveProducts.length})</h2>
+          <h2 className="text-sm font-medium text-gray-500 mb-3">Inactive ({inactiveProducts.length})</h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 opacity-50">
             {inactiveProducts.map(product => (
               <Card key={product.id} className="p-4">
-                <h3 className="text-sm font-semibold text-gray-700">{product.name}</h3>
+                <h3 className="text-sm font-medium text-gray-700">{product.name}</h3>
                 <p className="text-xs text-gray-500">SKU: {product.sku}</p>
                 <button
                   onClick={() => updateProduct(product.id, { is_active: true })}
@@ -116,37 +116,37 @@ export default function Products() {
         <div className="space-y-4">
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Product Name</label>
+              <label className="block text-xs font-medium text-gray-500 mb-1">Product Name</label>
               <Input value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))} placeholder="Product name" />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">SKU</label>
+              <label className="block text-xs font-medium text-gray-500 mb-1">SKU</label>
               <Input value={form.sku} onChange={e => setForm(f => ({ ...f, sku: e.target.value }))} placeholder="SKU-001" />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Category</label>
+              <label className="block text-xs font-medium text-gray-500 mb-1">Category</label>
               <Select value={form.category} onChange={e => setForm(f => ({ ...f, category: e.target.value as ProductCategory }))}>
                 {CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
               </Select>
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Weight (grams)</label>
+              <label className="block text-xs font-medium text-gray-500 mb-1">Weight (grams)</label>
               <Input type="number" value={form.weight_grams} onChange={e => setForm(f => ({ ...f, weight_grams: Number(e.target.value) }))} />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Selling Price (₹)</label>
+              <label className="block text-xs font-medium text-gray-500 mb-1">Selling Price (₹)</label>
               <Input type="number" value={form.selling_price} onChange={e => setForm(f => ({ ...f, selling_price: Number(e.target.value) }))} />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Cost Price (₹)</label>
+              <label className="block text-xs font-medium text-gray-500 mb-1">Cost Price (₹)</label>
               <Input type="number" value={form.cost_price} onChange={e => setForm(f => ({ ...f, cost_price: Number(e.target.value) }))} />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Inventory Count</label>
+              <label className="block text-xs font-medium text-gray-500 mb-1">Inventory Count</label>
               <Input type="number" value={form.inventory_count} onChange={e => setForm(f => ({ ...f, inventory_count: Number(e.target.value) }))} />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Reorder Threshold</label>
+              <label className="block text-xs font-medium text-gray-500 mb-1">Reorder Threshold</label>
               <Input type="number" value={form.reorder_threshold} onChange={e => setForm(f => ({ ...f, reorder_threshold: Number(e.target.value) }))} />
             </div>
           </div>

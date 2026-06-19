@@ -197,7 +197,7 @@ function ConnectModal({
         <div className="space-y-4">
           {meta.fields.map(field => (
             <div key={field.key}>
-              <label className="block text-sm font-medium text-gray-700 mb-1">{field.label}</label>
+              <label className="block text-xs font-medium text-gray-500 mb-1">{field.label}</label>
               <Input
                 type={field.type ?? 'text'}
                 value={credentials[field.key] ?? ''}
@@ -221,7 +221,7 @@ function ConnectModal({
             <Loader2 size={18} className="animate-spin" />
             <span className="text-sm font-medium">Connecting to {meta.name}…</span>
           </div>
-          <div className="bg-gray-50 rounded-xl p-4 space-y-2 min-h-[100px]">
+          <div className="bg-gray-50 rounded-md p-4 space-y-2 min-h-[100px]">
             {progressLog.map((log, i) => (
               <p key={i} className="text-xs text-gray-600 font-mono">{log}</p>
             ))}
@@ -234,14 +234,14 @@ function ConnectModal({
 
       {phase === 'done' && (
         <div className="space-y-4">
-          <div className="flex items-center gap-3 p-4 bg-green-50 rounded-xl">
+          <div className="flex items-center gap-3 p-4 bg-green-50 border border-green-100 rounded-md">
             <CheckCircle size={20} className="text-green-500 shrink-0" />
             <div>
-              <p className="text-sm font-semibold text-green-800">{meta.name} connected successfully!</p>
+              <p className="text-sm font-medium text-green-800">{meta.name} connected successfully!</p>
               <p className="text-xs text-green-600 mt-0.5">Webhooks registered and data sync initiated.</p>
             </div>
           </div>
-          <div className="bg-gray-50 rounded-xl p-4 space-y-1 max-h-[120px] overflow-y-auto">
+          <div className="bg-gray-50 rounded-md p-4 space-y-1 max-h-[120px] overflow-y-auto">
             {progressLog.map((log, i) => (
               <p key={i} className="text-xs text-gray-500 font-mono">{log}</p>
             ))}
@@ -252,15 +252,15 @@ function ConnectModal({
 
       {phase === 'error' && (
         <div className="space-y-4">
-          <div className="flex items-start gap-3 p-4 bg-red-50 rounded-xl">
+          <div className="flex items-start gap-3 p-4 bg-red-50 border border-red-100 rounded-md">
             <AlertCircle size={20} className="text-red-500 shrink-0 mt-0.5" />
             <div>
-              <p className="text-sm font-semibold text-red-800">Connection failed</p>
+              <p className="text-sm font-medium text-red-800">Connection failed</p>
               <p className="text-xs text-red-600 mt-1">{errorMsg}</p>
             </div>
           </div>
           {progressLog.length > 0 && (
-            <div className="bg-gray-50 rounded-xl p-3 space-y-1">
+            <div className="bg-gray-50 rounded-md p-3 space-y-1">
               {progressLog.map((log, i) => (
                 <p key={i} className="text-xs text-gray-500 font-mono">{log}</p>
               ))}
@@ -365,7 +365,7 @@ export default function Integrations() {
   return (
     <div className="space-y-6 max-w-3xl">
       <div>
-        <h1 className="text-xl font-semibold text-gray-900">Integrations</h1>
+        <h1 className="text-lg font-semibold text-gray-900">Integrations</h1>
         <p className="text-sm text-gray-500 mt-0.5">
           Connect your tools to sync orders, process payments, and automate shipments.
         </p>
@@ -388,7 +388,7 @@ export default function Integrations() {
                   <span className="text-2xl">{meta.logo}</span>
                   <div>
                     <div className="flex items-center gap-1.5">
-                      <h3 className="text-sm font-semibold text-gray-900">{meta.name}</h3>
+                      <h3 className="text-sm font-medium text-gray-900">{meta.name}</h3>
                       {meta.badge && (
                         <span className="px-1.5 py-0.5 text-[10px] font-medium bg-brand-50 text-brand-600 rounded-full">
                           {meta.badge}
@@ -414,13 +414,13 @@ export default function Integrations() {
               )}
 
               {integration?.error_message && status === 'ERROR' && (
-                <p className="text-xs text-red-600 mb-3 bg-red-50 px-2 py-1.5 rounded-lg">
+                <p className="text-xs text-red-600 mb-3 bg-red-50 px-2 py-1.5 rounded-md">
                   {integration.error_message}
                 </p>
               )}
 
               {testMsg && (
-                <p className={`text-xs mb-3 px-2 py-1.5 rounded-lg font-medium ${
+                <p className={`text-xs mb-3 px-2 py-1.5 rounded-md font-medium ${
                   testMsg.startsWith('✓')
                     ? 'bg-green-50 text-green-700'
                     : 'bg-red-50 text-red-700'

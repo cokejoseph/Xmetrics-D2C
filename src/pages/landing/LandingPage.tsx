@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
 import { Link } from 'react-router-dom'
-import { SparklesCore } from '../../components/ui/sparkles'
+import { BeamsBackground } from '@/components/ui/beams-background'
 import {
   TrendingDown, Zap, MessageSquare,
   Check, ChevronDown, ArrowRight, Shield, Clock, X as XIcon,
@@ -424,63 +424,13 @@ function OutcomesSection() {
   )
 }
 
-// ─── Social proof ─────────────────────────────────────────────────────────────
-// TODO: Replace placeholder quotes with real founder testimonials before launch
-const TESTIMONIALS = [
-  {
-    quote: "We cut RTOs from 26% to 14% in 8 weeks. The daily brief alone saved our ops team two hours every morning. I don't know how we ran the brand without it.",
-    name: 'Priya M.',
-    role: 'Founder',
-    brand: 'D2C Skincare Brand, Mumbai',
-    initials: 'PM',
-  },
-  {
-    quote: "I used to open Shopify, Shiprocket, and WhatsApp separately every morning. Now I check one dashboard and I'm done by 8 AM. The exception alerts are the best part. I know before the customer does.",
-    name: 'Rahul K.',
-    role: 'Co-founder',
-    brand: 'Health Supplements Brand, Bengaluru',
-    initials: 'RK',
-  },
-]
-
-function SocialProof() {
-  return (
-    <section className="py-24 bg-gray-50">
-      <div className="max-w-4xl mx-auto px-6">
-        <AnimateIn className="text-center mb-12">
-          <h2 className="text-3xl font-bold text-gray-900 mb-3">What founders say</h2>
-          <p className="text-gray-500">D2C brands using Xmetrics to run leaner ops.</p>
-        </AnimateIn>
-        <div className="grid md:grid-cols-2 gap-6">
-          {TESTIMONIALS.map((t, i) => (
-            <AnimateIn key={t.name} delay={i * 80}>
-              <div className="bg-white rounded-2xl p-8 border border-gray-200 shadow-sm h-full flex flex-col">
-                <p className="text-gray-700 text-[15px] leading-relaxed mb-6 flex-1">"{t.quote}"</p>
-                <div className="flex items-center gap-3">
-                  <div className="w-9 h-9 rounded-full bg-brand-100 flex items-center justify-center text-brand-700 text-xs font-bold shrink-0">
-                    {t.initials}
-                  </div>
-                  <div>
-                    <p className="font-semibold text-gray-900 text-sm">{t.name}</p>
-                    <p className="text-xs text-gray-400">{t.role}, {t.brand}</p>
-                  </div>
-                </div>
-              </div>
-            </AnimateIn>
-          ))}
-        </div>
-      </div>
-    </section>
-  )
-}
-
-// ─── Comparison table (5 rows, focused) ──────────────────────────────────────
+// ─── Comparison table ─────────────────────────────────────────────────────────
 const COMPARE_ROWS: { feature: string; legacy: string | false; xm: string | true }[] = [
-  { feature: 'Order visibility',       legacy: '4 separate tools',    xm: '1 unified view' },
-  { feature: 'RTO prevention',         legacy: false,                 xm: 'Scored per order' },
-  { feature: 'Daily ops review',       legacy: '2–3 hours',          xm: '8 min' },
-  { feature: 'Exception alerts',       legacy: 'Found by customers',  xm: true },
-  { feature: 'Returns & refunds',      legacy: 'Manual, fragmented',  xm: true },
+  { feature: 'Order visibility',  legacy: '4 separate tools',   xm: '1 unified view' },
+  { feature: 'RTO prevention',    legacy: false,                xm: 'Scored per order' },
+  { feature: 'Daily ops review',  legacy: '2–3 hours',         xm: '8 min' },
+  { feature: 'Exception alerts',  legacy: 'Found by customers', xm: true },
+  { feature: 'Returns & refunds', legacy: 'Manual, fragmented', xm: true },
 ]
 
 function ComparisonTable() {
@@ -491,7 +441,6 @@ function ComparisonTable() {
           <h2 className="text-3xl font-bold text-gray-900 mb-4">Your current stack vs Xmetrics</h2>
           <p className="text-gray-500">Stop context-switching. Every ops signal, one place.</p>
         </AnimateIn>
-
         <AnimateIn delay={100}>
           <div className="rounded-2xl overflow-hidden shadow-[0_4px_24px_rgba(0,0,0,0.08)] border border-gray-200">
             <div className="grid grid-cols-3 bg-gray-950">
@@ -505,7 +454,6 @@ function ComparisonTable() {
                 <span className="text-[11px] font-bold text-brand-300 uppercase tracking-widest">Xmetrics</span>
               </div>
             </div>
-
             {COMPARE_ROWS.map((row, i) => (
               <div key={row.feature}
                 className={`group grid grid-cols-3 items-center bg-white ${i < COMPARE_ROWS.length - 1 ? 'border-b border-gray-100' : ''} hover:bg-gray-50/70 transition-colors`}>
@@ -518,9 +466,7 @@ function ComparisonTable() {
                       <XIcon size={13} className="text-red-500" strokeWidth={2.5} />
                     </span>
                   ) : (
-                    <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-amber-700 bg-amber-50 border border-amber-100 rounded-full px-3 py-1">
-                      {row.legacy}
-                    </span>
+                    <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-amber-700 bg-amber-50 border border-amber-100 rounded-full px-3 py-1">{row.legacy}</span>
                   )}
                 </div>
                 <div className="px-4 py-4 flex items-center justify-center bg-green-50/40">
@@ -529,27 +475,109 @@ function ComparisonTable() {
                       <Check size={13} className="text-green-600" strokeWidth={2.5} />
                     </span>
                   ) : (
-                    <span className="inline-flex items-center text-xs font-bold text-green-700 bg-green-100 border border-green-200 rounded-full px-3 py-1 transition-transform duration-200 group-hover:scale-105">
-                      {row.xm}
-                    </span>
+                    <span className="inline-flex items-center text-xs font-bold text-green-700 bg-green-100 border border-green-200 rounded-full px-3 py-1 transition-transform duration-200 group-hover:scale-105">{row.xm}</span>
                   )}
                 </div>
               </div>
             ))}
-
             <div className="grid grid-cols-3 bg-gray-50 border-t border-gray-100">
               <div className="px-6 py-4" />
               <div className="px-4 py-4 border-l border-gray-100 flex items-center justify-center">
                 <span className="text-xs text-gray-400 font-medium">Multiple tools, daily chaos</span>
               </div>
               <div className="px-4 py-4 border-l border-gray-100 flex items-center justify-center bg-green-50/60">
-                <Link to="/signup" className="text-xs font-bold text-brand-600 hover:text-brand-700 transition-colors">
-                  Get started →
-                </Link>
+                <Link to="/signup" className="text-xs font-bold text-brand-600 hover:text-brand-700 transition-colors">Get started →</Link>
               </div>
             </div>
           </div>
         </AnimateIn>
+      </div>
+    </section>
+  )
+}
+
+// ─── Pricing section ──────────────────────────────────────────────────────────
+function PricingSection() {
+  const [yearly, setYearly] = useState(false)
+  const monthlyPrice = yearly ? 2499 : 2999
+  const originalPrice = 4999
+
+  return (
+    <section id="pricing" className="py-24 bg-white relative overflow-hidden">
+      <div className="max-w-5xl mx-auto px-6">
+        <AnimateIn className="text-center mb-10">
+          <h2 className="text-3xl font-bold text-gray-900 mb-4">Simple, transparent pricing</h2>
+          <p className="text-gray-500">One plan for growing D2C brands.</p>
+        </AnimateIn>
+
+        {/* Billing toggle */}
+        <AnimateIn className="flex items-center justify-center gap-3 mb-10">
+          <span className={`text-sm font-medium transition-colors ${!yearly ? 'text-gray-900' : 'text-gray-400'}`}>Monthly</span>
+          <button
+            onClick={() => setYearly(y => !y)}
+            className={`relative w-11 h-6 rounded-full transition-colors duration-200 focus:outline-none ${yearly ? 'bg-brand-600' : 'bg-gray-200'}`}
+          >
+            <span className={`absolute top-0.5 left-0.5 w-5 h-5 rounded-full bg-white shadow transition-transform duration-200 ${yearly ? 'translate-x-5' : 'translate-x-0'}`} />
+          </button>
+          <span className={`text-sm font-medium transition-colors ${yearly ? 'text-gray-900' : 'text-gray-400'}`}>
+            Yearly
+            <span className="ml-1.5 text-[10px] font-bold text-green-600 bg-green-100 border border-green-200 px-1.5 py-0.5 rounded-full">Save ₹500/mo</span>
+          </span>
+        </AnimateIn>
+
+        <AnimateIn className="max-w-md mx-auto">
+          <div className="relative rounded-2xl border border-white/[0.12] bg-gradient-to-br from-[#1d4ed8] via-[#2563eb] to-[#1e40af] text-white shadow-[0_24px_64px_rgba(37,99,235,0.45)] p-8 hover:-translate-y-1 transition-transform duration-300">
+            <div className="absolute inset-0 rounded-2xl bg-gradient-to-tr from-white/[0.04] to-transparent pointer-events-none" />
+
+            <div className="inline-flex items-center gap-2 bg-amber-400/15 border border-amber-400/25 rounded-full px-3 py-1 mb-7">
+              <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse" />
+              <span className="text-xs font-bold text-amber-300">Only 5 spots left</span>
+            </div>
+
+            <h3 className="font-bold text-white text-xl mb-1">Growth Plan</h3>
+            <p className="text-white/60 text-sm mb-5">Up to 3,000 orders / month · Full feature access</p>
+
+            <div className="flex items-end gap-3 mb-1">
+              <span className="text-5xl font-bold text-white">₹{monthlyPrice.toLocaleString('en-IN')}</span>
+              <div className="mb-1.5 flex flex-col items-start gap-0.5">
+                <span className="text-white/40 text-sm line-through">₹{originalPrice.toLocaleString('en-IN')}</span>
+                <span className="text-white/60 text-sm">/mo</span>
+              </div>
+            </div>
+            {yearly && (
+              <p className="text-white/50 text-xs mb-1">Billed annually — ₹{(monthlyPrice * 12).toLocaleString('en-IN')}/yr</p>
+            )}
+            <p className="text-white/40 text-xs mb-7">Locked for life. Price never increases for founders.</p>
+
+            <ul className="space-y-3 mb-8">
+              {[
+                'All integrations: Shopify, Shiprocket, Razorpay, WhatsApp',
+                'Real-time RTO scoring and review queue',
+                'Daily ops brief with WhatsApp export',
+                'Priority support and dedicated onboarding call',
+              ].map(f => (
+                <li key={f} className="flex items-start gap-2.5 text-sm">
+                  <Check size={14} className="mt-0.5 shrink-0 text-white/80" />
+                  <span className="text-white/75">{f}</span>
+                </li>
+              ))}
+            </ul>
+
+            <Link to={`/checkout?plan=GROWTH&billing=${yearly ? 'yearly' : 'monthly'}`}
+              className="block text-center text-sm font-bold py-3.5 rounded-xl bg-white text-brand-700 hover:bg-brand-50 transition-colors shadow-lg mb-4">
+              Claim your founder spot →
+            </Link>
+
+            <div className="flex items-center justify-center gap-4 text-[11px] text-white/40">
+              <span>Cancel anytime</span>
+              <span>·</span>
+              <span>No setup fees</span>
+              <span>·</span>
+              <span>Access in 5 minutes</span>
+            </div>
+          </div>
+        </AnimateIn>
+
       </div>
     </section>
   )
@@ -667,21 +695,10 @@ export default function LandingPage() {
           e.currentTarget.style.setProperty('--hy', `${e.clientY - r.top}px`)
         }}
       >
+        <BeamsBackground intensity="subtle" />
         <div className="absolute -top-32 -left-32 w-[480px] h-[480px] bg-brand-500/30 rounded-full blur-3xl animate-aurora" />
         <div className="absolute top-1/3 -right-40 w-[520px] h-[520px] bg-sky-500/25 rounded-full blur-3xl animate-aurora-2" />
-        <SparklesCore
-          id="hero-sparkles"
-          background="transparent"
-          minSize={0.6}
-          maxSize={1.8}
-          particleDensity={60}
-          particleColor="#bae6fd"
-          speed={2}
-          className="absolute inset-0 w-full h-full pointer-events-none"
-        />
-        <div className="absolute inset-0 opacity-[0.04]"
-          style={{ backgroundImage: 'radial-gradient(circle, white 1px, transparent 1px)', backgroundSize: '32px 32px' }} />
-        <div className="pointer-events-none absolute inset-0"
+<div className="pointer-events-none absolute inset-0"
           style={{ background: 'radial-gradient(620px circle at var(--hx, 50%) var(--hy, 35%), rgba(96,165,250,0.14), transparent 65%)' }} />
 
         <div className="relative max-w-5xl mx-auto px-6 text-center">
@@ -828,84 +845,11 @@ export default function LandingPage() {
       {/* ── 3 OUTCOME BLOCKS ────────────────────────────────────────────── */}
       <OutcomesSection />
 
-      {/* ── SOCIAL PROOF ────────────────────────────────────────────────── */}
-      <SocialProof />
-
       {/* ── COMPARISON TABLE ────────────────────────────────────────────── */}
       <ComparisonTable />
 
       {/* ── PRICING ─────────────────────────────────────────────────────── */}
-      <section id="pricing" className="py-24 bg-white relative overflow-hidden">
-        <div className="max-w-5xl mx-auto px-6">
-          <AnimateIn className="text-center mb-12">
-            <h2 className="text-3xl font-bold text-gray-900 mb-4">Simple, transparent pricing</h2>
-            <p className="text-gray-500">One plan for growing D2C brands.</p>
-          </AnimateIn>
-
-          {/* Security signals — at the decision point, not the footer */}
-          <AnimateIn className="max-w-md mx-auto mb-6">
-            <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-1.5 text-xs text-gray-400">
-              <span className="flex items-center gap-1.5"><Shield size={11} className="text-green-500/70" /> TLS 1.3 · AES-256</span>
-              <span className="flex items-center gap-1.5"><Shield size={11} className="text-green-500/70" /> AWS Mumbai</span>
-              <span className="flex items-center gap-1.5"><Shield size={11} className="text-green-500/70" /> Per-brand data isolation</span>
-            </div>
-          </AnimateIn>
-
-          <AnimateIn className="max-w-md mx-auto">
-            <div className="relative rounded-2xl border border-white/[0.12] bg-gradient-to-br from-[#1d4ed8] via-[#2563eb] to-[#1e40af] text-white shadow-[0_24px_64px_rgba(37,99,235,0.45)] p-8 hover:-translate-y-1 transition-transform duration-300">
-              <div className="absolute inset-0 rounded-2xl bg-gradient-to-tr from-white/[0.04] to-transparent pointer-events-none" />
-
-              <div className="inline-flex items-center gap-2 bg-amber-400/15 border border-amber-400/25 rounded-full px-3 py-1 mb-7">
-                <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse" />
-                <span className="text-xs font-bold text-amber-300">Only 5 spots left</span>
-              </div>
-
-              <h3 className="font-bold text-white text-xl mb-1">Growth Plan</h3>
-              <p className="text-white/60 text-sm mb-5">Up to 3,000 orders / month · Full feature access</p>
-
-              <div className="flex items-end gap-2 mb-1">
-                <span className="text-5xl font-bold text-white">₹2,999</span>
-                <span className="text-white/60 mb-1.5">/mo</span>
-              </div>
-              <p className="text-white/40 text-xs mb-7">Locked for life. Price never increases for founders.</p>
-
-              <ul className="space-y-3 mb-8">
-                {[
-                  'All integrations: Shopify, Shiprocket, Razorpay, WhatsApp',
-                  'Real-time RTO scoring and review queue',
-                  'Daily ops brief with WhatsApp export',
-                  'Priority support and dedicated onboarding call',
-                ].map(f => (
-                  <li key={f} className="flex items-start gap-2.5 text-sm">
-                    <Check size={14} className="mt-0.5 shrink-0 text-white/80" />
-                    <span className="text-white/75">{f}</span>
-                  </li>
-                ))}
-              </ul>
-
-              <Link to="/checkout?plan=GROWTH"
-                className="block text-center text-sm font-bold py-3.5 rounded-xl bg-white text-brand-700 hover:bg-brand-50 transition-colors shadow-lg mb-4">
-                Claim your founder spot →
-              </Link>
-
-              <div className="flex items-center justify-center gap-4 text-[11px] text-white/40">
-                <span>Cancel anytime</span>
-                <span>·</span>
-                <span>No setup fees</span>
-                <span>·</span>
-                <span>Access in 5 minutes</span>
-              </div>
-            </div>
-          </AnimateIn>
-
-          <AnimateIn className="text-center mt-6">
-            <p className="text-sm text-gray-400">
-              Need more orders or team members?{' '}
-              <a href="mailto:joe@xmetrics.in" className="text-brand-600 hover:underline font-medium">Talk to us</a>
-            </p>
-          </AnimateIn>
-        </div>
-      </section>
+      <PricingSection />
 
       {/* ── FAQ ─────────────────────────────────────────────────────────── */}
       <section id="faq" className="py-24 bg-white">

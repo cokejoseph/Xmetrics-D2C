@@ -14,10 +14,7 @@ export function setConfirmCallback(cb: (options: ConfirmOptions) => Promise<bool
 
 export function useConfirm() {
   return async (options: ConfirmOptions): Promise<boolean> => {
-    if (!confirmCallback) {
-      console.warn('Confirm dialog not initialized')
-      return true
-    }
+    if (!confirmCallback) return true
     return confirmCallback(options)
   }
 }

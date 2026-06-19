@@ -416,7 +416,7 @@ export const useAppStore = create<AppState>((set, get) => ({
     if (!DEMO_MODE) {
       addProductDB({ ...product, brand_id: brandId })
         .then(({ data, error }) => {
-          if (error) { console.error('addProduct DB error:', error); return }
+          if (error) { if (import.meta.env.DEV) console.error('addProduct DB error:', error); return }
           if (!data) return
           // Replace temp ID with real DB id
           set(state => ({
@@ -450,7 +450,7 @@ export const useAppStore = create<AppState>((set, get) => ({
     if (!DEMO_MODE) {
       addWarehouseDB({ ...warehouse, brand_id: brandId })
         .then(({ data, error }) => {
-          if (error) { console.error('addWarehouse DB error:', error); return }
+          if (error) { if (import.meta.env.DEV) console.error('addWarehouse DB error:', error); return }
           if (!data) return
           set(state => ({
             warehouses: state.warehouses.map(w => w.id === tempId ? data : w),
@@ -583,7 +583,7 @@ export const useAppStore = create<AppState>((set, get) => ({
     if (!DEMO_MODE) {
       inviteTeamMemberDB(brandId, data.name, data.email, data.role)
         .then(({ error }) => {
-          if (error) console.error('inviteTeamMember DB error:', error)
+          if (error && import.meta.env.DEV) console.error('inviteTeamMember DB error:', error)
         })
         .catch(console.error)
     }

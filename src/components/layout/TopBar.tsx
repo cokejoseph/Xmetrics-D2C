@@ -1,18 +1,18 @@
-import { Bell } from 'lucide-react'
-import { Link, useLocation } from 'react-router-dom'
-import { useAppStore } from '../../stores/appStore'
+import { useLocation } from 'react-router-dom'
 import GlobalSearch from '../shared/GlobalSearch'
+import { NotificationPopover } from '../ui/notification-popover'
+import { useAuthStore } from '../../stores/authStore'
 
 const NO_SEARCH_PREFIXES = ['/settings', '/briefs/history']
 
 export default function TopBar() {
-  const { exceptions } = useAppStore()
-  const unresolved = exceptions.filter(e => e.status === 'UNRESOLVED').length
   const { pathname } = useLocation()
+  const { user } = useAuthStore()
   const showSearch = !NO_SEARCH_PREFIXES.some(p => pathname.startsWith(p))
+  const initials = user?.email?.slice(0, 1).toUpperCase() ?? 'U'
+
   return (
-    <header className="h-14 shrink-0 bg-white/95 dark:bg-[#0f0f12]/95 backdrop-blur-sm border-b border-gray-100 dark:border-white/[0.08] flex items-center px-5 gap-4 z-10">
-      {/* Search */}
+    <header className="h-12 shrink-0 bg-white dark:bg-[#0f0f12] border-b border-gray-100 dark:border-white/[0.08] flex items-center px-5 gap-4 z-10">
       {showSearch && (
         <div className="flex-1 max-w-md">
           <GlobalSearch />
@@ -20,21 +20,9 @@ export default function TopBar() {
       )}
 
       <div className="flex items-center gap-1 ml-auto">
-        {/* Bell */}
-        <Link
-          to="/exceptions"
-          aria-label={`Exceptions ${unresolved > 0 ? `(${unresolved} unresolved)` : '(none)'}`}
-          className="relative p-2 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-50 transition-colors"
-        >
-          <Bell size={18} className={unresolved > 0 ? 'animate-bell-ring' : undefined} />
-          {unresolved > 0 && (
-            <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-red-500 animate-pulse-dot" />
-          )}
-        </Link>
-
-        {/* Avatar */}
-        <div className="ml-1 w-8 h-8 rounded-full bg-gradient-to-br from-brand-600 to-brand-800 flex items-center justify-center text-white text-xs font-semibold shadow-[0_2px_8px_rgba(37,99,235,0.35)] ring-2 ring-transparent hover:ring-brand-300/60 hover:scale-105 transition-all duration-200 cursor-default">
-          R
+        <NotificationPopover />
+        <div className="ml-1 w-8 h-8 rounded-full bg-brand-600 flex items-center justify-center text-white text-xs font-medium cursor-default">
+          {initials}
         </div>
       </div>
     </header>

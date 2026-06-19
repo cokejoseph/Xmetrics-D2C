@@ -9,6 +9,10 @@ export default defineConfig({
     alias: {
       '@': path.resolve(__dirname, './src'),
     },
+    dedupe: ['react', 'react-dom'],
+  },
+  optimizeDeps: {
+    include: ['@radix-ui/react-dropdown-menu', '@radix-ui/react-popover'],
   },
   build: {
     rollupOptions: {

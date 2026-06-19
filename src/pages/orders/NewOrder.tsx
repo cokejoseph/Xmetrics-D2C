@@ -37,10 +37,9 @@ export default function NewOrder() {
   useEffect(() => {
     if (pincode.length !== 6) { setPincodeData(null); return }
     setPincodeLoading(true)
-    lookupPincode(pincode).then(data => {
-      setPincodeData(data)
-      setPincodeLoading(false)
-    })
+    lookupPincode(pincode)
+      .then(data => { setPincodeData(data); setPincodeLoading(false) })
+      .catch(() => { setPincodeData(null); setPincodeLoading(false) })
   }, [pincode])
 
   const addLine = () => setLines(l => [...l, { product_id: '', quantity: 1, unit_price: 0, sku: '' }])

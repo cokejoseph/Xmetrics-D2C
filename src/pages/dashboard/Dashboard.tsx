@@ -79,32 +79,31 @@ export default function Dashboard() {
     <div className="space-y-5 stagger-children">
       {/* Morning Brief Widget */}
       {brief.headline.total_orders > 0 && (
-        <Card className="p-5 bg-gradient-to-br from-[#172554] via-[#1E40AF] to-[#0C4A6E] text-white border-0 overflow-hidden relative">
-          <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,rgba(96,165,250,0.18),transparent_60%)]" />
-          <div className="relative flex items-start justify-between mb-4">
+        <Card className="p-5 border-l-[3px] border-l-brand-600">
+          <div className="flex items-start justify-between mb-3">
             <div>
               <div className="flex items-center gap-2 mb-1">
-                <Zap size={15} className="text-brand-300" />
-                <span className="text-brand-300 text-sm font-medium tracking-tight">Morning Brief · Today</span>
+                <Zap size={13} className="text-brand-600" />
+                <span className="text-[11px] font-medium text-brand-600 uppercase tracking-wider">Today's Brief</span>
               </div>
-              <h2 className="text-xl font-bold tracking-tight">
+              <p className="text-sm font-medium text-gray-900">
                 {brief.headline.total_orders} orders · ₹{Math.round(brief.headline.total_revenue).toLocaleString('en-IN')} revenue
-              </h2>
-              <p className="text-brand-300 text-sm mt-0.5">
+              </p>
+              <p className="text-xs text-gray-400 mt-0.5">
                 Margin {Math.round(brief.headline.true_margin)}% · {brief.headline.rto_count} RTO
               </p>
             </div>
-            <Link to="/briefs" className="text-brand-300 hover:text-white text-sm flex items-center gap-1 transition-colors">
-              Full brief <ChevronRight size={14} />
+            <Link to="/briefs" className="text-xs text-gray-400 hover:text-gray-600 flex items-center gap-0.5 transition-colors">
+              Full brief <ChevronRight size={13} />
             </Link>
           </div>
-          <div className="relative space-y-1.5">
+          <div className="space-y-1.5 border-t border-gray-50 pt-3">
             {brief.actions.slice(0, 2).map((action, i) => (
-              <div key={i} className="flex items-start gap-2 text-sm">
-                <span className={`w-1.5 h-1.5 rounded-full mt-2 shrink-0 ${
+              <div key={i} className="flex items-start gap-2">
+                <span className={`w-1.5 h-1.5 rounded-full mt-1.5 shrink-0 ${
                   action.priority === 'HIGH' ? 'bg-red-400' : action.priority === 'MEDIUM' ? 'bg-amber-400' : 'bg-green-400'
                 }`} />
-                <span className="text-blue-200 leading-5">{action.text}</span>
+                <span className="text-xs text-gray-500 leading-5">{action.text}</span>
               </div>
             ))}
           </div>
@@ -128,11 +127,17 @@ export default function Dashboard() {
       {/* Charts row */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 animate-fade-in-up" style={{ animationDelay: '200ms' }}>
         <Card className="lg:col-span-2 p-5">
-          <h3 className="text-sm font-semibold text-gray-900 mb-4">Revenue & Orders — 14 Days</h3>
+          <div className="mb-4">
+            <h3 className="text-sm font-semibold text-gray-900">Revenue Performance</h3>
+            <p className="text-xs text-gray-400 mt-0.5">14-day revenue and order trend</p>
+          </div>
           <RevenueAreaChart data={revenueChartData} />
         </Card>
         <Card className="p-5">
-          <h3 className="text-sm font-semibold text-gray-900 mb-2">Order Status</h3>
+          <div className="mb-3">
+            <h3 className="text-sm font-semibold text-gray-900">Order Status</h3>
+            <p className="text-xs text-gray-400 mt-0.5">Current fulfillment breakdown</p>
+          </div>
           <StatusDonut data={statusCounts} />
         </Card>
       </div>
@@ -140,12 +145,18 @@ export default function Dashboard() {
       {/* Channel + Exceptions */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 animate-fade-in-up" style={{ animationDelay: '290ms' }}>
         <Card className="p-5">
-          <h3 className="text-sm font-semibold text-gray-900 mb-4">Channel Performance</h3>
+          <div className="mb-4">
+            <h3 className="text-sm font-semibold text-gray-900">Channel Performance</h3>
+            <p className="text-xs text-gray-400 mt-0.5">Orders by sales channel</p>
+          </div>
           <ChannelBarChart data={channelData} />
         </Card>
         <Card className="p-5">
           <div className="flex items-center justify-between mb-4">
-            <h3 className="text-sm font-semibold text-gray-900">Exceptions</h3>
+            <div>
+              <h3 className="text-sm font-semibold text-gray-900">Exceptions</h3>
+              <p className="text-xs text-gray-400 mt-0.5">Unresolved issues</p>
+            </div>
             <Link to="/exceptions" className="text-brand-600 text-xs hover:underline">View all</Link>
           </div>
           <div className="space-y-3">
@@ -169,7 +180,10 @@ export default function Dashboard() {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 animate-fade-in-up" style={{ animationDelay: '370ms' }}>
         <Card className="p-5">
           <div className="flex items-center justify-between mb-4">
-            <h3 className="text-sm font-semibold text-gray-900">Ready to Pack</h3>
+            <div>
+              <h3 className="text-sm font-semibold text-gray-900">Ready to Pack</h3>
+              <p className="text-xs text-gray-400 mt-0.5">Paid & cleared orders</p>
+            </div>
             <Link to="/fulfillment" className="text-brand-600 text-xs hover:underline">Fulfillment →</Link>
           </div>
           {readyToPack.length === 0 ? (
@@ -195,7 +209,10 @@ export default function Dashboard() {
 
         <Card className="p-5">
           <div className="flex items-center justify-between mb-4">
-            <h3 className="text-sm font-semibold text-gray-900">Recent Orders</h3>
+            <div>
+              <h3 className="text-sm font-semibold text-gray-900">Recent Orders</h3>
+              <p className="text-xs text-gray-400 mt-0.5">Latest activity</p>
+            </div>
             <Link to="/orders" className="text-brand-600 text-xs hover:underline">View all</Link>
           </div>
           <div className="space-y-2">
@@ -254,18 +271,18 @@ function KPICard({
 }) {
   const isGood = invertTrend ? !trend.positive : trend.positive
   return (
-    <Card className="p-4">
+    <Card className="p-5">
       <div className="flex items-start justify-between mb-3">
-        <div className="w-9 h-9 rounded-xl bg-brand-50 flex items-center justify-center text-brand-500">
+        <div className="w-9 h-9 rounded-lg bg-brand-50 flex items-center justify-center text-brand-600">
           {icon}
         </div>
-        <div className={`flex items-center gap-0.5 text-xs font-medium ${isGood ? 'text-green-600' : 'text-red-600'}`}>
-          {isGood ? <ArrowUpRight size={13} /> : <ArrowDownRight size={13} />}
+        <span className={`text-xs font-medium flex items-center gap-0.5 ${isGood ? 'text-green-500' : 'text-red-400'}`}>
+          {isGood ? <ArrowUpRight size={11} /> : <ArrowDownRight size={11} />}
           {Math.abs(trend.value)}%
-        </div>
+        </span>
       </div>
-      <p className="text-2xl font-bold text-gray-900">{value}</p>
-      <p className="text-xs text-gray-500 mt-0.5">{title}</p>
+      <p className="text-[11px] font-medium text-gray-400 uppercase tracking-wider mb-1">{title}</p>
+      <p className="text-2xl font-semibold text-gray-900 tracking-tight">{value}</p>
       <p className="text-xs text-gray-400 mt-1">{sub}</p>
     </Card>
   )

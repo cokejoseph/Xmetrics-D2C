@@ -3,30 +3,30 @@ import {
   XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
 } from 'recharts'
 
-const ACCENT = '#3B82F6'
+const ACCENT = '#6B8AB8'
 
-// Semantic colors per fulfilment status — intentionally distinct
+// 4-bucket semantic palette — reduces visual noise in the donut
 const STATUS_COLORS: Record<string, string> = {
-  PENDING:          '#94A3B8',
-  CONFIRMED:        '#3B82F6',
-  PROCESSING:       '#8B5CF6',
-  PACKING:          '#A78BFA',
-  READY_TO_SHIP:    '#F59E0B',
-  READY_FOR_PICKUP: '#F97316',
-  PICKUP_SCHEDULED: '#FB923C',
-  IN_TRANSIT:       '#0EA5E9',
-  SHIPPED:          '#06B6D4',
-  OUT_FOR_DELIVERY: '#10B981',
   DELIVERED:        '#22C55E',
-  RTO_INITIATED:    '#EF4444',
-  RTO_DELIVERED:    '#DC2626',
-  CANCELLED:        '#6B7280',
-  LOST:             '#991B1B',
+  OUT_FOR_DELIVERY: '#34D399',
+  IN_TRANSIT:       '#6B8AB8',
+  SHIPPED:          '#93B5D4',
+  PICKUP_SCHEDULED: '#A5B4FC',
+  READY_FOR_PICKUP: '#C4B5FD',
+  READY_TO_SHIP:    '#FCD34D',
+  PACKING:          '#FDE68A',
+  PROCESSING:       '#94A3B8',
+  CONFIRMED:        '#CBD5E1',
+  PENDING:          '#E2E8F0',
+  RTO_INITIATED:    '#F87171',
+  RTO_DELIVERED:    '#EF4444',
+  CANCELLED:        '#D1D5DB',
+  LOST:             '#9CA3AF',
 }
 
 function getStatusColor(name: string, index: number): string {
   return STATUS_COLORS[name] ?? [
-    ACCENT, '#8B5CF6', '#EC4899', '#F59E0B', '#10B981', '#0EA5E9', '#F97316',
+    ACCENT, '#93B5D4', '#34D399', '#FCD34D', '#F87171', '#A5B4FC', '#94A3B8',
   ][index % 7]
 }
 
@@ -38,16 +38,16 @@ export function RevenueAreaChart({ data }: { data: RevenuePoint[] }) {
       <AreaChart data={data} margin={{ top: 8, right: 8, bottom: 0, left: 0 }}>
         <defs>
           <linearGradient id="revenueGrad" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="5%"  stopColor={ACCENT} stopOpacity={0.18} />
+            <stop offset="5%"  stopColor={ACCENT} stopOpacity={0.1} />
             <stop offset="95%" stopColor={ACCENT} stopOpacity={0} />
           </linearGradient>
         </defs>
-        <CartesianGrid strokeDasharray="3 3" stroke="#EFF6FF" vertical={false} />
+        <CartesianGrid strokeDasharray="3 3" stroke="#F1F5F9" vertical={false} />
         <XAxis dataKey="label" tick={{ fontSize: 11, fill: '#94a3b8' }} axisLine={false} tickLine={false} />
         <YAxis tick={{ fontSize: 11, fill: '#94a3b8' }} axisLine={false} tickLine={false}
           tickFormatter={v => `₹${(v / 1000).toFixed(0)}k`} />
         <Tooltip
-          contentStyle={{ border: 'none', borderRadius: 12, boxShadow: '0 8px 24px rgba(0,0,0,0.1)', fontSize: 12, padding: '8px 12px' }}
+          contentStyle={{ border: '1px solid #e5e7eb', borderRadius: 8, boxShadow: '0 4px 16px rgba(0,0,0,0.06)', fontSize: 12, padding: '6px 10px', background: '#fff' }}
           formatter={(v: unknown) => [`₹${Number(v).toLocaleString('en-IN')}`, 'Revenue']}
         />
         <Area type="monotone" dataKey="revenue" stroke={ACCENT} strokeWidth={2.5}
@@ -61,10 +61,10 @@ export function OrdersBarChart({ data }: { data: Array<{ label: string; orders: 
   return (
     <ResponsiveContainer width="100%" height={200}>
       <BarChart data={data} margin={{ top: 8, right: 8, bottom: 0, left: 0 }}>
-        <CartesianGrid strokeDasharray="3 3" stroke="#EFF6FF" vertical={false} />
+        <CartesianGrid strokeDasharray="3 3" stroke="#F1F5F9" vertical={false} />
         <XAxis dataKey="label" tick={{ fontSize: 11, fill: '#94a3b8' }} axisLine={false} tickLine={false} />
         <YAxis tick={{ fontSize: 11, fill: '#94a3b8' }} axisLine={false} tickLine={false} />
-        <Tooltip contentStyle={{ border: 'none', borderRadius: 12, boxShadow: '0 8px 24px rgba(0,0,0,0.1)', fontSize: 12, padding: '8px 12px' }} />
+        <Tooltip contentStyle={{ border: '1px solid #e5e7eb', borderRadius: 8, boxShadow: '0 4px 16px rgba(0,0,0,0.06)', fontSize: 12, padding: '6px 10px', background: '#fff' }} />
         <Bar dataKey="orders" fill={ACCENT} radius={[5, 5, 0, 0]} />
       </BarChart>
     </ResponsiveContainer>
@@ -77,10 +77,10 @@ export function ChannelBarChart({ data }: { data: ChannelPoint[] }) {
   return (
     <ResponsiveContainer width="100%" height={200}>
       <BarChart data={data} layout="vertical" margin={{ top: 5, right: 12, bottom: 5, left: 64 }}>
-        <CartesianGrid strokeDasharray="3 3" stroke="#EFF6FF" horizontal={false} />
+        <CartesianGrid strokeDasharray="3 3" stroke="#F1F5F9" horizontal={false} />
         <XAxis type="number" tick={{ fontSize: 11, fill: '#94a3b8' }} axisLine={false} tickLine={false} />
         <YAxis dataKey="channel" type="category" tick={{ fontSize: 11, fill: '#64748b' }} axisLine={false} tickLine={false} />
-        <Tooltip contentStyle={{ border: 'none', borderRadius: 12, boxShadow: '0 8px 24px rgba(0,0,0,0.1)', fontSize: 12, padding: '8px 12px' }} />
+        <Tooltip contentStyle={{ border: '1px solid #e5e7eb', borderRadius: 8, boxShadow: '0 4px 16px rgba(0,0,0,0.06)', fontSize: 12, padding: '6px 10px', background: '#fff' }} />
         <Bar dataKey="orders" fill={ACCENT} radius={[0, 5, 5, 0]} />
       </BarChart>
     </ResponsiveContainer>
@@ -139,12 +139,12 @@ export function StatusDonut({ data }: { data: DonutData[] }) {
                 key={entry.name}
                 fill={getStatusColor(entry.name, index)}
                 stroke="white"
-                strokeWidth={2}
+                strokeWidth={1}
               />
             ))}
           </Pie>
           <Tooltip
-            contentStyle={{ border: 'none', borderRadius: 12, boxShadow: '0 8px 24px rgba(0,0,0,0.1)', fontSize: 12, padding: '8px 12px' }}
+            contentStyle={{ border: '1px solid #e5e7eb', borderRadius: 8, boxShadow: '0 4px 16px rgba(0,0,0,0.06)', fontSize: 12, padding: '6px 10px', background: '#fff' }}
             formatter={(v: unknown, name: unknown) => [Number(v), String(name).replace(/_/g, ' ')]}
           />
         </PieChart>

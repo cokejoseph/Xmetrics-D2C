@@ -19,7 +19,7 @@ export default function OrderDetail() {
 
   useEffect(() => {
     if (!order?.shipping_address.pincode) return
-    lookupPincode(order.shipping_address.pincode).then(setPincodeData)
+    lookupPincode(order.shipping_address.pincode).then(setPincodeData).catch(() => setPincodeData(null))
   }, [order?.shipping_address.pincode])
 
   if (!order) {
@@ -71,7 +71,7 @@ export default function OrderDetail() {
         </Link>
         <div className="flex-1">
           <div className="flex items-center gap-3 flex-wrap">
-            <h1 className="text-xl font-semibold text-gray-900">{order.order_number}</h1>
+            <h1 className="text-lg font-semibold text-gray-900">{order.order_number}</h1>
             <ChannelBadge channel={order.channel} />
             <FulfillmentBadge status={order.fulfillment_status} />
             <PaymentBadge status={order.payment_status} />
@@ -88,15 +88,15 @@ export default function OrderDetail() {
           <Card className="p-5">
             <div className="flex items-center gap-2 mb-4">
               <Package size={16} className="text-gray-400" />
-              <h2 className="text-sm font-semibold text-gray-900">Order Items</h2>
+              <h2 className="text-sm font-medium text-gray-900">Order Items</h2>
             </div>
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-gray-100">
-                  <th className="pb-2 text-left text-xs text-gray-500 font-medium">Product</th>
-                  <th className="pb-2 text-right text-xs text-gray-500 font-medium">Qty</th>
-                  <th className="pb-2 text-right text-xs text-gray-500 font-medium">Unit Price</th>
-                  <th className="pb-2 text-right text-xs text-gray-500 font-medium">Total</th>
+                  <th className="pb-2 text-left text-[11px] font-medium text-gray-400 uppercase tracking-wider">Product</th>
+                  <th className="pb-2 text-right text-[11px] font-medium text-gray-400 uppercase tracking-wider">Qty</th>
+                  <th className="pb-2 text-right text-[11px] font-medium text-gray-400 uppercase tracking-wider">Unit Price</th>
+                  <th className="pb-2 text-right text-[11px] font-medium text-gray-400 uppercase tracking-wider">Total</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-50">
@@ -114,8 +114,8 @@ export default function OrderDetail() {
               </tbody>
               <tfoot>
                 <tr className="border-t border-gray-200">
-                  <td colSpan={3} className="pt-3 text-sm font-semibold text-gray-900">Total</td>
-                  <td className="pt-3 text-right text-sm font-bold text-gray-900">₹{(order.gross_amount - order.discount_amount).toLocaleString('en-IN')}</td>
+                  <td colSpan={3} className="pt-3 text-sm font-medium text-gray-900">Total</td>
+                  <td className="pt-3 text-right text-sm font-medium text-gray-900">₹{(order.gross_amount - order.discount_amount).toLocaleString('en-IN')}</td>
                 </tr>
               </tfoot>
             </table>
@@ -123,7 +123,7 @@ export default function OrderDetail() {
 
           {/* P&L Waterfall */}
           <Card className="p-5">
-            <h2 className="text-sm font-semibold text-gray-900 mb-4">P&L Breakdown</h2>
+            <h2 className="text-sm font-medium text-gray-900 mb-4">P&L Breakdown</h2>
             <div className="space-y-2">
               <PLRow label="Gross Revenue" value={revenue} positive />
               {discount > 0 && <PLRow label="Discount" value={-discount} />}
@@ -138,9 +138,9 @@ export default function OrderDetail() {
               }
               {rtoReserve > 0 && <PLRow label="RTO Reserve (5%)" value={-rtoReserve} />}
               <div className="border-t border-gray-200 pt-2 flex justify-between items-center">
-                <span className="text-sm font-semibold text-gray-900">Net Profit</span>
+                <span className="text-sm font-medium text-gray-900">Net Profit</span>
                 <div className="text-right">
-                  <span className={`text-base font-bold ${netProfit >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                  <span className={`text-base font-medium ${netProfit >= 0 ? 'text-green-600' : 'text-red-600'}`}>
                     ₹{Math.round(netProfit).toLocaleString('en-IN')}
                   </span>
                   <span className="text-xs text-gray-500 ml-2">({Math.round(margin)}% margin)</span>
@@ -154,7 +154,7 @@ export default function OrderDetail() {
             <Card className="p-5">
               <div className="flex items-center gap-2 mb-4">
                 <Truck size={16} className="text-gray-400" />
-                <h2 className="text-sm font-semibold text-gray-900">Shipment</h2>
+                <h2 className="text-sm font-medium text-gray-900">Shipment</h2>
               </div>
               <div className="flex items-center justify-between mb-4">
                 <div>
@@ -172,7 +172,7 @@ export default function OrderDetail() {
             <Card className="p-5">
               <div className="flex items-center gap-2 mb-4">
                 <Clock size={16} className="text-gray-400" />
-                <h2 className="text-sm font-semibold text-gray-900">Timeline</h2>
+                <h2 className="text-sm font-medium text-gray-900">Timeline</h2>
               </div>
               <div className="space-y-3">
                 {(order.timeline ?? []).map(event => (
@@ -202,20 +202,20 @@ export default function OrderDetail() {
             <Card className="p-4">
               <div className="flex items-center gap-2 mb-3">
                 <User size={15} className="text-gray-400" />
-                <h2 className="text-sm font-semibold text-gray-900">Customer</h2>
+                <h2 className="text-sm font-medium text-gray-900">Customer</h2>
               </div>
-              <Link to={`/customers/${customer.id}`} className="block hover:bg-gray-50 rounded-xl p-2 -mx-2 transition-colors">
+              <Link to={`/customers/${customer.id}`} className="block hover:bg-gray-50 rounded-md p-2 -mx-2 transition-colors">
                 <p className="text-sm font-medium text-brand-600">{customer.name}</p>
                 <p className="text-xs text-gray-500">{customer.phone}</p>
                 {customer.email && <p className="text-xs text-gray-500">{customer.email}</p>}
               </Link>
               <div className="mt-3 pt-3 border-t border-gray-100 grid grid-cols-2 gap-2 text-center">
                 <div>
-                  <p className="text-base font-bold text-gray-900">{customer.total_orders}</p>
+                  <p className="text-base font-medium text-gray-900">{customer.total_orders}</p>
                   <p className="text-xs text-gray-500">Orders</p>
                 </div>
                 <div>
-                  <p className="text-base font-bold text-gray-900">₹{customer.total_spent.toLocaleString('en-IN')}</p>
+                  <p className="text-base font-medium text-gray-900">₹{customer.total_spent.toLocaleString('en-IN')}</p>
                   <p className="text-xs text-gray-500">Lifetime</p>
                 </div>
               </div>
@@ -226,7 +226,7 @@ export default function OrderDetail() {
           <Card className="p-4">
             <div className="flex items-center gap-2 mb-3">
               <MapPin size={15} className="text-gray-400" />
-              <h2 className="text-sm font-semibold text-gray-900">Shipping Address</h2>
+              <h2 className="text-sm font-medium text-gray-900">Shipping Address</h2>
             </div>
             <p className="text-sm text-gray-700">{order.shipping_address.address}</p>
             <p className="text-sm text-gray-700">
@@ -239,10 +239,10 @@ export default function OrderDetail() {
           <Card className="p-4">
             <div className="flex items-center gap-2 mb-3">
               <ShieldAlert size={15} className="text-gray-400" />
-              <h2 className="text-sm font-semibold text-gray-900">RTO Intelligence</h2>
+              <h2 className="text-sm font-medium text-gray-900">RTO Intelligence</h2>
             </div>
             <div className="flex items-center justify-between mb-3">
-              <span className="text-2xl font-bold text-gray-900">{rtoResult.score}</span>
+              <span className="text-2xl font-light text-gray-900">{rtoResult.score}</span>
               <Badge
                 variant={rtoResult.level === 'HIGH' ? 'danger' : rtoResult.level === 'MEDIUM' ? 'warning' : 'success'}
               >
@@ -280,7 +280,7 @@ export default function OrderDetail() {
           <Card className="p-4">
             <div className="flex items-center gap-2 mb-3">
               <CreditCard size={15} className="text-gray-400" />
-              <h2 className="text-sm font-semibold text-gray-900">Payment</h2>
+              <h2 className="text-sm font-medium text-gray-900">Payment</h2>
             </div>
             <div className="space-y-2 text-sm">
               <div className="flex justify-between">
@@ -337,7 +337,7 @@ function ShipmentTimeline({ status }: { status: string }) {
 
   if (isRTO) {
     return (
-      <div className="flex items-center gap-2 px-3 py-2 bg-red-50 rounded-xl">
+      <div className="flex items-center gap-2 px-3 py-2 bg-red-50 rounded-md">
         <div className="w-2.5 h-2.5 rounded-full bg-red-500 shrink-0" />
         <span className="text-xs font-medium text-red-700">
           {status === 'LOST' ? 'Package Lost' : status === 'RTO_DELIVERED' ? 'RTO Delivered' : 'RTO Initiated — returning to sender'}
@@ -369,7 +369,7 @@ function ShipmentTimeline({ status }: { status: string }) {
               )}
             </div>
             <p className={`text-[10px] text-center mt-1 leading-tight px-0.5 ${
-              current ? 'text-brand-700 font-semibold' : done ? 'text-brand-500' : 'text-gray-400'
+              current ? 'text-brand-700 font-medium' : done ? 'text-brand-500' : 'text-gray-400'
             }`}>
               {SHIP_LABELS[stage]}
             </p>

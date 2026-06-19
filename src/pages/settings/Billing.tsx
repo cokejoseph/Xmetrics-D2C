@@ -2,246 +2,145 @@ import { useState } from 'react'
 import { CheckCircle, Zap } from 'lucide-react'
 import { useAppStore } from '../../stores/appStore'
 import { DEMO_MODE } from '../../lib/supabase'
-import { Card, Button } from '../../components/ui'
+import { Card } from '../../components/ui'
 import { RazorpayCheckout } from '../../components/shared/RazorpayCheckout'
-import type { PlanType } from '../../types'
 import { useSearchParams } from 'react-router-dom'
 
-const PLANS: {
-  key: PlanType
-  name: string
-  price: number
-  period: string
-  orders: number
-  features: string[]
-  highlight?: boolean
-}[] = [
-  {
-    key: 'STARTER',
-    name: 'Starter',
-    price: 2499,
-    period: '/mo',
-    orders: 1000,
-    features: [
-      'Up to 1,000 orders/month',
-      '1 warehouse',
-      '3 team members',
-      'All integrations',
-      'RTO scoring',
-      'Daily briefs',
-    ],
-  },
-  {
-    key: 'GROWTH',
-    name: 'Growth',
-    price: 4999,
-    period: '/mo',
-    orders: 3000,
-    highlight: true,
-    features: [
-      'Up to 3,000 orders/month',
-      '3 warehouses',
-      '5 team members',
-      'All integrations',
-      'Demand forecast',
-      'Daily briefs',
-      'Priority support',
-    ],
-  },
-  {
-    key: 'SCALE',
-    name: 'Scale',
-    price: 9999,
-    period: '/mo',
-    orders: 10000,
-    features: [
-      'Up to 10,000 orders/month',
-      'Unlimited warehouses',
-      '15 team members',
-      'Custom RTO rules',
-      'API access',
-      'Dedicated CSM',
-      'SLA support',
-    ],
-  },
-  {
-    key: 'ENTERPRISE',
-    name: 'Enterprise',
-    price: 0,
-    period: 'custom',
-    orders: 999999,
-    features: [
-      'Unlimited orders',
-      'Unlimited warehouses',
-      'Unlimited team members',
-      'Custom integrations',
-      'On-prem deployment option',
-      'White-label available',
-      'Enterprise SLA',
-    ],
-  },
+const GROWTH_FEATURES = [
+  'Up to 3,000 orders/month',
+  '3 warehouses',
+  '5 team members',
+  'All integrations (Shopify, Shiprocket, WhatsApp)',
+  'RTO scoring & review queue',
+  'Demand forecast & pincode intelligence',
+  'Daily ops briefs (WhatsApp export)',
+  'Priority support',
 ]
+
+const FOUNDING_PRICE_MONTHLY = 2999
+const FOUNDING_PRICE_YEARLY  = 2499
+const ORIGINAL_PRICE         = 4999
 
 export default function Billing() {
   const { currentPlan } = useAppStore()
   const [searchParams] = useSearchParams()
-  const planFromUrl = searchParams.get('plan')?.toUpperCase() as PlanType | null
   const isFoundingAccess = (DEMO_MODE && currentPlan === 'GROWTH') || searchParams.get('founding') === 'true'
-  const defaultSelected = (planFromUrl && PLANS.find(p => p.key === planFromUrl) ? planFromUrl : null) ?? currentPlan ?? 'GROWTH'
-  const [selected, setSelected] = useState<PlanType>(defaultSelected)
+  const [yearly, setYearly] = useState(false)
   const [payStatus, setPayStatus] = useState<{ ok: boolean; message: string } | null>(null)
 
-  const usageOrders = 287
-  const planLimit = PLANS.find(p => p.key === currentPlan)?.orders ?? 500
-  const usagePct = Math.min(100, (usageOrders / planLimit) * 100)
+  const foundingPrice = yearly ? FOUNDING_PRICE_YEARLY : FOUNDING_PRICE_MONTHLY
+  const yearlyTotal   = FOUNDING_PRICE_YEARLY * 12
+  const isOnPlan      = currentPlan === 'GROWTH'
 
-  const FOUNDING_PRICE = 2999
-  const selectedPlan = PLANS.find(p => p.key === selected)!
-  const checkoutPrice = (isFoundingAccess && selected === 'GROWTH') ? FOUNDING_PRICE : selectedPlan.price
+  const usageOrders = 287
+  const planLimit   = 3000
+  const usagePct    = Math.min(100, (usageOrders / planLimit) * 100)
 
   return (
-    <div className="space-y-6">
-      <h1 className="text-xl font-semibold text-gray-900">Billing & Plans</h1>
+    <div className="space-y-6 max-w-2xl">
+      <h1 className="text-lg font-semibold text-gray-900">Billing</h1>
 
-      {/* Founding access banner */}
-      {isFoundingAccess && (
-        <div className="flex items-center gap-3 px-4 py-3 bg-amber-50 border border-amber-200 rounded-xl">
-          <Zap size={16} className="text-amber-600 shrink-0" />
+      {/* Current plan card */}
+      <Card className="p-6">
+        <div className="flex items-start justify-between mb-5">
           <div>
-            <p className="text-sm font-semibold text-amber-900">Founding Access — Growth plan at ₹2,999/mo for life</p>
-            <p className="text-xs text-amber-700 mt-0.5">Exclusive founder pricing locked in permanently. Regular price is ₹4,999/mo.</p>
+            <div className="flex items-center gap-2 mb-1">
+              <p className="text-sm font-medium text-gray-900">Growth Plan</p>
+              {isOnPlan && (
+                <span className="text-[10px] font-medium text-green-600 bg-green-50 border border-green-100 px-2 py-0.5 rounded">
+                  Current plan
+                </span>
+              )}
+              {isFoundingAccess && (
+                <span className="text-[10px] font-medium text-amber-600 bg-amber-50 border border-amber-100 px-2 py-0.5 rounded flex items-center gap-1">
+                  <Zap size={9} /> Founding rate
+                </span>
+              )}
+            </div>
+            <p className="text-xs text-gray-400">Locked in for life · Regular price ₹{ORIGINAL_PRICE.toLocaleString('en-IN')}/mo</p>
+          </div>
+
+          {/* Billing toggle */}
+          <div className="flex items-center gap-2">
+            <span className={`text-xs transition-colors ${!yearly ? 'text-gray-700' : 'text-gray-400'}`}>Monthly</span>
+            <button
+              onClick={() => setYearly(y => !y)}
+              className={`relative w-9 h-5 rounded-full transition-colors duration-200 focus:outline-none ${yearly ? 'bg-brand-600' : 'bg-gray-200'}`}
+            >
+              <span className={`absolute top-0.5 left-0.5 w-4 h-4 rounded-full bg-white shadow transition-transform duration-200 ${yearly ? 'translate-x-4' : 'translate-x-0'}`} />
+            </button>
+            <span className={`text-xs transition-colors ${yearly ? 'text-gray-700' : 'text-gray-400'}`}>
+              Yearly
+              {yearly && <span className="ml-1 text-green-600">· save ₹500/mo</span>}
+            </span>
           </div>
         </div>
-      )}
 
-      {/* Current usage */}
-      <Card className="p-5 max-w-md">
-        <h2 className="text-sm font-semibold text-gray-900 mb-3">Current Usage</h2>
-        <div className="space-y-2">
-          <div className="flex items-center justify-between text-sm">
-            <span className="text-gray-600">Orders this month</span>
-            <span className="font-semibold text-gray-900">{usageOrders} / {planLimit.toLocaleString()}</span>
+        {/* Price */}
+        <div className="mb-5">
+          <div className="flex items-end gap-2">
+            <span className="text-3xl font-light text-gray-900">₹{foundingPrice.toLocaleString('en-IN')}</span>
+            <span className="text-sm text-gray-400 mb-0.5">/mo</span>
+            <span className="text-sm text-gray-300 line-through mb-0.5">₹{ORIGINAL_PRICE.toLocaleString('en-IN')}</span>
           </div>
-          <div className="w-full bg-gray-100 rounded-full h-2">
+          {yearly && (
+            <p className="text-xs text-gray-400 mt-1">= ₹{yearlyTotal.toLocaleString('en-IN')} billed annually</p>
+          )}
+        </div>
+
+        {/* Features */}
+        <div className="grid sm:grid-cols-2 gap-2 mb-6">
+          {GROWTH_FEATURES.map((f, i) => (
+            <div key={i} className="flex items-start gap-2">
+              <CheckCircle size={12} className="mt-0.5 text-green-400 shrink-0" />
+              <span className="text-xs text-gray-500">{f}</span>
+            </div>
+          ))}
+        </div>
+
+        {/* CTA */}
+        {!isOnPlan && (
+          <div className="space-y-2">
+            {payStatus && (
+              <p className={`text-xs font-medium ${payStatus.ok ? 'text-green-600' : 'text-red-500'}`}>
+                {payStatus.message}
+              </p>
+            )}
+            <RazorpayCheckout
+              planName="Growth (Founding)"
+              amountInRupees={foundingPrice}
+              onSuccess={id => setPayStatus({ ok: true, message: `Payment successful — ${id}` })}
+              onError={err => setPayStatus({ ok: false, message: err })}
+            />
+          </div>
+        )}
+        {isOnPlan && (
+          <p className="text-xs text-gray-400">You're on the Growth Founding plan. No action needed.</p>
+        )}
+      </Card>
+
+      {/* Usage */}
+      <Card className="p-5">
+        <p className="text-[11px] font-medium text-gray-400 uppercase tracking-wider mb-4">Usage this month</p>
+        <div className="space-y-3">
+          <div className="flex items-center justify-between text-sm">
+            <span className="text-gray-500">Orders</span>
+            <span className="font-medium text-gray-700">{usageOrders.toLocaleString()} / {planLimit.toLocaleString()}</span>
+          </div>
+          <div className="w-full bg-gray-100 rounded-full h-1.5">
             <div
-              className={`h-2 rounded-full transition-all ${usagePct > 80 ? 'bg-red-500' : usagePct > 60 ? 'bg-amber-500' : 'bg-green-500'}`}
+              className={`h-1.5 rounded-full transition-all ${usagePct > 80 ? 'bg-red-400' : usagePct > 60 ? 'bg-amber-400' : 'bg-brand-500'}`}
               style={{ width: `${usagePct}%` }}
             />
           </div>
-          <p className="text-xs text-gray-400">{Math.round(usagePct)}% of plan limit used</p>
+          <p className="text-xs text-gray-400">{Math.round(usagePct)}% of monthly limit</p>
         </div>
       </Card>
 
-      {/* Plan cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
-        {PLANS.map(plan => {
-          const isCurrent = plan.key === currentPlan
-          const isSelected = plan.key === selected
-
-          return (
-            <div
-              key={plan.key}
-              onClick={() => !isCurrent && setSelected(plan.key)}
-              className={`relative rounded-2xl border-2 p-5 cursor-pointer transition-all ${
-                isCurrent
-                  ? 'border-green-500 bg-green-50/40'
-                  : isSelected
-                    ? 'border-brand-600 bg-brand-50 shadow-[0_0_0_3px_rgba(37,99,235,0.12)]'
-                    : 'border-gray-200 bg-white hover:border-gray-300'
-              }`}
-            >
-              {/* Selected checkmark */}
-              {isSelected && !isCurrent && (
-                <div className="absolute top-3 right-3 w-5 h-5 rounded-full bg-brand-600 flex items-center justify-center">
-                  <CheckCircle size={12} className="text-white" />
-                </div>
-              )}
-
-              {plan.highlight && !isSelected && !isCurrent && (
-                <div className="absolute -top-2.5 left-1/2 -translate-x-1/2 px-2.5 py-0.5 bg-brand-600 text-white text-[10px] font-semibold rounded-full whitespace-nowrap">
-                  MOST POPULAR
-                </div>
-              )}
-              {isSelected && !isCurrent && (
-                <div className="absolute -top-2.5 left-1/2 -translate-x-1/2 px-2.5 py-0.5 bg-brand-600 text-white text-[10px] font-semibold rounded-full whitespace-nowrap">
-                  SELECTED
-                </div>
-              )}
-              {isCurrent && (
-                <div className="absolute -top-2.5 left-1/2 -translate-x-1/2 px-2.5 py-0.5 bg-green-600 text-white text-[10px] font-semibold rounded-full whitespace-nowrap">
-                  CURRENT PLAN
-                </div>
-              )}
-
-              <h3 className="text-sm font-bold text-gray-900 mb-1 mt-1">{plan.name}</h3>
-              <div className="mb-4">
-                {plan.price === 0 ? (
-                  <span className="text-xl font-bold text-gray-900">Custom</span>
-                ) : isFoundingAccess && plan.key === 'GROWTH' ? (
-                  <div>
-                    <div className="flex items-end gap-1.5">
-                      <span className="text-2xl font-bold text-amber-600">₹{FOUNDING_PRICE.toLocaleString('en-IN')}</span>
-                      <span className="text-sm text-gray-500">/mo</span>
-                    </div>
-                    <div className="flex items-center gap-1.5 mt-0.5">
-                      <span className="text-xs text-gray-400 line-through">₹{plan.price.toLocaleString('en-IN')}/mo</span>
-                      <span className="text-[10px] font-semibold text-amber-700 bg-amber-100 px-1.5 py-0.5 rounded">FOUNDER</span>
-                    </div>
-                  </div>
-                ) : (
-                  <>
-                    <span className="text-2xl font-bold text-gray-900">₹{plan.price.toLocaleString('en-IN')}</span>
-                    <span className="text-sm text-gray-500">{plan.period}</span>
-                  </>
-                )}
-              </div>
-
-              <ul className="space-y-1.5 mb-2">
-                {plan.features.map((f, i) => (
-                  <li key={i} className="flex items-start gap-2 text-xs text-gray-600">
-                    <CheckCircle size={12} className={`mt-0.5 shrink-0 ${isCurrent ? 'text-green-500' : isSelected ? 'text-brand-600' : 'text-green-500'}`} />
-                    {f}
-                  </li>
-                ))}
-              </ul>
-            </div>
-          )
-        })}
-      </div>
-
-      {selected !== currentPlan && (
-        <div className="space-y-2">
-          {payStatus && (
-            <p className={`text-sm font-medium ${payStatus.ok ? 'text-green-600' : 'text-red-600'}`}>
-              {payStatus.message}
-            </p>
-          )}
-
-          {selectedPlan.key === 'ENTERPRISE' ? (
-            <Button variant="secondary" onClick={() => window.open('mailto:hello@xmetrics.app?subject=Enterprise Plan Enquiry', '_blank')}>
-              Contact us for Enterprise
-            </Button>
-          ) : (
-            <RazorpayCheckout
-              planName={isFoundingAccess && selected === 'GROWTH' ? 'Growth (Founding)' : selectedPlan.name}
-              amountInRupees={checkoutPrice}
-              onSuccess={(paymentId) =>
-                setPayStatus({ ok: true, message: `Payment successful! ID: ${paymentId}` })
-              }
-              onError={(err) =>
-                setPayStatus({ ok: false, message: err })
-              }
-            />
-          )}
-        </div>
-      )}
-
-      {/* Invoice history placeholder */}
-      <Card className="p-5 max-w-2xl">
-        <h2 className="text-sm font-semibold text-gray-900 mb-3">Invoice History</h2>
-        <div className="text-sm text-gray-400 text-center py-6">
-          No invoices yet — billing starts when you upgrade to a paid plan.
-        </div>
+      {/* Invoices */}
+      <Card className="p-5">
+        <p className="text-[11px] font-medium text-gray-400 uppercase tracking-wider mb-4">Invoice History</p>
+        <p className="text-sm text-gray-400 text-center py-4">No invoices yet.</p>
       </Card>
     </div>
   )
