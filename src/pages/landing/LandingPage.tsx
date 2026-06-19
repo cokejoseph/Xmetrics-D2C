@@ -692,10 +692,6 @@ export default function LandingPage() {
             </Link>
           </div>
           <div className="flex items-center gap-3">
-            <Link to="/login"
-              className={`hidden md:inline-flex text-sm font-medium transition-colors ${scrolled ? 'text-gray-600 hover:text-gray-900' : 'text-white/80 hover:text-white'}`}>
-              Try demo
-            </Link>
             <Link to="/checkout"
               className={`text-sm font-semibold px-4 py-2 rounded-xl transition-all duration-200 hover:-translate-y-px ${
                 scrolled
