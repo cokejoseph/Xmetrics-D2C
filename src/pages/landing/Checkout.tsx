@@ -16,7 +16,7 @@ const PLAN_DATA: Record<string, {
 }> = {
   STARTER: {
     name: 'Starter',
-    monthlyPrice: 2499,
+    monthlyPrice: 999,
     badge: null,
     features: [
       'Up to 1,000 orders / month',
@@ -45,7 +45,7 @@ const PLAN_DATA: Record<string, {
   },
   SCALE: {
     name: 'Scale',
-    monthlyPrice: 9999,
+    monthlyPrice: 7999,
     badge: null,
     features: [
       'Up to 10,000 orders / month',

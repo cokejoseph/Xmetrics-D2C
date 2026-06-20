@@ -91,6 +91,26 @@ export default function Onboarding() {
 
     // Bootstrap the app state from Supabase
     await bootstrap(currentUser.id)
+
+    // If the user paid on the landing page before signing up, activate their subscription now
+    // that we have a brand_id. The payment details were saved to sessionStorage by FoundingAccess.tsx.
+    const pendingPayment = sessionStorage.getItem('xmetrics-pending-payment')
+    if (pendingPayment && supabase) {
+      try {
+        const paymentData = JSON.parse(pendingPayment) as {
+          razorpay_payment_id: string
+          razorpay_order_id: string
+          razorpay_signature: string
+        }
+        await supabase.functions.invoke('subscription-verify-payment', {
+          body: { ...paymentData, brand_id: brand.id },
+        })
+      } catch {
+        // Non-blocking: Razorpay webhook will activate the subscription as fallback.
+      }
+      sessionStorage.removeItem('xmetrics-pending-payment')
+    }
+
     sessionStorage.removeItem('xmetrics-pending-plan')
     sessionStorage.removeItem('xmetrics-founding')
     navigate(afterNav)

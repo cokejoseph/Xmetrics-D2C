@@ -52,6 +52,9 @@ export default function FoundingAccess() {
         amount: FOUNDING_PRICE * 100,
         currency: 'INR',
         receipt: `founding_${Date.now()}`,
+        plan: 'GROWTH',
+        billing_cycle: 'MONTHLY',
+        email: email.trim(),
       })
 
       const rzp = new window.Razorpay({
@@ -64,10 +67,22 @@ export default function FoundingAccess() {
         prefill: { name: name.trim() || undefined, email: email.trim() },
         theme: { color: '#2563EB' },
         modal: { ondismiss: () => setLoading(false) },
-        handler: async () => {
+        handler: async (response: {
+          razorpay_payment_id: string
+          razorpay_order_id: string
+          razorpay_signature: string
+        }) => {
+          // Save payment details to sessionStorage so Onboarding can activate the subscription
+          // once the brand is created and we have a brand_id
+          sessionStorage.setItem('xmetrics-pending-payment', JSON.stringify({
+            razorpay_payment_id: response.razorpay_payment_id,
+            razorpay_order_id: response.razorpay_order_id,
+            razorpay_signature: response.razorpay_signature,
+          }))
+          sessionStorage.setItem('xmetrics-pending-plan', 'GROWTH')
+          sessionStorage.setItem('xmetrics-founding', 'true')
           setLoading(false)
           setDone(true)
-          // Redirect to signup with founding params after short delay
           setTimeout(() => {
             navigate(`/signup?plan=GROWTH&founding=true&email=${encodeURIComponent(email.trim())}`)
           }, 2000)

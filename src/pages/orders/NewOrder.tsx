@@ -17,7 +17,7 @@ interface LineItem {
 
 export default function NewOrder() {
   const navigate = useNavigate()
-  const { products, customers, addOrder } = useAppStore()
+  const { products, customers, currentBrand, addOrder } = useAppStore()
 
   const [customerName, setCustomerName] = useState('')
   const [customerPhone, setCustomerPhone] = useState('')
@@ -56,7 +56,7 @@ export default function NewOrder() {
   const shipping = 60
   const total = subtotal + shipping
 
-  const brandAov = 450
+  const brandAov = currentBrand?.settings?.average_order_value ?? 450
   const isFirstOrder = !customers.some(c => c.phone === customerPhone)
   const rtoPreview = pincode.length === 6 && !pincodeLoading
     ? calculateRTOScore({
@@ -76,11 +76,11 @@ export default function NewOrder() {
     e.preventDefault()
     if (lines.some(l => !l.product_id)) return
     setSubmitting(true)
-    const order = addOrder({
+    const order = await addOrder({
       customer_id: null,
       channel,
       payment_method: paymentMethod,
-      payment_status: paymentMethod === 'COD' ? 'AWAITING_PAYMENT' : 'PAID',
+      payment_status: 'AWAITING_PAYMENT',
       fulfillment_status: 'CONFIRMED',
       rto_review_status: rtoPreview?.level === 'HIGH' ? 'PENDING' : 'NOT_REQUIRED',
       gross_amount: total,

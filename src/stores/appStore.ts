@@ -76,7 +76,7 @@ interface AppState {
   bulkHold: (ids: string[]) => void
   startPacking: (ids: string[]) => void
   generateLabels: (ids: string[]) => { results: ReturnType<typeof mockGenerateLabels>['results']; merged_pdf_url: string }
-  addOrder: (order: Omit<Order, 'id' | 'brand_id' | 'created_at' | 'order_number'>) => Order
+  addOrder: (order: Omit<Order, 'id' | 'brand_id' | 'created_at' | 'order_number'>) => Promise<Order>
   resolveException: (id: string) => void
   dismissException: (id: string) => void
   restoreException: (id: string, previousStatus: string) => void
@@ -132,6 +132,42 @@ function makeDemoSubscription(plan: PlanType): SubscriptionData {
     integrations_limit: lim.integrations,
     at_integration_limit: lim.integrations !== null && integrations_used >= lim.integrations,
     at_capacity:        false,
+  }
+}
+
+// ─── Live subscription mapper ──────────────────────────────────────────────
+
+function buildSubscriptionData(
+  sub: Record<string, unknown>,
+  teamCount: number,
+  intCount: number
+): SubscriptionData {
+  const ordersUsed   = (sub.orders_this_month as number) ?? 0
+  const ordersLimit  = (sub.max_orders_per_month as number | null) ?? null
+  const teamLimit    = (sub.max_team_members as number | null) ?? null
+  const intLimit     = (sub.max_integrations as number | null) ?? null
+  const ordersPct    = ordersLimit ? Math.round(ordersUsed / ordersLimit * 100) : 0
+  const atOrderLimit = ordersLimit !== null && ordersUsed >= ordersLimit
+  const atTeamLimit  = teamLimit !== null && teamCount >= teamLimit
+  const atIntLimit   = intLimit !== null && intCount >= intLimit
+  return {
+    plan_type:           (sub.plan_type as PlanType) ?? 'STARTER',
+    status:              (sub.status as SubscriptionData['status']) ?? 'ACTIVE',
+    feature_flags:       (sub.feature_flags as Record<string, boolean>) ?? {},
+    billing_start_date:  (sub.billing_start_date as string) ?? '',
+    next_renewal_date:   (sub.next_renewal_date as string | null) ?? null,
+    plan_amount_paise:   (sub.plan_amount_paise as number) ?? 0,
+    orders_used:         ordersUsed,
+    orders_limit:        ordersLimit,
+    orders_pct:          ordersPct,
+    at_order_limit:      atOrderLimit,
+    team_used:           teamCount,
+    team_limit:          teamLimit,
+    at_team_limit:       atTeamLimit,
+    integrations_used:   intCount,
+    integrations_limit:  intLimit,
+    at_integration_limit: atIntLimit,
+    at_capacity:         atOrderLimit || atTeamLimit || atIntLimit,
   }
 }
 
@@ -203,6 +239,7 @@ export const useAppStore = create<AppState>((set, get) => ({
         exceptions,
         integrations,
         teamMembers,
+        subData,
       ] = await Promise.all([
         getWarehouses(brandId),
         getProducts(brandId),
@@ -212,9 +249,21 @@ export const useAppStore = create<AppState>((set, get) => ({
         getExceptions(brandId),
         getIntegrations(brandId),
         getTeamMembers(brandId),
+        supabase!
+          .from('subscriptions')
+          .select('*')
+          .eq('brand_id', brandId)
+          .in('status', ['ACTIVE', 'PAYMENT_FAILED'])
+          .maybeSingle()
+          .then(r => r.data),
       ])
 
       const primaryWarehouse = warehouses.find(w => w.is_primary) ?? warehouses[0] ?? null
+      const connectedIntCount = integrations.filter(i => i.status === 'CONNECTED').length
+      const subscription = subData
+        ? buildSubscriptionData(subData as Record<string, unknown>, teamMembers.length, connectedIntCount)
+        : null
+      const currentPlan = subData?.plan_type as PlanType ?? 'STARTER'
 
       set({
         currentBrand: brand,
@@ -228,8 +277,8 @@ export const useAppStore = create<AppState>((set, get) => ({
         warehouses,
         teamMembers,
         integrations,
-        currentPlan: 'GROWTH',
-        subscription: null,
+        currentPlan,
+        subscription,
         isLoading: false,
         bootstrapError: null,
       })
@@ -437,19 +486,91 @@ export const useAppStore = create<AppState>((set, get) => ({
 
   // ─── Manual Order Creation ─────────────────────────────────────────────────
 
-  addOrder: (orderData) => {
+  addOrder: async (orderData) => {
     const brandId = get().currentBrand?.id ?? 'demo'
     const num = String(Math.floor(Math.random() * 9000) + 1000)
+    const newId = `ord-${Date.now()}`
+
+    // Build order with null customer_id; may be patched below
     const newOrder: Order = {
       ...orderData,
-      id: `ord-${Date.now()}`,
+      customer_id: null,
+      id: newId,
       brand_id: brandId,
       order_number: `#XM-${num}`,
       created_at: new Date().toISOString(),
     }
-    // Patch item order_ids
-    newOrder.items = (newOrder.items ?? []).map(item => ({ ...item, order_id: newOrder.id }))
+    newOrder.items = (newOrder.items ?? []).map(item => ({ ...item, order_id: newId }))
+
+    // Optimistic add immediately so navigation feels instant
     set(state => ({ orders: [newOrder, ...state.orders] }))
+
+    // In live mode, upsert customer by phone and link the order
+    if (!DEMO_MODE && supabase) {
+      const phone = orderData.shipping_address.phone
+      if (phone) {
+        const orderAmount = orderData.gross_amount
+        const { data: existing } = await supabase
+          .from('customers')
+          .select('id, total_orders, total_spent')
+          .eq('brand_id', brandId)
+          .eq('phone', phone)
+          .maybeSingle()
+
+        let customerId: string | null = null
+
+        if (existing) {
+          await supabase
+            .from('customers')
+            .update({
+              total_orders: existing.total_orders + 1,
+              total_spent: existing.total_spent + orderAmount,
+            })
+            .eq('id', existing.id)
+          customerId = existing.id
+          set(state => ({
+            customers: state.customers.map(c =>
+              c.id === existing.id
+                ? { ...c, total_orders: c.total_orders + 1, total_spent: c.total_spent + orderAmount }
+                : c
+            ),
+          }))
+        } else {
+          const { data: newCustomer } = await supabase
+            .from('customers')
+            .insert({
+              brand_id: brandId,
+              name: orderData.shipping_address.name ?? 'Unknown',
+              phone,
+              email: null,
+              address: orderData.shipping_address.address,
+              city: orderData.shipping_address.city,
+              state: orderData.shipping_address.state,
+              pincode: orderData.shipping_address.pincode,
+              total_orders: 1,
+              total_spent: orderAmount,
+              tags: [],
+            })
+            .select('*')
+            .single()
+          if (newCustomer) {
+            customerId = newCustomer.id as string
+            set(state => ({ customers: [...state.customers, newCustomer as unknown as Customer] }))
+          }
+        }
+
+        if (customerId) {
+          set(state => ({
+            orders: state.orders.map(o =>
+              o.id === newId ? { ...o, customer_id: customerId } : o
+            ),
+          }))
+          // Return order with resolved customer_id
+          return { ...newOrder, customer_id: customerId }
+        }
+      }
+    }
+
     return newOrder
   },
 

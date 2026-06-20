@@ -1,6 +1,7 @@
 import { Component } from 'react'
 import type { ReactNode } from 'react'
 import { AlertTriangle } from 'lucide-react'
+import { captureError } from '../../lib/sentry'
 
 interface Props {
   children: ReactNode
@@ -22,6 +23,7 @@ export default class ErrorBoundary extends Component<Props, State> {
   }
 
   componentDidCatch(error: Error) {
+    captureError(error, { component: 'ErrorBoundary' })
     if (import.meta.env.DEV) console.error('ErrorBoundary caught:', error)
   }
 

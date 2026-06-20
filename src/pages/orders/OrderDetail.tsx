@@ -14,9 +14,13 @@ import type { PincodeResult } from '../../lib/pincodeService'
 
 export default function OrderDetail() {
   const { id } = useParams<{ id: string }>()
-  const { orders, products, customers } = useAppStore()
-  const order = orders.find(o => o.id === id)
+  const { orders, products, customers, currentBrand, updateOrder } = useAppStore()
   const [pincodeData, setPincodeData] = useState<PincodeResult | null>(null)
+
+  // All hooks must be called unconditionally before any early returns
+  const canViewFinancials = useCanViewFinancials()
+
+  const order = orders.find(o => o.id === id)
 
   useEffect(() => {
     if (!order?.shipping_address.pincode) return
@@ -34,6 +38,7 @@ export default function OrderDetail() {
 
   const customer = order.customer ?? customers.find(c => c.id === order.customer_id)
   const items = order.items ?? []
+  const brandAov = currentBrand?.settings?.average_order_value ?? 450
 
   // P&L waterfall
   const revenue = order.gross_amount
@@ -54,7 +59,7 @@ export default function OrderDetail() {
     pincode: order.shipping_address.pincode,
     customer_id: order.customer_id,
     order_value: order.gross_amount,
-    brand_aov: 450,
+    brand_aov: brandAov,
     is_first_order: (customer?.total_orders ?? 1) <= 1,
     has_prior_rto: customer?.tags?.includes('rto-history') ?? false,
     address_complete: !!(order.shipping_address.address && order.shipping_address.pincode),
@@ -62,7 +67,9 @@ export default function OrderDetail() {
   })
 
   const shipment = order.shipments?.[0]
-  const canViewFinancials = useCanViewFinancials()
+  const canMarkPaid = order.payment_status === 'AWAITING_PAYMENT'
+    && order.payment_method !== 'COD'
+    && order.channel === 'MANUAL'
 
   return (
     <div className="space-y-4">
@@ -305,6 +312,16 @@ export default function OrderDetail() {
                 <span className="text-gray-500">Status</span>
                 <PaymentBadge status={order.payment_status} />
               </div>
+              {canMarkPaid && (
+                <div className="pt-2 border-t border-gray-100">
+                  <button
+                    onClick={() => updateOrder(order.id, { payment_status: 'PAID' })}
+                    className="w-full text-sm font-medium text-emerald-700 bg-emerald-50 hover:bg-emerald-100 rounded-lg py-2 transition-colors"
+                  >
+                    Mark as Paid
+                  </button>
+                </div>
+              )}
             </div>
           </Card>
         </div>

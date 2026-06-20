@@ -18,7 +18,7 @@ export function useCurrentRole(): Role {
   if (!user) return 'VIEWER'
 
   const member = teamMembers.find(m => m.email === user.email || m.user_id === user.id)
-  return member?.role ?? 'ADMIN'
+  return member?.role ?? 'VIEWER'
 }
 
 export function useCanViewFinancials(): boolean {
