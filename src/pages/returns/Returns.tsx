@@ -19,98 +19,6 @@ import {
 import { DEMO_MODE } from '../../lib/supabase'
 import type { Return, ReturnStatus, ReturnCondition, ReturnReason } from '../../types'
 
-// ── Demo seed data ────────────────────────────────────────────────────────────
-
-const DEMO_RETURNS: Return[] = [
-  {
-    id: 'ret-demo-1', brand_id: 'brand-1', order_id: 'ord-demo-1', customer_id: 'cust-1',
-    return_reason: 'damaged', customer_comment: 'Packaging was torn on arrival',
-    status: 'PENDING_APPROVAL', denial_reason: null, return_condition: null,
-    return_eligible_for_resale: false, return_window_days: 30,
-    return_initiation_date: new Date(Date.now() - 2 * 86400000).toISOString(),
-    return_approved_date: null, return_approved_by: null, return_approval_notes: null,
-    shiprocket_awb_number: null, shiprocket_order_id: null, shiprocket_label_url: null, shiprocket_error: null,
-    expected_return_delivery: null, actual_return_received_date: null,
-    refund_amount: 1499, refund_method: 'RAZORPAY', razorpay_refund_id: null, cod_refund_status: null,
-    inventory_updated_at: null, created_at: new Date(Date.now() - 2 * 86400000).toISOString(),
-    updated_at: new Date(Date.now() - 2 * 86400000).toISOString(),
-    order: { id: 'ord-demo-1', order_number: '#XM-1042' } as Return['order'],
-    customer: { id: 'cust-1', name: 'Anjali Sharma', phone: '9876543210', email: 'anjali@example.com' } as Return['customer'],
-  },
-  {
-    id: 'ret-demo-2', brand_id: 'brand-1', order_id: 'ord-demo-2', customer_id: 'cust-2',
-    return_reason: 'wrong_item', customer_comment: null,
-    status: 'APPROVED', denial_reason: null, return_condition: null,
-    return_eligible_for_resale: false, return_window_days: 30,
-    return_initiation_date: new Date(Date.now() - 4 * 86400000).toISOString(),
-    return_approved_date: new Date(Date.now() - 1 * 86400000).toISOString(),
-    return_approved_by: 'ops@xmetrics.app', return_approval_notes: null,
-    shiprocket_awb_number: null, shiprocket_order_id: null, shiprocket_label_url: null, shiprocket_error: null,
-    expected_return_delivery: null, actual_return_received_date: null,
-    refund_amount: 2199, refund_method: 'RAZORPAY', razorpay_refund_id: null, cod_refund_status: null,
-    inventory_updated_at: null, created_at: new Date(Date.now() - 4 * 86400000).toISOString(),
-    updated_at: new Date(Date.now() - 1 * 86400000).toISOString(),
-    order: { id: 'ord-demo-2', order_number: '#XM-1038' } as Return['order'],
-    customer: { id: 'cust-2', name: 'Rohan Verma', phone: '9123456789', email: null } as Return['customer'],
-  },
-  {
-    id: 'ret-demo-3', brand_id: 'brand-1', order_id: 'ord-demo-3', customer_id: 'cust-3',
-    return_reason: 'defective', customer_comment: 'Stopped working after 2 days',
-    status: 'IN_TRANSIT', denial_reason: null, return_condition: null,
-    return_eligible_for_resale: false, return_window_days: 30,
-    return_initiation_date: new Date(Date.now() - 7 * 86400000).toISOString(),
-    return_approved_date: new Date(Date.now() - 6 * 86400000).toISOString(),
-    return_approved_by: 'ops@xmetrics.app', return_approval_notes: null,
-    shiprocket_awb_number: 'SR1234567890001', shiprocket_order_id: 'SR-ORD-001', shiprocket_label_url: '#',
-    shiprocket_error: null,
-    expected_return_delivery: new Date(Date.now() + 2 * 86400000).toISOString(),
-    actual_return_received_date: null,
-    refund_amount: 3499, refund_method: 'RAZORPAY', razorpay_refund_id: null, cod_refund_status: null,
-    inventory_updated_at: null, created_at: new Date(Date.now() - 7 * 86400000).toISOString(),
-    updated_at: new Date(Date.now() - 5 * 86400000).toISOString(),
-    order: { id: 'ord-demo-3', order_number: '#XM-1031' } as Return['order'],
-    customer: { id: 'cust-3', name: 'Priya Nair', phone: '9988776655', email: 'priya@example.com' } as Return['customer'],
-  },
-  {
-    id: 'ret-demo-4', brand_id: 'brand-1', order_id: 'ord-demo-4', customer_id: 'cust-4',
-    return_reason: 'changed_mind', customer_comment: null,
-    status: 'RECEIVED', denial_reason: null, return_condition: null,
-    return_eligible_for_resale: false, return_window_days: 30,
-    return_initiation_date: new Date(Date.now() - 12 * 86400000).toISOString(),
-    return_approved_date: new Date(Date.now() - 11 * 86400000).toISOString(),
-    return_approved_by: 'ops@xmetrics.app', return_approval_notes: null,
-    shiprocket_awb_number: 'SR9876543210002', shiprocket_order_id: 'SR-ORD-002', shiprocket_label_url: '#',
-    shiprocket_error: null,
-    expected_return_delivery: new Date(Date.now() - 1 * 86400000).toISOString(),
-    actual_return_received_date: new Date(Date.now() - 1 * 86400000).toISOString(),
-    refund_amount: 899, refund_method: 'COD_REVERSAL', razorpay_refund_id: null, cod_refund_status: 'PENDING',
-    inventory_updated_at: null, created_at: new Date(Date.now() - 12 * 86400000).toISOString(),
-    updated_at: new Date(Date.now() - 1 * 86400000).toISOString(),
-    order: { id: 'ord-demo-4', order_number: '#XM-1025' } as Return['order'],
-    customer: { id: 'cust-4', name: 'Kiran Mehta', phone: '8765432109', email: null } as Return['customer'],
-  },
-  {
-    id: 'ret-demo-5', brand_id: 'brand-1', order_id: 'ord-demo-5', customer_id: 'cust-5',
-    return_reason: 'size_issue', customer_comment: 'Size runs too small',
-    status: 'COMPLETED', denial_reason: null, return_condition: 'GOOD',
-    return_eligible_for_resale: true, return_window_days: 30,
-    return_initiation_date: new Date(Date.now() - 20 * 86400000).toISOString(),
-    return_approved_date: new Date(Date.now() - 18 * 86400000).toISOString(),
-    return_approved_by: 'ops@xmetrics.app', return_approval_notes: 'Good condition, restocked',
-    shiprocket_awb_number: 'SR1122334455003', shiprocket_order_id: 'SR-ORD-003', shiprocket_label_url: '#',
-    shiprocket_error: null,
-    expected_return_delivery: new Date(Date.now() - 12 * 86400000).toISOString(),
-    actual_return_received_date: new Date(Date.now() - 13 * 86400000).toISOString(),
-    refund_amount: 1299, refund_method: 'RAZORPAY',
-    razorpay_refund_id: 'rfnd_demo_abc123', cod_refund_status: null,
-    inventory_updated_at: new Date(Date.now() - 12 * 86400000).toISOString(),
-    created_at: new Date(Date.now() - 20 * 86400000).toISOString(),
-    updated_at: new Date(Date.now() - 12 * 86400000).toISOString(),
-    order: { id: 'ord-demo-5', order_number: '#XM-1010' } as Return['order'],
-    customer: { id: 'cust-5', name: 'Deepa Singh', phone: '7654321098', email: 'deepa@example.com' } as Return['customer'],
-  },
-]
-
 // ── KPI row ───────────────────────────────────────────────────────────────────
 
 function KPICard({ label, value, sub }: {
@@ -373,9 +281,8 @@ const STATUS_FILTERS: { value: string; label: string }[] = [
 ]
 
 export default function Returns() {
-  const { currentBrand } = useAppStore()
-  const [returns, setReturns] = useState<Return[]>([])
-  const [loading, setLoading] = useState(true)
+  const { currentBrand, returns, setReturns, addReturn, updateReturn } = useAppStore()
+  const [loading, setLoading] = useState(!DEMO_MODE)
   const [search, setSearch] = useState('')
   const [filterStatus, setFilterStatus] = useState('')
   const [actionLoading, setActionLoading] = useState<string | null>(null)
@@ -383,19 +290,15 @@ export default function Returns() {
   const [initiateModal, setInitiateModal] = useState(false)
 
   const load = useCallback(async () => {
+    if (DEMO_MODE) return
     setLoading(true)
     try {
-      if (DEMO_MODE) {
-        await new Promise(r => setTimeout(r, 400))
-        setReturns(DEMO_RETURNS)
-      } else {
-        const data = await fetchReturns(currentBrand?.id ?? '')
-        setReturns(data)
-      }
+      const data = await fetchReturns(currentBrand?.id ?? '')
+      setReturns(data)
     } finally {
       setLoading(false)
     }
-  }, [currentBrand?.id])
+  }, [currentBrand?.id, setReturns])
 
   useEffect(() => { load() }, [load])
 
@@ -423,11 +326,10 @@ export default function Returns() {
     try {
       if (DEMO_MODE) {
         await new Promise(r => setTimeout(r, 600))
-        setReturns(prev => prev.map(r => r.id === ret.id ? { ...r, status: 'APPROVED' } : r))
+        updateReturn(ret.id, { status: 'APPROVED' })
         showToast.success('Return approved — generate label next')
         return
       }
-      // In live mode: update DB directly via supabase client
       const { supabase } = await import('../../lib/supabase')
       if (!supabase) throw new Error('Not connected')
       const { error } = await supabase.from('returns').update({
@@ -435,7 +337,7 @@ export default function Returns() {
         return_approved_date: new Date().toISOString(),
       }).eq('id', ret.id)
       if (error) throw error
-      setReturns(prev => prev.map(r => r.id === ret.id ? { ...r, status: 'APPROVED' } : r))
+      updateReturn(ret.id, { status: 'APPROVED' })
       showToast.success('Return approved — generate label next')
     } catch (err) {
       showToast.error(err instanceof Error ? err.message : 'Failed')
@@ -449,11 +351,11 @@ export default function Returns() {
     try {
       const result = await generateReturnLabel(ret.id)
       if (!result.ok) throw new Error(result.error ?? 'Label generation failed')
-      setReturns(prev => prev.map(r =>
-        r.id === ret.id
-          ? { ...r, status: 'LABEL_GENERATED', shiprocket_awb_number: result.awb_number ?? null, shiprocket_label_url: result.label_url ?? null }
-          : r
-      ))
+      updateReturn(ret.id, {
+        status: 'LABEL_GENERATED',
+        shiprocket_awb_number: result.awb_number ?? null,
+        shiprocket_label_url: result.label_url ?? null,
+      })
       showToast.success(result.message ?? `Label generated. AWB: ${result.awb_number}`)
     } catch (err) {
       showToast.error(err instanceof Error ? err.message : 'Failed')
@@ -467,7 +369,7 @@ export default function Returns() {
     try {
       if (DEMO_MODE) {
         await new Promise(r => setTimeout(r, 400))
-        setReturns(prev => prev.map(r => r.id === ret.id ? { ...r, status: 'AUTO_DENIED' } : r))
+        updateReturn(ret.id, { status: 'AUTO_DENIED' })
         showToast.success('Return denied')
         return
       }
@@ -478,7 +380,7 @@ export default function Returns() {
         denial_reason: 'Denied by ops',
       }).eq('id', ret.id)
       if (error) throw error
-      setReturns(prev => prev.map(r => r.id === ret.id ? { ...r, status: 'AUTO_DENIED' } : r))
+      updateReturn(ret.id, { status: 'AUTO_DENIED' })
       showToast.success('Return denied')
     } catch (err) {
       showToast.error(err instanceof Error ? err.message : 'Failed')
@@ -492,14 +394,14 @@ export default function Returns() {
     try {
       if (DEMO_MODE) {
         await new Promise(r => setTimeout(r, 400))
-        setReturns(prev => prev.map(r => r.id === ret.id ? { ...r, status: 'COMPLETED' } : r))
+        updateReturn(ret.id, { status: 'COMPLETED' })
         showToast.success('Return marked complete')
         return
       }
       const { supabase } = await import('../../lib/supabase')
       if (!supabase) throw new Error('Not connected')
       await supabase.from('returns').update({ status: 'COMPLETED' }).eq('id', ret.id)
-      setReturns(prev => prev.map(r => r.id === ret.id ? { ...r, status: 'COMPLETED' } : r))
+      updateReturn(ret.id, { status: 'COMPLETED' })
       showToast.success('Return marked complete')
     } catch (err) {
       showToast.error(err instanceof Error ? err.message : 'Failed')
@@ -515,8 +417,8 @@ export default function Returns() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-lg font-semibold text-gray-900">Returns</h1>
-          <p className="text-sm text-gray-500 mt-0.5">Manage return requests, labels, and refunds</p>
+          <h1 className="text-xl font-semibold tracking-tight text-gray-900">Returns</h1>
+          <p className="text-[13px] text-gray-400 mt-0.5">Manage return requests, labels, and refunds</p>
         </div>
         <div className="flex gap-2">
           <Button variant="ghost" size="sm" onClick={load} disabled={loading}>
@@ -713,14 +615,14 @@ export default function Returns() {
         <ApproveRefundModal
           ret={refundModal}
           onClose={() => setRefundModal(null)}
-          onDone={updates => setReturns(prev => prev.map(r => r.id === refundModal.id ? { ...r, ...updates } : r))}
+          onDone={updates => updateReturn(refundModal.id, updates)}
         />
       )}
 
       {initiateModal && (
         <InitiateReturnModal
           onClose={() => setInitiateModal(false)}
-          onDone={ret => setReturns(prev => [ret, ...prev])}
+          onDone={addReturn}
         />
       )}
     </div>

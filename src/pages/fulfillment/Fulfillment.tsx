@@ -75,7 +75,10 @@ export default function Fulfillment() {
 
   return (
     <div className="space-y-4">
-      <h1 className="text-lg font-semibold text-gray-900">Fulfillment</h1>
+      <div>
+        <h1 className="text-xl font-semibold tracking-tight text-gray-900">Fulfillment</h1>
+        <p className="text-[13px] text-gray-400 mt-0.5">{tabOrders.length} orders in {TABS.find(t => t.key === tab)?.label.toLowerCase()}</p>
+      </div>
 
       {/* Tabs */}
       <div className="flex gap-6 border-b border-gray-100 overflow-x-auto">

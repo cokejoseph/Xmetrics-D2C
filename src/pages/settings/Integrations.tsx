@@ -14,13 +14,15 @@ const PLATFORM_META: Record<IntegrationPlatform, {
   name: string
   description: string
   logo: string
+  color: string
   fields: { key: string; label: string; type?: string; placeholder?: string }[]
   badge?: string
 }> = {
   SHOPIFY: {
     name: 'Shopify',
     description: 'Sync orders, products, and inventory in real time from your Shopify store.',
-    logo: '🛍️',
+    logo: 'S',
+    color: 'bg-[#96BF48] text-white',
     badge: 'Most popular',
     fields: [
       { key: 'shop_domain', label: 'Store Domain', placeholder: 'yourstore.myshopify.com' },
@@ -32,7 +34,8 @@ const PLATFORM_META: Record<IntegrationPlatform, {
   RAZORPAY: {
     name: 'Razorpay',
     description: 'Collect payments, receive settlement updates, and trigger refunds for RTOs.',
-    logo: '💳',
+    logo: 'R',
+    color: 'bg-[#528FF0] text-white',
     fields: [
       { key: 'key_id', label: 'Key ID', placeholder: 'rzp_live_XXXX' },
       { key: 'key_secret', label: 'Key Secret', placeholder: '••••••••', type: 'password' },
@@ -42,7 +45,8 @@ const PLATFORM_META: Record<IntegrationPlatform, {
   SHIPROCKET: {
     name: 'Shiprocket',
     description: 'Book courier pickups, generate labels, and track across 17,000+ pincodes.',
-    logo: '🚀',
+    logo: 'SR',
+    color: 'bg-[#E87722] text-white',
     fields: [
       { key: 'email', label: 'Shiprocket Email', placeholder: 'you@company.com' },
       { key: 'password', label: 'Password', placeholder: '••••••••', type: 'password' },
@@ -52,7 +56,8 @@ const PLATFORM_META: Record<IntegrationPlatform, {
   WHATSAPP: {
     name: 'WhatsApp Business',
     description: 'Send order confirmations, delivery updates, and reorder nudges via WhatsApp.',
-    logo: '💬',
+    logo: 'W',
+    color: 'bg-[#25D366] text-white',
     fields: [
       { key: 'phone_number_id', label: 'Phone Number ID', placeholder: '123456789012345' },
       { key: 'api_token', label: 'System User Token', placeholder: 'EAAxxxxxxx', type: 'password' },
@@ -61,7 +66,8 @@ const PLATFORM_META: Record<IntegrationPlatform, {
   ECOMEXPRESS: {
     name: 'Ecom Express',
     description: 'Book courier pickups and track shipments via Ecom Express across India.',
-    logo: '🚚',
+    logo: 'EE',
+    color: 'bg-[#E31E24] text-white',
     fields: [
       { key: 'api_key', label: 'API Key', placeholder: 'Your Ecom Express API Key' },
       { key: 'api_secret', label: 'API Secret', placeholder: '••••••••', type: 'password' },
@@ -71,7 +77,8 @@ const PLATFORM_META: Record<IntegrationPlatform, {
   UNICOMMERCE: {
     name: 'Unicommerce',
     description: 'Sync orders and inventory across channels via Unicommerce OMS.',
-    logo: '🔗',
+    logo: 'U',
+    color: 'bg-[#1A56DB] text-white',
     fields: [
       { key: 'username', label: 'Username', placeholder: 'your-username' },
       { key: 'password', label: 'Password', placeholder: '••••••••', type: 'password' },
@@ -365,10 +372,8 @@ export default function Integrations() {
   return (
     <div className="space-y-6 max-w-3xl">
       <div>
-        <h1 className="text-lg font-semibold text-gray-900">Integrations</h1>
-        <p className="text-sm text-gray-500 mt-0.5">
-          Connect your tools to sync orders, process payments, and automate shipments.
-        </p>
+        <h1 className="text-xl font-semibold tracking-tight text-gray-900">Integrations</h1>
+        <p className="text-[13px] text-gray-400 mt-0.5">Connect your tools to sync orders, process payments, and automate shipments.</p>
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -385,7 +390,9 @@ export default function Integrations() {
             <Card key={platform} className="p-5">
               <div className="flex items-start justify-between mb-3">
                 <div className="flex items-center gap-3">
-                  <span className="text-2xl">{meta.logo}</span>
+                  <div className={`w-10 h-10 rounded-xl flex items-center justify-center text-[13px] font-bold shrink-0 ${meta.color}`}>
+                    {meta.logo}
+                  </div>
                   <div>
                     <div className="flex items-center gap-1.5">
                       <h3 className="text-sm font-medium text-gray-900">{meta.name}</h3>

@@ -1,8 +1,9 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import { Link } from 'react-router-dom'
-import { Search } from 'lucide-react'
+import { Search, Download } from 'lucide-react'
 import { useAppStore } from '../../stores/appStore'
-import { Card, Input } from '../../components/ui'
+import { Card, Input, Pagination } from '../../components/ui'
+import { exportCSV } from '../../lib/exportCSV'
 
 function tagStyle(tag: string): string {
   if (tag === 'vip') return 'bg-amber-50 text-amber-700'
@@ -16,6 +17,8 @@ function tagStyle(tag: string): string {
 export default function CustomerList() {
   const { customers } = useAppStore()
   const [search, setSearch] = useState('')
+  const [page, setPage] = useState(1)
+  const PAGE_SIZE = 50
 
   const filtered = useMemo(() => {
     if (!search) return customers
@@ -27,10 +30,45 @@ export default function CustomerList() {
     )
   }, [customers, search])
 
+  const pagedCustomers = useMemo(
+    () => filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE),
+    [filtered, page]
+  )
+
+  useEffect(() => { setPage(1) }, [search])
+
+  const handleExport = () => {
+    exportCSV(
+      `customers-${new Date().toISOString().slice(0, 10)}.csv`,
+      ['Name', 'Phone', 'Email', 'City', 'State', 'Pincode', 'Total Orders', 'Lifetime Value', 'Tags'],
+      filtered.map(c => [
+        c.name,
+        c.phone,
+        c.email ?? '',
+        c.city ?? '',
+        c.state ?? '',
+        c.pincode ?? '',
+        c.total_orders,
+        c.total_spent,
+        c.tags.join('; '),
+      ])
+    )
+  }
+
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <h1 className="text-lg font-semibold text-gray-900">Customers</h1>
+        <div>
+          <h1 className="text-xl font-semibold tracking-tight text-gray-900">Customers</h1>
+          <p className="text-[13px] text-gray-400 mt-0.5">{customers.length} total · {filtered.length} shown</p>
+        </div>
+        <div className="flex items-center gap-2">
+        <button
+          onClick={handleExport}
+          className="flex items-center gap-1.5 h-8 px-3 rounded-lg border border-gray-200 bg-white text-gray-600 text-sm font-medium hover:border-gray-300 hover:bg-gray-50 transition-colors"
+        >
+          <Download size={13} /> Export
+        </button>
         <div className="relative w-64">
           <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
           <Input
@@ -39,6 +77,7 @@ export default function CustomerList() {
             placeholder="Search by name, phone, email…"
             className="pl-8"
           />
+        </div>
         </div>
       </div>
 
@@ -57,7 +96,7 @@ export default function CustomerList() {
               </tr>
             </thead>
             <tbody className="stagger-rows">
-              {filtered.map(customer => (
+              {pagedCustomers.map(customer => (
                 <tr key={customer.id} className="border-b border-gray-50 hover:bg-gray-50/50 transition-colors">
                   <td className="px-4 py-3">
                     <Link to={`/customers/${customer.id}`} className="text-sm font-medium text-brand-600 hover:underline">
@@ -95,6 +134,7 @@ export default function CustomerList() {
         <div className="px-4 py-3 border-t border-gray-100 text-xs text-gray-500">
           {filtered.length} customers
         </div>
+        <Pagination page={page} pageSize={PAGE_SIZE} total={filtered.length} onChange={setPage} />
       </Card>
     </div>
   )

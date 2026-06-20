@@ -2,14 +2,14 @@ import { create } from 'zustand'
 import { DEMO_MODE } from '../lib/supabase'
 import {
   DEMO_BRAND, DEMO_TEAM, DEMO_WAREHOUSES, DEMO_PRODUCTS,
-  DEMO_CUSTOMERS, DEMO_ORDERS, DEMO_PAYMENTS, DEMO_EXCEPTIONS, DEMO_INTEGRATIONS,
+  DEMO_CUSTOMERS, DEMO_ORDERS, DEMO_PAYMENTS, DEMO_EXCEPTIONS, DEMO_INTEGRATIONS, DEMO_RETURNS,
 } from '../data/seed'
 import { mockGenerateLabels } from '../lib/services'
 import { createShipment } from '../lib/shiprocket'
 import type { ShipmentPayload } from '../lib/shiprocket'
 import type {
   Brand, BrandMember, Warehouse, Product, Customer, Order,
-  Payment, Exception, Integration, PlanType,
+  Payment, Exception, Integration, PlanType, Return,
 } from '../types'
 import { supabase } from '../lib/supabase'
 import {
@@ -59,6 +59,7 @@ interface AppState {
   warehouses: Warehouse[]
   teamMembers: BrandMember[]
   integrations: Integration[]
+  returns: Return[]
   currentPlan: PlanType
   isLoading: boolean
   bootstrapError: string | null
@@ -87,6 +88,9 @@ interface AppState {
   updateTeamMember: (id: string, changes: Partial<BrandMember>) => void
   removeTeamMember: (id: string) => void
   inviteTeamMember: (data: { name: string; email: string; role: BrandMember['role'] }) => void
+  setReturns: (returns: Return[]) => void
+  addReturn: (ret: Return) => void
+  updateReturn: (id: string, changes: Partial<Return>) => void
 }
 
 // ─── Store ──────────────────────────────────────────────────────────────────
@@ -103,6 +107,7 @@ export const useAppStore = create<AppState>((set, get) => ({
   warehouses: [],
   teamMembers: [],
   integrations: [],
+  returns: [],
   currentPlan: 'GROWTH',
   isLoading: true,
   bootstrapError: null,
@@ -124,6 +129,7 @@ export const useAppStore = create<AppState>((set, get) => ({
         warehouses: DEMO_WAREHOUSES,
         teamMembers: DEMO_TEAM,
         integrations: DEMO_INTEGRATIONS,
+        returns: DEMO_RETURNS,
         currentPlan: 'GROWTH',
         isLoading: false,
         bootstrapError: null,
@@ -588,4 +594,13 @@ export const useAppStore = create<AppState>((set, get) => ({
         .catch(console.error)
     }
   },
+
+  // ─── Returns ───────────────────────────────────────────────────────────────
+
+  setReturns: (returns) => set({ returns }),
+
+  addReturn: (ret) => set(state => ({ returns: [ret, ...state.returns] })),
+
+  updateReturn: (id, changes) =>
+    set(state => ({ returns: state.returns.map(r => r.id === id ? { ...r, ...changes } : r) })),
 }))

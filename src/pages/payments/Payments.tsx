@@ -1,92 +1,11 @@
-import { useState, useRef, useEffect } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import { Link } from 'react-router-dom'
-import { ChevronDown, Check } from 'lucide-react'
+import { Download } from 'lucide-react'
 import { useAppStore } from '../../stores/appStore'
-import { Card } from '../../components/ui'
+import { Card, Pagination } from '../../components/ui'
 import { PaymentMethodBadge } from '../../components/shared/StatusBadge'
-import { cn } from '../../components/ui'
-
-// ── Reusable pill dropdown ────────────────────────────────────────────────────
-
-interface FilterOption<T extends string> {
-  value: T
-  label: string
-}
-
-function FilterPill<T extends string>({
-  value,
-  onChange,
-  options,
-  placeholder,
-}: {
-  value: T | ''
-  onChange: (v: T | '') => void
-  options: FilterOption<T>[]
-  placeholder: string
-}) {
-  const [open, setOpen] = useState(false)
-  const ref = useRef<HTMLDivElement>(null)
-  const selected = options.find(o => o.value === value)
-
-  useEffect(() => {
-    function onClickOutside(e: MouseEvent) {
-      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false)
-    }
-    if (open) document.addEventListener('mousedown', onClickOutside)
-    return () => document.removeEventListener('mousedown', onClickOutside)
-  }, [open])
-
-  return (
-    <div ref={ref} className="relative">
-      <button
-        onClick={() => setOpen(o => !o)}
-        className={cn(
-          'flex items-center gap-1.5 h-8 px-3 rounded-lg border text-sm font-medium transition-all duration-150',
-          value
-            ? 'border-brand-300 bg-brand-50 text-brand-700 dark:border-brand-700/50 dark:bg-brand-900/20 dark:text-brand-400'
-            : 'border-gray-200 bg-white text-gray-600 hover:border-gray-300 hover:bg-gray-50 dark:border-white/10 dark:bg-white/5 dark:text-gray-300 dark:hover:bg-white/8'
-        )}
-      >
-        {selected?.label ?? placeholder}
-        <ChevronDown
-          size={13}
-          className={`text-current opacity-60 transition-transform duration-150 ${open ? 'rotate-180' : ''}`}
-        />
-      </button>
-
-      {open && (
-        <div className="absolute top-full left-0 mt-1.5 z-30 bg-white dark:bg-[#1e1e24] border border-gray-100 dark:border-white/[0.08] rounded-xl shadow-lg shadow-black/8 py-1 min-w-[148px] animate-dropdown-in">
-          <button
-            onClick={() => { onChange('' as T | ''); setOpen(false) }}
-            className={cn(
-              'w-full text-left px-3 py-2 text-[13px] flex items-center justify-between hover:bg-gray-50 dark:hover:bg-white/5 transition-colors',
-              !value ? 'font-medium text-gray-900 dark:text-white' : 'text-gray-500 dark:text-gray-400'
-            )}
-          >
-            {placeholder}
-            {!value && <Check size={12} className="text-brand-600" />}
-          </button>
-          <div className="my-1 border-t border-gray-100 dark:border-white/[0.06]" />
-          {options.map(opt => (
-            <button
-              key={opt.value}
-              onClick={() => { onChange(opt.value); setOpen(false) }}
-              className={cn(
-                'w-full text-left px-3 py-2 text-[13px] flex items-center justify-between hover:bg-gray-50 dark:hover:bg-white/5 transition-colors',
-                value === opt.value
-                  ? 'font-medium text-brand-600 dark:text-brand-400'
-                  : 'text-gray-600 dark:text-gray-300'
-              )}
-            >
-              {opt.label}
-              {value === opt.value && <Check size={12} className="text-brand-600 dark:text-brand-400" />}
-            </button>
-          ))}
-        </div>
-      )}
-    </div>
-  )
-}
+import { FilterPill } from '../../components/shared/FilterPill'
+import { exportCSV } from '../../lib/exportCSV'
 
 // ── Page ──────────────────────────────────────────────────────────────────────
 
@@ -94,16 +13,26 @@ export default function Payments() {
   const { payments, orders } = useAppStore()
   const [filterStatus, setFilterStatus] = useState('')
   const [filterMethod, setFilterMethod] = useState('')
+  const [page, setPage] = useState(1)
+  const PAGE_SIZE = 50
 
   const totalCollected = payments.filter(p => p.status === 'PAID').reduce((s, p) => s + p.amount, 0)
   const codPending = orders.filter(o => o.payment_method === 'COD' && o.payment_status !== 'PAID').length
   const failedCount = payments.filter(p => p.status === 'FAILED').length
 
-  const filtered = payments.filter(p => {
+  const filtered = useMemo(() => payments.filter(p => {
     if (filterStatus && p.status !== filterStatus) return false
     if (filterMethod && p.method !== filterMethod) return false
     return true
-  }).sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
+  }).sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()),
+  [payments, filterStatus, filterMethod])
+
+  const pagedPayments = useMemo(
+    () => filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE),
+    [filtered, page]
+  )
+
+  useEffect(() => { setPage(1) }, [filterStatus, filterMethod])
 
   const statusDot: Record<string, string> = {
     PAID: 'bg-green-400', PENDING: 'bg-amber-400', FAILED: 'bg-red-400',
@@ -118,11 +47,39 @@ export default function Payments() {
     REFUNDED: 'Refunded', SETTLED: 'Settled',
   }
 
+  const handleExport = () => {
+    exportCSV(
+      `payments-${new Date().toISOString().slice(0, 10)}.csv`,
+      ['Order #', 'Customer', 'Method', 'Amount', 'Status', 'Gateway Ref', 'Date'],
+      filtered.map(p => {
+        const order = orders.find(o => o.id === p.order_id)
+        return [
+          order?.order_number ?? '',
+          order?.customer?.name ?? '',
+          p.method,
+          p.amount,
+          p.status,
+          p.gateway_ref ?? '',
+          new Date(p.created_at).toLocaleDateString('en-IN'),
+        ]
+      })
+    )
+  }
+
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <h1 className="text-lg font-semibold text-gray-900">Payments</h1>
+        <div>
+          <h1 className="text-xl font-semibold tracking-tight text-gray-900">Payments</h1>
+          <p className="text-[13px] text-gray-400 mt-0.5">₹{Math.round(totalCollected).toLocaleString('en-IN')} collected · {codPending} COD pending</p>
+        </div>
         <div className="flex items-center gap-2">
+          <button
+            onClick={handleExport}
+            className="flex items-center gap-1.5 h-8 px-3 rounded-lg border border-gray-200 bg-white text-gray-600 text-sm font-medium hover:border-gray-300 hover:bg-gray-50 transition-colors"
+          >
+            <Download size={13} /> Export
+          </button>
           <FilterPill
             value={filterStatus}
             onChange={setFilterStatus}
@@ -186,7 +143,7 @@ export default function Payments() {
               </tr>
             </thead>
             <tbody className="stagger-rows">
-              {filtered.map(payment => {
+              {pagedPayments.map(payment => {
                 const order = orders.find(o => o.id === payment.order_id)
                 return (
                   <tr key={payment.id} className="border-b border-gray-50 hover:bg-gray-50/50 transition-colors">
@@ -229,6 +186,7 @@ export default function Payments() {
         <div className="px-4 py-3 border-t border-gray-100 text-xs text-gray-500">
           {filtered.length} transactions
         </div>
+        <Pagination page={page} pageSize={PAGE_SIZE} total={filtered.length} onChange={setPage} />
       </Card>
     </div>
   )

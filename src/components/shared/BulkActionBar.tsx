@@ -1,7 +1,8 @@
 import { useState } from 'react'
-import { CheckSquare, Tag, ThumbsUp, Pause, X, Download } from 'lucide-react'
+import { CheckSquare, Tag, ThumbsUp, Pause, X, Download, FlaskConical } from 'lucide-react'
 import { Button } from '../ui'
 import { useAppStore } from '../../stores/appStore'
+import { DEMO_MODE } from '../../lib/supabase'
 
 interface LabelToast {
   awbs: Array<{ awb: string; courier: string; orderId: string }>
@@ -92,6 +93,12 @@ export default function BulkActionBar({ selectedIds, onClear, showGenerateLabels
               <X size={14} />
             </button>
           </div>
+          {DEMO_MODE && (
+            <div className="flex items-center gap-1.5 mb-2 px-2 py-1.5 bg-amber-50 rounded-lg border border-amber-100">
+              <FlaskConical size={11} className="text-amber-500 shrink-0" />
+              <span className="text-[11px] text-amber-700">Demo mode — AWBs are simulated</span>
+            </div>
+          )}
           <div className="space-y-1 max-h-36 overflow-y-auto mb-3">
             {labelToast.awbs.map(a => (
               <div key={a.awb} className="flex items-center justify-between text-xs text-gray-600">
@@ -100,10 +107,16 @@ export default function BulkActionBar({ selectedIds, onClear, showGenerateLabels
               </div>
             ))}
           </div>
-          <Button size="sm" className="w-full" onClick={() => setLabelToast(null)}>
-            <Download size={14} />
-            Download Merged PDF
-          </Button>
+          {DEMO_MODE ? (
+            <div className="text-center text-[11px] text-gray-400 py-1">
+              PDF generation available in live mode with Shiprocket connected
+            </div>
+          ) : (
+            <Button size="sm" className="w-full" onClick={() => window.open(labelToast.pdfUrl, '_blank')}>
+              <Download size={14} />
+              Download Merged PDF
+            </Button>
+          )}
         </div>
       )}
     </>

@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom'
-import { AlertOctagon, ExternalLink, Check, X } from 'lucide-react'
+import { AlertOctagon, ExternalLink, Check, CheckCircle, X } from 'lucide-react'
 import { useAppStore } from '../../stores/appStore'
 import { Card, Button } from '../../components/ui'
 import { SeverityBadge } from '../../components/shared/StatusBadge'
@@ -27,7 +27,12 @@ export default function Exceptions() {
 
   return (
     <div className="space-y-4">
-      <h1 className="text-lg font-semibold text-gray-900">Exceptions</h1>
+      <div className="flex items-start justify-between">
+        <div>
+          <h1 className="text-xl font-semibold tracking-tight text-gray-900">Exceptions</h1>
+          <p className="text-[13px] text-gray-400 mt-0.5">{unresolved.length} unresolved · {resolved.length} resolved</p>
+        </div>
+      </div>
 
       {criticalCount > 0 && (
         <div className="flex items-center gap-3 p-4 bg-red-50 border border-red-200 rounded-md text-red-800">
@@ -45,8 +50,9 @@ export default function Exceptions() {
         </h2>
         <div className="space-y-3 stagger-children">
           {unresolved.length === 0 && (
-            <Card className="p-8 text-center text-gray-500 text-sm">
-              No unresolved exceptions 🎉
+            <Card className="p-8 flex flex-col items-center gap-2">
+              <CheckCircle size={24} className="text-green-400" />
+              <p className="text-sm text-gray-500">No unresolved exceptions</p>
             </Card>
           )}
           {unresolved.map(exc => (

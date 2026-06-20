@@ -6,17 +6,17 @@ export default {
     extend: {
       colors: {
         brand: {
-          950: '#172554',
-          900: '#1E3A8A',
-          800: '#1E40AF',
-          700: '#1D4ED8',
-          600: '#2563EB',
-          500: '#3B82F6',
-          400: '#60A5FA',
-          300: '#93C5FD',
-          200: '#BFDBFE',
-          100: '#DBEAFE',
-          50:  '#EFF6FF',
+          950: '#0A1F5C',
+          900: '#0F2E7A',
+          800: '#1240A8',
+          700: '#1048C4',
+          600: '#1658E3',
+          500: '#2D6BF0',
+          400: '#5B8EF0',
+          300: '#93B8F8',
+          200: '#C7DBFD',
+          100: '#E0ECFF',
+          50:  '#EEF4FF',
         },
         sidebar: {
           bg:           '#FFFFFF',
@@ -39,10 +39,10 @@ export default {
         sans: ['Inter', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'sans-serif'],
       },
       boxShadow: {
-        card:       '0 1px 2px rgba(0,0,0,0.04), 0 4px 16px rgba(0,0,0,0.04)',
-        'card-hover':'0 4px 20px rgba(37,99,235,0.12)',
+        card:       '0 1px 3px rgba(0,0,0,0.08), 0 4px 20px rgba(0,0,0,0.05)',
+        'card-hover':'0 4px 20px rgba(22,88,227,0.12)',
         dropdown:   '0 8px 30px rgba(0,0,0,0.14)',
-        'glow-sm':  '0 0 0 3px rgba(37,99,235,0.15)',
+        'glow-sm':  '0 0 0 3px rgba(22,88,227,0.15)',
       },
       backgroundImage: {
         'brand-gradient': 'linear-gradient(135deg, #172554 0%, #1E40AF 50%, #0C4A6E 100%)',

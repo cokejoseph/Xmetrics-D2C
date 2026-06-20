@@ -68,7 +68,7 @@ export default function DailyBrief() {
       {/* Main brief */}
       <div className="flex-1 min-w-0 space-y-4">
         <div className="flex items-center justify-between">
-          <h1 className="text-xl font-semibold text-gray-900">Daily Brief — {dayLabel(selectedDate)}</h1>
+          <h1 className="text-xl font-semibold tracking-tight text-gray-900">Daily Brief — {dayLabel(selectedDate)}</h1>
           <Button size="sm" onClick={() => setShowWhatsApp(true)}>
             Export to WhatsApp
           </Button>

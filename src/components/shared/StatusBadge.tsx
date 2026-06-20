@@ -46,18 +46,19 @@ export function PaymentBadge({ status }: { status: PaymentStatus }) {
 }
 
 export function ChannelBadge({ channel }: { channel: OrderChannel }) {
-  const labels: Record<OrderChannel, string> = {
-    SHOPIFY:     'Shopify',
-    WHATSAPP:    'WhatsApp',
-    MANUAL:      'Manual',
-    AMAZON:      'Amazon',
-    FLIPKART:    'Flipkart',
-    WOOCOMMERCE: 'WooCommerce',
-    MEESHO:      'Meesho',
+  const config: Record<OrderChannel, { label: string; bg: string; text: string }> = {
+    SHOPIFY:     { label: 'Shopify',     bg: 'bg-[#96BF48]/12 dark:bg-[#96BF48]/15', text: 'text-[#4a7c14] dark:text-[#7ab833]' },
+    WHATSAPP:    { label: 'WhatsApp',    bg: 'bg-[#25D366]/12 dark:bg-[#25D366]/15', text: 'text-[#15813d] dark:text-[#1db954]' },
+    AMAZON:      { label: 'Amazon',      bg: 'bg-[#FF9900]/12 dark:bg-[#FF9900]/15', text: 'text-[#b36a00] dark:text-[#e08000]' },
+    FLIPKART:    { label: 'Flipkart',    bg: 'bg-[#2874F0]/12 dark:bg-[#2874F0]/15', text: 'text-[#1455c0] dark:text-[#4d90f5]' },
+    MANUAL:      { label: 'Manual',      bg: 'bg-gray-100 dark:bg-white/[0.07]',      text: 'text-gray-500 dark:text-gray-400' },
+    WOOCOMMERCE: { label: 'WooCommerce', bg: 'bg-[#7F54B3]/12 dark:bg-[#7F54B3]/15', text: 'text-[#5a3a8a] dark:text-[#a07dd0]' },
+    MEESHO:      { label: 'Meesho',      bg: 'bg-[#F43397]/12 dark:bg-[#F43397]/15', text: 'text-[#b01065] dark:text-[#f05cb0]' },
   }
+  const { label, bg, text } = config[channel] ?? { label: channel, bg: 'bg-gray-100', text: 'text-gray-600' }
   return (
-    <span className="inline-flex items-center px-2 py-0.5 rounded bg-gray-100 text-[11px] font-medium text-gray-600">
-      {labels[channel] ?? channel}
+    <span className={`inline-flex items-center px-2 py-0.5 rounded-md ${bg} text-[11px] font-semibold ${text}`}>
+      {label}
     </span>
   )
 }
@@ -113,17 +114,18 @@ export function ShipmentStatusBadge({ status }: { status: ShipmentStatus }) {
 }
 
 export function PaymentMethodBadge({ method }: { method: string }) {
-  const labels: Record<string, string> = {
-    COD:        'COD',
-    UPI:        'UPI',
-    CARD:       'Card',
-    NETBANKING: 'Netbanking',
-    WALLET:     'Wallet',
-    PREPAID:    'Prepaid',
+  const config: Record<string, { label: string; bg: string; text: string }> = {
+    COD:        { label: 'COD',        bg: 'bg-amber-50 dark:bg-amber-400/10',  text: 'text-amber-700 dark:text-amber-400' },
+    UPI:        { label: 'UPI',        bg: 'bg-violet-50 dark:bg-violet-400/10', text: 'text-violet-700 dark:text-violet-400' },
+    CARD:       { label: 'Card',       bg: 'bg-blue-50 dark:bg-blue-400/10',    text: 'text-blue-700 dark:text-blue-400' },
+    NETBANKING: { label: 'Netbanking', bg: 'bg-teal-50 dark:bg-teal-400/10',   text: 'text-teal-700 dark:text-teal-400' },
+    WALLET:     { label: 'Wallet',     bg: 'bg-indigo-50 dark:bg-indigo-400/10', text: 'text-indigo-700 dark:text-indigo-400' },
+    PREPAID:    { label: 'Prepaid',    bg: 'bg-emerald-50 dark:bg-emerald-400/10', text: 'text-emerald-700 dark:text-emerald-400' },
   }
+  const { label, bg, text } = config[method] ?? { label: method, bg: 'bg-gray-100 dark:bg-white/[0.07]', text: 'text-gray-600 dark:text-gray-400' }
   return (
-    <span className="inline-flex items-center px-2 py-0.5 rounded bg-gray-100 text-[11px] font-medium text-gray-600">
-      {labels[method] ?? method}
+    <span className={`inline-flex items-center px-2 py-0.5 rounded-md ${bg} text-[11px] font-semibold ${text}`}>
+      {label}
     </span>
   )
 }

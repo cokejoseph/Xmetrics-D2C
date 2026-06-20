@@ -88,7 +88,7 @@ export default function NewOrder() {
         <Link to="/orders" className="p-2 rounded-lg hover:bg-gray-100 text-gray-500">
           <ArrowLeft size={16} />
         </Link>
-        <h1 className="text-xl font-semibold text-gray-900">New Order</h1>
+        <h1 className="text-xl font-semibold tracking-tight text-gray-900">New Order</h1>
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-4">

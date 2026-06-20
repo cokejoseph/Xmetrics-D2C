@@ -1,6 +1,6 @@
 import { clsx } from 'clsx'
 import { twMerge } from 'tailwind-merge'
-import { X } from 'lucide-react'
+import { X, ChevronLeft, ChevronRight } from 'lucide-react'
 import * as DialogPrimitive from '@radix-ui/react-dialog'
 
 export function cn(...inputs: Parameters<typeof clsx>) {
@@ -81,7 +81,7 @@ export function Card({
   className, children, ...props
 }: React.HTMLAttributes<HTMLDivElement>) {
   return (
-    <div className={cn('bg-white dark:bg-[#1e1e24] rounded-lg border border-gray-100 dark:border-white/[0.07]', className)} {...props}>
+    <div className={cn('bg-white dark:bg-[#141C28] rounded-lg border border-gray-100 dark:border-white/[0.05] shadow-card dark:shadow-[0_0_0_1px_rgba(255,255,255,0.05),_inset_0_1px_0_rgba(255,255,255,0.05)]', className)} {...props}>
       {children}
     </div>
   )
@@ -159,6 +159,47 @@ export function Modal({ open, onClose, title, children, size = 'md' }: ModalProp
         </DialogPrimitive.Content>
       </DialogPrimitive.Portal>
     </DialogPrimitive.Root>
+  )
+}
+
+// ─── Pagination ─────────────────────────────────────────────────────────────
+
+interface PaginationProps {
+  page: number
+  pageSize: number
+  total: number
+  onChange: (page: number) => void
+}
+
+export function Pagination({ page, pageSize, total, onChange }: PaginationProps) {
+  const totalPages = Math.ceil(total / pageSize)
+  if (totalPages <= 1) return null
+  const from = (page - 1) * pageSize + 1
+  const to = Math.min(page * pageSize, total)
+
+  return (
+    <div className="flex items-center justify-between px-4 py-3 border-t border-gray-100">
+      <span className="text-xs text-gray-500">
+        {from}–{to} of {total}
+      </span>
+      <div className="flex items-center gap-1">
+        <button
+          onClick={() => onChange(page - 1)}
+          disabled={page === 1}
+          className="p-1.5 rounded-md text-gray-500 hover:bg-gray-100 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+        >
+          <ChevronLeft size={14} />
+        </button>
+        <span className="text-xs text-gray-500 px-2 tabular-nums">{page} / {totalPages}</span>
+        <button
+          onClick={() => onChange(page + 1)}
+          disabled={page === totalPages}
+          className="p-1.5 rounded-md text-gray-500 hover:bg-gray-100 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+        >
+          <ChevronRight size={14} />
+        </button>
+      </div>
+    </div>
   )
 }
 

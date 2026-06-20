@@ -32,7 +32,10 @@ export default function Team() {
   return (
     <div className="space-y-6 max-w-3xl">
       <div className="flex items-center justify-between">
-        <h1 className="text-lg font-semibold text-gray-900">Team</h1>
+        <div>
+          <h1 className="text-xl font-semibold tracking-tight text-gray-900">Team</h1>
+          <p className="text-[13px] text-gray-400 mt-0.5">Manage members and permissions</p>
+        </div>
         <div className="flex gap-2">
           <Button variant="secondary" size="sm" onClick={() => setShowMatrix(true)}>
             <Shield size={14} /> RBAC Matrix

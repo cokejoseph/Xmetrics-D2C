@@ -1,7 +1,9 @@
 import { useState, useMemo, useRef, useEffect } from 'react'
-import { ChevronUp, ChevronDown, Search, ChevronDown as ChevronDownIcon, Check } from 'lucide-react'
+import { ChevronUp, ChevronDown, Search, Check, MessageCircle, Copy } from 'lucide-react'
 import { useAppStore } from '../../stores/appStore'
 import { buildSKUForecast } from '../../lib/forecastEngine'
+import { buildReorderNudgeList } from '../../lib/reorderEngine'
+import type { ChurnLevel } from '../../lib/reorderEngine'
 import { Card, Input } from '../../components/ui'
 import { RevenueAreaChart, OrdersBarChart, StatusDonut, ChannelBarChart } from '../../components/charts'
 import type { Order, ForecastStatus } from '../../types'
@@ -138,7 +140,7 @@ const FORECAST_STATUS_STYLE: Record<ForecastStatus, { label: string; dot: string
   UNPREDICTABLE:     { label: 'Unpredictable',      dot: 'bg-gray-300',   text: 'text-gray-400' },
 }
 
-type TabType = 'overview' | 'forecast' | 'pincode'
+type TabType = 'overview' | 'reorder' | 'forecast' | 'pincode'
 type PincodeSortKey = 'orders' | 'revenue' | 'aov' | 'rto_rate'
 
 // ── Period picker dropdown ────────────────────────────────────────────────────
@@ -164,7 +166,7 @@ function PeriodPicker({ value, onChange }: { value: Period; onChange: (v: Period
         className="inline-flex items-center gap-1.5 pl-3 pr-2.5 py-1.5 text-sm font-medium border border-gray-200 rounded-lg bg-white text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-brand-600/20 cursor-pointer transition-colors"
       >
         {current.label}
-        <ChevronDownIcon size={13} className={`text-gray-400 transition-transform duration-150 ${open ? 'rotate-180' : ''}`} />
+        <ChevronDown size={13} className={`text-gray-400 transition-transform duration-150 ${open ? 'rotate-180' : ''}`} />
       </button>
       {open && (
         <div className="absolute right-0 top-full mt-1 z-50 w-44 overflow-hidden rounded-lg border border-gray-100 bg-white p-1 shadow-lg shadow-black/5">
@@ -196,9 +198,29 @@ export default function Analytics() {
   const [pincodeSearch, setPincodeSearch] = useState('')
   const [pincodeSort, setPincodeSort]     = useState<PincodeSortKey>('orders')
   const [pincodeSortAsc, setPincodeSortAsc] = useState(false)
-  const { orders, products } = useAppStore()
+  const [reorderSearch, setReorderSearch] = useState('')
+  const [copiedPhone, setCopiedPhone]     = useState<string | null>(null)
+  const { orders, products, customers } = useAppStore()
 
   const { forecasts, summary } = useMemo(() => buildSKUForecast(products, orders), [products, orders])
+
+  // ── Reorder Engine ────────────────────────────────────────────────────────────
+  const allNudges = useMemo(() => buildReorderNudgeList(customers, orders), [customers, orders])
+  const filteredNudges = useMemo(() => {
+    if (!reorderSearch) return allNudges
+    const q = reorderSearch.toLowerCase()
+    return allNudges.filter(n =>
+      n.customer_name.toLowerCase().includes(q) ||
+      n.customer_phone.includes(q) ||
+      n.top_category.toLowerCase().includes(q)
+    )
+  }, [allNudges, reorderSearch])
+  const reorderSummary = useMemo(() => ({
+    lost:     allNudges.filter(n => n.churn_level === 'LOST').length,
+    churning: allNudges.filter(n => n.churn_level === 'CHURNING').length,
+    at_risk:  allNudges.filter(n => n.churn_level === 'AT_RISK').length,
+    active:   allNudges.filter(n => n.churn_level === 'ACTIVE').length,
+  }), [allNudges])
 
   const periodMeta = PERIOD_OPTIONS.find(o => o.value === period)!
   const { from, to } = useMemo(() => getDateRange(period), [period])
@@ -363,6 +385,7 @@ export default function Analytics() {
 
   const TABS: { key: TabType; label: string }[] = [
     { key: 'overview', label: 'Overview' },
+    { key: 'reorder',  label: 'Reorder Engine' },
     { key: 'forecast', label: 'Demand Forecast' },
     { key: 'pincode',  label: 'Pincode Intelligence' },
   ]
@@ -377,8 +400,11 @@ export default function Analytics() {
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <h1 className="text-lg font-semibold text-gray-900">Analytics</h1>
-        {tab !== 'forecast' && (
+        <div>
+          <h1 className="text-xl font-semibold tracking-tight text-gray-900">Analytics</h1>
+          <p className="text-[13px] text-gray-400 mt-0.5">{tab === 'overview' ? periodMeta.label : tab === 'reorder' ? 'Churn intelligence' : 'Demand forecast'}</p>
+        </div>
+        {tab !== 'forecast' && tab !== 'reorder' && (
           <PeriodPicker value={period} onChange={setPeriod} />
         )}
       </div>
@@ -396,36 +422,36 @@ export default function Analytics() {
         <div className="space-y-4">
 
           {/* KPIs — 6 cards */}
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
-            <Card className="p-4">
-              <p className="text-[11px] font-medium text-gray-400 uppercase tracking-wider mb-1">Revenue</p>
-              <p className="text-2xl font-semibold text-gray-900">₹{totalRevenue >= 1000 ? `${Math.round(totalRevenue / 1000)}k` : Math.round(totalRevenue)}</p>
-              <p className="text-[10px] text-gray-400 mt-0.5">{periodMeta.shortLabel}</p>
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+            <Card className="px-4 py-3.5">
+              <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-widest mb-2">Revenue</p>
+              <p className="text-[26px] font-semibold text-gray-900 leading-none tabular-nums">₹{totalRevenue >= 1000 ? `${Math.round(totalRevenue / 1000)}k` : Math.round(totalRevenue)}</p>
+              <p className="text-[10px] text-gray-400 mt-1.5">{periodMeta.shortLabel}</p>
             </Card>
-            <Card className="p-4">
-              <p className="text-[11px] font-medium text-gray-400 uppercase tracking-wider mb-1">Orders</p>
-              <p className="text-2xl font-semibold text-gray-900">{filteredOrders.length}</p>
-              <p className="text-[10px] text-gray-400 mt-0.5">{periodMeta.shortLabel}</p>
+            <Card className="px-4 py-3.5">
+              <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-widest mb-2">Orders</p>
+              <p className="text-[26px] font-semibold text-gray-900 leading-none tabular-nums">{filteredOrders.length}</p>
+              <p className="text-[10px] text-gray-400 mt-1.5">{periodMeta.shortLabel}</p>
             </Card>
-            <Card className="p-4">
-              <p className="text-[11px] font-medium text-gray-400 uppercase tracking-wider mb-1">Avg Order Value</p>
-              <p className="text-2xl font-semibold text-gray-900">₹{aov.toLocaleString('en-IN')}</p>
-              <p className="text-[10px] text-gray-400 mt-0.5">paid orders</p>
+            <Card className="px-4 py-3.5">
+              <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-widest mb-2">Avg Order Value</p>
+              <p className="text-[26px] font-semibold text-gray-900 leading-none tabular-nums">₹{aov.toLocaleString('en-IN')}</p>
+              <p className="text-[10px] text-gray-400 mt-1.5">paid orders</p>
             </Card>
-            <Card className="p-4">
-              <p className="text-[11px] font-medium text-gray-400 uppercase tracking-wider mb-1">RTO Rate</p>
-              <p className="text-2xl font-semibold text-red-600">{rtoRate.toFixed(1)}%</p>
-              <p className="text-[10px] text-gray-400 mt-0.5">{periodMeta.shortLabel}</p>
+            <Card className="px-4 py-3.5">
+              <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-widest mb-2">RTO Rate</p>
+              <p className="text-[26px] font-semibold text-red-600 dark:text-red-400 leading-none tabular-nums">{rtoRate.toFixed(1)}%</p>
+              <p className="text-[10px] text-gray-400 mt-1.5">{periodMeta.shortLabel}</p>
             </Card>
-            <Card className="p-4">
-              <p className="text-[11px] font-medium text-gray-400 uppercase tracking-wider mb-1">Gross Margin</p>
-              <p className="text-2xl font-semibold text-green-600">{cogs > 0 ? `${grossMarginPct.toFixed(1)}%` : '—'}</p>
-              <p className="text-[10px] text-gray-400 mt-0.5">after COGS</p>
+            <Card className="px-4 py-3.5">
+              <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-widest mb-2">Gross Margin</p>
+              <p className="text-[26px] font-semibold text-emerald-600 dark:text-emerald-400 leading-none tabular-nums">{cogs > 0 ? `${grossMarginPct.toFixed(1)}%` : '—'}</p>
+              <p className="text-[10px] text-gray-400 mt-1.5">after COGS</p>
             </Card>
-            <Card className="p-4">
-              <p className="text-[11px] font-medium text-gray-400 uppercase tracking-wider mb-1">RTO Loss</p>
-              <p className="text-2xl font-semibold text-gray-900">₹{Math.round(rtoLoss).toLocaleString('en-IN')}</p>
-              <p className="text-[10px] text-gray-400 mt-0.5">est. 15% of value</p>
+            <Card className="px-4 py-3.5">
+              <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-widest mb-2">RTO Loss</p>
+              <p className="text-[26px] font-semibold text-gray-900 leading-none tabular-nums">₹{Math.round(rtoLoss).toLocaleString('en-IN')}</p>
+              <p className="text-[10px] text-gray-400 mt-1.5">est. 15% of value</p>
             </Card>
           </div>
 
@@ -644,6 +670,122 @@ export default function Analytics() {
         </div>
       )}
 
+      {/* ── Reorder Engine Tab ───────────────────────────────────────────────── */}
+      {tab === 'reorder' && (
+        <div className="space-y-4">
+          {/* Summary cards */}
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+            <Card className="p-4 text-center">
+              <p className="text-2xl font-semibold text-red-600">{reorderSummary.lost}</p>
+              <p className="text-[11px] font-medium text-gray-400 uppercase tracking-wider mt-0.5">Lost</p>
+              <p className="text-[10px] text-gray-400 mt-0.5">Gone cold, needs win-back</p>
+            </Card>
+            <Card className="p-4 text-center">
+              <p className="text-2xl font-semibold text-orange-600">{reorderSummary.churning}</p>
+              <p className="text-[11px] font-medium text-gray-400 uppercase tracking-wider mt-0.5">Churning</p>
+              <p className="text-[10px] text-gray-400 mt-0.5">Significantly overdue</p>
+            </Card>
+            <Card className="p-4 text-center">
+              <p className="text-2xl font-semibold text-amber-600">{reorderSummary.at_risk}</p>
+              <p className="text-[11px] font-medium text-gray-400 uppercase tracking-wider mt-0.5">At Risk</p>
+              <p className="text-[10px] text-gray-400 mt-0.5">Just past their cycle</p>
+            </Card>
+            <Card className="p-4 text-center">
+              <p className="text-2xl font-semibold text-green-600">{reorderSummary.active}</p>
+              <p className="text-[11px] font-medium text-gray-400 uppercase tracking-wider mt-0.5">Active</p>
+              <p className="text-[10px] text-gray-400 mt-0.5">Within cycle window</p>
+            </Card>
+          </div>
+
+          {/* Nudge table */}
+          <Card>
+            <div className="px-4 py-3 border-b border-gray-100 flex items-center gap-3">
+              <h3 className="text-[11px] font-medium text-gray-400 uppercase tracking-wider flex-1">
+                Customer Reorder Nudges
+              </h3>
+              <div className="relative w-56">
+                <Search size={12} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-400" />
+                <Input
+                  value={reorderSearch}
+                  onChange={e => setReorderSearch(e.target.value)}
+                  placeholder="Search customers…"
+                  className="pl-7 py-1.5 text-xs h-8"
+                />
+              </div>
+            </div>
+
+            {filteredNudges.length === 0 ? (
+              <p className="px-4 py-10 text-center text-sm text-gray-400">
+                {reorderSearch ? 'No customers match your search' : 'No customer purchase history yet'}
+              </p>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full">
+                  <thead>
+                    <tr className="border-b border-gray-100">
+                      <th className="px-4 py-3 text-left text-[11px] font-medium text-gray-400 uppercase tracking-wider">Customer</th>
+                      <th className="px-4 py-3 text-left text-[11px] font-medium text-gray-400 uppercase tracking-wider hidden sm:table-cell">Status</th>
+                      <th className="px-4 py-3 text-right text-[11px] font-medium text-gray-400 uppercase tracking-wider hidden md:table-cell">Last Order</th>
+                      <th className="px-4 py-3 text-right text-[11px] font-medium text-gray-400 uppercase tracking-wider hidden md:table-cell">Overdue</th>
+                      <th className="px-4 py-3 text-right text-[11px] font-medium text-gray-400 uppercase tracking-wider">Orders</th>
+                      <th className="px-4 py-3 text-right text-[11px] font-medium text-gray-400 uppercase tracking-wider hidden lg:table-cell">LTV</th>
+                      <th className="px-4 py-3 text-left text-[11px] font-medium text-gray-400 uppercase tracking-wider">Nudge</th>
+                    </tr>
+                  </thead>
+                  <tbody className="stagger-rows">
+                    {filteredNudges.map(nudge => (
+                      <tr key={nudge.customer_id} className="border-b border-gray-50 hover:bg-gray-50/50">
+                        <td className="px-4 py-3">
+                          <p className="text-sm font-medium text-gray-900">{nudge.customer_name}</p>
+                          <p className="text-xs text-gray-400">{nudge.customer_phone}</p>
+                        </td>
+                        <td className="px-4 py-3 hidden sm:table-cell">
+                          <ChurnBadge level={nudge.churn_level} />
+                        </td>
+                        <td className="px-4 py-3 text-right text-sm text-gray-600 hidden md:table-cell">
+                          {nudge.last_order_date}
+                        </td>
+                        <td className="px-4 py-3 text-right hidden md:table-cell">
+                          {nudge.overdue_by_days > 0
+                            ? <span className="text-sm font-medium text-red-500">+{nudge.overdue_by_days}d</span>
+                            : <span className="text-sm text-green-600">on time</span>
+                          }
+                        </td>
+                        <td className="px-4 py-3 text-right text-sm text-gray-700">{nudge.total_orders}</td>
+                        <td className="px-4 py-3 text-right text-sm text-gray-700 hidden lg:table-cell">
+                          ₹{nudge.total_spent.toLocaleString('en-IN')}
+                        </td>
+                        <td className="px-4 py-3">
+                          <div className="flex items-center gap-2">
+                            <button
+                              title={nudge.nudge_message}
+                              onClick={() => {
+                                navigator.clipboard.writeText(nudge.nudge_message)
+                                setCopiedPhone(nudge.customer_id)
+                                setTimeout(() => setCopiedPhone(null), 2000)
+                              }}
+                              className="flex items-center gap-1 px-2 py-1 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 text-[11px] font-medium rounded-md transition-colors"
+                            >
+                              {copiedPhone === nudge.customer_id
+                                ? <><Copy size={10} /> Copied!</>
+                                : <><MessageCircle size={10} /> Copy msg</>
+                              }
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+            <div className="px-4 py-3 border-t border-gray-100 text-xs text-gray-500">
+              {filteredNudges.length} of {allNudges.length} customers · {reorderSummary.lost + reorderSummary.churning} need immediate attention
+            </div>
+          </Card>
+        </div>
+      )}
+
       {/* ── Pincode Tab ──────────────────────────────────────────────────────── */}
       {tab === 'pincode' && (
         <div className="space-y-4">
@@ -785,6 +927,22 @@ export default function Analytics() {
         </div>
       )}
     </div>
+  )
+}
+
+function ChurnBadge({ level }: { level: ChurnLevel }) {
+  const styles: Record<ChurnLevel, { dot: string; text: string; label: string }> = {
+    LOST:     { dot: 'bg-red-500',    text: 'text-red-600',    label: 'Lost' },
+    CHURNING: { dot: 'bg-orange-400', text: 'text-orange-600', label: 'Churning' },
+    AT_RISK:  { dot: 'bg-amber-400',  text: 'text-amber-600',  label: 'At Risk' },
+    ACTIVE:   { dot: 'bg-green-400',  text: 'text-green-600',  label: 'Active' },
+  }
+  const s = styles[level]
+  return (
+    <span className="inline-flex items-center gap-1.5">
+      <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${s.dot}`} />
+      <span className={`text-[11px] font-medium ${s.text}`}>{s.label}</span>
+    </span>
   )
 }
 

@@ -9,7 +9,7 @@ export default function AppLayout() {
   const location = useLocation()
 
   return (
-    <div className="flex h-screen bg-page-bg dark:bg-[#0f0f12] overflow-hidden">
+    <div className="flex h-screen bg-page-bg dark:bg-[#0C1118] overflow-hidden">
       {/* Sidebar — desktop */}
       <Sidebar />
 

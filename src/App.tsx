@@ -1,5 +1,6 @@
 import { useEffect, lazy, Suspense } from 'react'
 import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom'
+import { AlertTriangle } from 'lucide-react'
 import { useAuthStore } from './stores/authStore'
 import { useAppStore } from './stores/appStore'
 import AppLayout from './components/layout/AppLayout'
@@ -74,13 +75,35 @@ function RootRoute() {
 // ── Auth guard for protected app routes ──────────────────────────────────────
 function AuthGuard({ children }: { children: React.ReactNode }) {
   const { user, isLoading: authLoading } = useAuthStore()
-  const { currentBrand, isLoading: appLoading } = useAppStore()
+  const { currentBrand, isLoading: appLoading, bootstrapError } = useAppStore()
 
   // Wait for BOTH auth session AND app data (bootstrap) to finish loading
   if (authLoading || (user && appLoading)) {
     return (
       <div className="min-h-screen bg-page-bg flex items-center justify-center">
         <div className="animate-spin w-8 h-8 border-2 border-brand-600 border-t-transparent rounded-full" />
+      </div>
+    )
+  }
+
+  if (bootstrapError) {
+    return (
+      <div className="min-h-screen bg-page-bg flex items-center justify-center p-4">
+        <div className="max-w-sm w-full bg-white rounded-xl border border-gray-100 shadow-sm p-8 text-center space-y-4">
+          <div className="w-12 h-12 mx-auto rounded-xl bg-red-50 flex items-center justify-center">
+            <AlertTriangle size={24} className="text-red-500" />
+          </div>
+          <div>
+            <h2 className="text-base font-semibold text-gray-900">Failed to load workspace</h2>
+            <p className="text-sm text-gray-500 mt-1">{bootstrapError}</p>
+          </div>
+          <button
+            onClick={() => window.location.reload()}
+            className="px-4 py-2 bg-brand-600 text-white rounded-lg text-sm font-medium hover:bg-brand-500 transition-colors"
+          >
+            Retry
+          </button>
+        </div>
       </div>
     )
   }

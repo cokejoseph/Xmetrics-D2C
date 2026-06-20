@@ -64,7 +64,7 @@
 
   .sidebar-nav-item.active {
     @apply bg-brand-50 text-brand-600;
-    box-shadow: inset 3px 0 0 #2563EB;
+    box-shadow: inset 3px 0 0 #1658E3;
   }
 
   /* KPI card value */
@@ -82,10 +82,10 @@
     @apply px-1 py-2.5 text-sm font-medium border-b-2 transition-colors cursor-pointer whitespace-nowrap;
   }
   .tab-line.active {
-    @apply border-gray-900 text-gray-900;
+    @apply border-gray-900 text-gray-900 dark:border-white dark:text-white;
   }
   .tab-line:not(.active) {
-    @apply border-transparent text-gray-400 hover:text-gray-600 hover:border-gray-300;
+    @apply border-transparent text-gray-400 hover:text-gray-600 hover:border-gray-300 dark:hover:text-gray-200 dark:hover:border-gray-600;
   }
 }
 
@@ -182,85 +182,106 @@
 .sidebar-nav-item:hover svg { transform: scale(1.1); }
 
 /* ══════════════════════════════════════════════
-   DARK MODE  — kept OUTSIDE @layer so unlayered
-   styles always beat Tailwind's layered utilities
+   DARK MODE  "Navy"
+   Design token spec:
+     Page bg:      #0C1118  (cool navy-black)
+     Card surface: #141C28  (elevated — blue-navy tint)
+     Sidebar:      #080D14  (anchoring dark, deeper than page)
+     Border:       rgba(255,255,255,0.05)  — nearly invisible
+     Card shadow:  0 0 0 1px rgba(255,255,255,0.05), inset 0 1px 0 rgba(255,255,255,0.05)
+     Text-1:       #E8EEF8  (primary — crisp blue-white)
+     Text-2:       #7A8FA8  (secondary — muted navy-blue)
+     Text-3:       #4A5E78  (tertiary — labels, placeholders)
+     Blue:         #4DA6FF  (action — saturated light blue)
+   Kept OUTSIDE @layer so unlayered styles beat Tailwind utilities.
 ══════════════════════════════════════════════ */
 .dark { color-scheme: dark; }
 
 .dark body {
-  background-color: #0c0c0f;
-  color: #e2e8f0;
+  background-color: #0C1118;
+  color: #E8EEF8;
 }
 
-/* Dark sidebar nav overrides */
+/* ── Sidebar nav ─────────── */
 .dark .sidebar-nav-item {
-  color: #9CA3AF;
+  color: #5A7090;
 }
 .dark .sidebar-nav-item:hover {
-  background-color: rgba(255,255,255,0.07);
-  color: #e2e8f0;
+  background-color: rgba(255,255,255,0.05);
+  color: #A8C4E0;
 }
 .dark .sidebar-nav-item.active {
-  background-color: rgba(37, 99, 235, 0.15);
-  color: #60A5FA;
-  box-shadow: inset 3px 0 0 rgba(96, 165, 250, 0.85);
+  background-color: rgba(77, 166, 255, 0.10);
+  color: #4DA6FF;
+  box-shadow: inset 3px 0 0 rgba(77, 166, 255, 0.55);
 }
 
-/* ── Text ────────────────── */
-.dark .text-gray-900 { color: #f1f5f9; }   /* slate-100  — headings, values    */
-.dark .text-gray-800 { color: #e2e8f0; }   /* slate-200                        */
-.dark .text-gray-700 { color: #cbd5e1; }   /* slate-300  — secondary text      */
-.dark .text-gray-600 { color: #94a3b8; }   /* slate-400                        */
-.dark .text-gray-500 { color: #94a3b8; }   /* slate-400  — was #64748b (invisible!) */
-.dark .text-gray-400 { color: #64748b; }   /* slate-500  — was #4b5563 (invisible!) */
+/* ── Text — wider contrast ramp ── */
+.dark .text-gray-900 { color: #E8EEF8; }   /* primary — headings, values         */
+.dark .text-gray-800 { color: #D4DCE8; }   /* near-primary                       */
+.dark .text-gray-700 { color: #B0BCC8; }   /* body — readable secondary          */
+.dark .text-gray-600 { color: #7A8FA8; }   /* secondary — metadata, descriptions */
+.dark .text-gray-500 { color: #7A8FA8; }   /* same as 600 — intentional merge    */
+.dark .text-gray-400 { color: #4A5E78; }   /* tertiary — labels only             */
+.dark .text-gray-300 { color: #334455; }   /* faintest — divider labels          */
 
 /* ── Backgrounds ─────────── */
-.dark .bg-page-bg   { background-color: #0f0f12; }              /* custom token override    */
-.dark .bg-white     { background-color: #1e1e24; }              /* elevated card surface    */
+.dark .bg-page-bg   { background-color: #0C1118; }
+.dark .bg-white     { background-color: #141C28; }  /* primary card surface */
 .dark .bg-gray-50   { background-color: rgba(255,255,255,0.03); }
-.dark .bg-gray-100  { background-color: rgba(255,255,255,0.07); }
-.dark .bg-gray-200  { background-color: rgba(255,255,255,0.1); }
-.dark .bg-brand-50  { background-color: rgba(37,99,235,0.12); } /* selected rows, icon bg   */
-.dark .bg-brand-100 { background-color: rgba(37,99,235,0.2); }
+.dark .bg-gray-100  { background-color: rgba(255,255,255,0.05); }
+.dark .bg-gray-200  { background-color: rgba(255,255,255,0.08); }
+.dark .bg-gray-900  { background-color: #0C1118; }
+.dark .bg-brand-50  { background-color: rgba(77,166,255,0.10); }
+.dark .bg-brand-100 { background-color: rgba(77,166,255,0.18); }
 
-/* ── Borders ─────────────── */
-.dark .border-gray-50  { border-color: rgba(255,255,255,0.04); }   /* table row dividers */
-.dark .border-gray-100 { border-color: rgba(255,255,255,0.08); }
-.dark .border-gray-200 { border-color: rgba(255,255,255,0.1); }
-.dark .border-gray-300 { border-color: rgba(255,255,255,0.15); }
+/* ── Borders — nearly invisible, rely on shadows ── */
+.dark .border-gray-50  { border-color: rgba(255,255,255,0.03); }
+.dark .border-gray-100 { border-color: rgba(255,255,255,0.05); }
+.dark .border-gray-200 { border-color: rgba(255,255,255,0.08); }
+.dark .border-gray-300 { border-color: rgba(255,255,255,0.12); }
 
-/* divide-y utilities (OrderDetail tbody) */
-.dark .divide-gray-50 > :not([hidden]) ~ :not([hidden]) { border-color: rgba(255,255,255,0.04); }
+/* divide-y utilities */
+.dark .divide-gray-50  > :not([hidden]) ~ :not([hidden]) { border-color: rgba(255,255,255,0.03); }
+.dark .divide-gray-200 > :not([hidden]) ~ :not([hidden]) { border-color: rgba(255,255,255,0.08); }
 
-/* ── Hover states ────────── */
+/* ── Hover states ─────────── */
 .dark .hover\:bg-gray-50:hover      { background-color: rgba(255,255,255,0.04); }
-.dark .hover\:bg-gray-50\/50:hover  { background-color: rgba(255,255,255,0.04); }   /* table row hover */
-.dark .hover\:bg-gray-100:hover     { background-color: rgba(255,255,255,0.07); }
-.dark .hover\:border-gray-300:hover { border-color: rgba(255,255,255,0.15); }
+.dark .hover\:bg-gray-50\/50:hover  { background-color: rgba(255,255,255,0.03); }
+.dark .hover\:bg-gray-100:hover     { background-color: rgba(255,255,255,0.06); }
+.dark .hover\:border-gray-300:hover { border-color: rgba(255,255,255,0.12); }
 
-/* ── Input fields ────────── */
+/* ── Inputs ───────────────── */
 .dark .input-field {
-  background-color: #26262e;
-  border-color: rgba(255,255,255,0.1);
-  color: #e2e8f0;
+  background-color: rgba(255,255,255,0.05);
+  border-color: rgba(255,255,255,0.08);
+  color: #E8EEF8;
 }
-.dark .input-field::placeholder { color: #64748b; }
+.dark .input-field::placeholder { color: #4A5E78; }
+.dark .input-field:focus {
+  border-color: rgba(77,166,255,0.45);
+  box-shadow: 0 0 0 3px rgba(77,166,255,0.10);
+}
 
-/* ── Card & modal surfaces ── */
-/* bg-white → elevated card (already covered above)              */
-/* bg-white/95 = TopBar semi-transparent header                  */
-.dark .bg-white\/95  { background-color: rgba(15,15,18,0.95); }
+/* ── Card surface — rim-light elevation ── */
+.dark .shadow-card {
+  box-shadow:
+    0 0 0 1px rgba(255,255,255,0.05),
+    inset 0 1px 0 rgba(255,255,255,0.05);
+}
+.dark .border-gray-100\/80 { border-color: rgba(255,255,255,0.05); }
+.dark .shadow-dropdown {
+  box-shadow:
+    0 0 0 1px rgba(255,255,255,0.06),
+    0 8px 32px rgba(0,0,0,0.7);
+}
 
-/* border-gray-100/80 = Card border (Tailwind opacity modifier)  */
-.dark .border-gray-100\/80 { border-color: rgba(255,255,255,0.08); }
+/* bg-white/95 → TopBar scroll blur */
+.dark .bg-white\/95  { background-color: rgba(8,13,20,0.96); }
 
-/* Shadows: cards are flat in dark, modals keep depth            */
-.dark .shadow-card     { box-shadow: none; }
-.dark .shadow-dropdown { box-shadow: 0 8px 30px rgba(0,0,0,0.5); }
-
-/* ── Scrollbar ───────────── */
-.dark ::-webkit-scrollbar-thumb       { background: #374151; border-radius: 4px; }
-.dark ::-webkit-scrollbar-thumb:hover { background: #4b5563; }
+/* ── Scrollbar ─────────────── */
+.dark ::-webkit-scrollbar-thumb       { background: rgba(255,255,255,0.10); border-radius: 4px; }
+.dark ::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.18); }
 
 /* ══════════════════════════════════════════════
    LANDING PAGE — hero mockup + ambient motion
@@ -410,7 +431,7 @@
   animation: shimmer 2s infinite;
 }
 .dark .skeleton {
-  background: linear-gradient(90deg, #2a2a2a 25%, #3a3a3a 50%, #2a2a2a 75%);
+  background: linear-gradient(90deg, #141C28 25%, #1A2438 50%, #141C28 75%);
   background-size: 1000px 100%;
   animation: shimmer 2s infinite;
 }

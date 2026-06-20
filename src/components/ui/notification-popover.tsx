@@ -199,8 +199,8 @@ export function NotificationPopover() {
           align="end"
           sideOffset={8}
           className={cn(
-            'z-50 w-96 rounded-xl border border-gray-100 dark:border-white/[0.08]',
-            'bg-white dark:bg-[#161620] shadow-xl shadow-black/10',
+            'z-50 w-96 rounded-xl border border-gray-100 dark:border-transparent',
+            'bg-white dark:bg-[#1E2840] dark:shadow-[0_0_0_1px_rgba(255,255,255,0.05),_0_8px_32px_rgba(0,0,0,0.6)]',
             'outline-none overflow-hidden flex flex-col',
             'data-[state=open]:animate-in data-[state=closed]:animate-out',
             'data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0',

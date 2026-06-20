@@ -12,7 +12,7 @@ export default function TopBar() {
   const initials = user?.email?.slice(0, 1).toUpperCase() ?? 'U'
 
   return (
-    <header className="h-12 shrink-0 bg-white dark:bg-[#0f0f12] border-b border-gray-100 dark:border-white/[0.08] flex items-center px-5 gap-4 z-10">
+    <header className="h-12 shrink-0 bg-white dark:bg-[#080D14] border-b border-gray-100 dark:border-white/[0.05] flex items-center px-5 gap-4 z-10">
       {showSearch && (
         <div className="flex-1 max-w-md">
           <GlobalSearch />

@@ -1,12 +1,14 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import { Link } from 'react-router-dom'
-import { Plus, AlertTriangle, Search, PackageOpen } from 'lucide-react'
+import { Plus, Search, PackageOpen, Download } from 'lucide-react'
 import { useAppStore } from '../../stores/appStore'
-import { Button, Input, Select, Card } from '../../components/ui'
+import { Button, Input, Card, Pagination } from '../../components/ui'
 import {
   FulfillmentBadge, PaymentBadge, ChannelBadge,
   RTOScoreBar, PaymentMethodBadge,
 } from '../../components/shared/StatusBadge'
+import { FilterPill } from '../../components/shared/FilterPill'
+import { exportCSV } from '../../lib/exportCSV'
 import type { Order } from '../../types'
 
 type TabType = 'all' | 'ready' | 'review'
@@ -20,6 +22,8 @@ export default function OrderList() {
   const [filterFulfillment, setFilterFulfillment] = useState('')
   const [filterRTO, setFilterRTO] = useState('')
   const [selected, setSelected] = useState<string[]>([])
+  const [page, setPage] = useState(1)
+  const PAGE_SIZE = 50
 
   const pendingReviewCount = orders.filter(o => o.rto_review_status === 'PENDING').length
 
@@ -62,6 +66,13 @@ export default function OrderList() {
     return list.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
   }, [orders, readyOrders, tab, search, filterChannel, filterPayment, filterFulfillment, filterRTO])
 
+  const pagedOrders = useMemo(
+    () => filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE),
+    [filtered, page]
+  )
+
+  useEffect(() => { setPage(1) }, [search, filterChannel, filterPayment, filterFulfillment, filterRTO])
+
   const highRiskPending = orders.filter(o => o.rto_risk_score >= 60 && o.rto_review_status === 'PENDING').length
 
   const toggleSelect = (id: string) =>
@@ -77,36 +88,70 @@ export default function OrderList() {
 
   const totalGMV = filtered.reduce((s, o) => s + o.gross_amount - o.discount_amount, 0)
 
+  const handleExport = () => {
+    exportCSV(
+      `orders-${new Date().toISOString().slice(0, 10)}.csv`,
+      ['Order #', 'Customer', 'Phone', 'Channel', 'Net Amount', 'Payment Status', 'Payment Method', 'Fulfillment Status', 'RTO Score', 'Date'],
+      filtered.map(o => [
+        o.order_number,
+        o.customer?.name ?? '',
+        o.customer?.phone ?? '',
+        o.channel,
+        Math.round(o.gross_amount - o.discount_amount),
+        o.payment_status,
+        o.payment_method,
+        o.fulfillment_status,
+        o.rto_risk_score,
+        new Date(o.created_at).toLocaleDateString('en-IN'),
+      ])
+    )
+  }
+
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <h1 className="text-lg font-semibold text-gray-900">Orders</h1>
-        <Link to="/orders/new">
-          <Button size="sm"><Plus size={14} /> New Order</Button>
-        </Link>
+        <div>
+          <h1 className="text-xl font-semibold tracking-tight text-gray-900">Orders</h1>
+          <p className="text-[13px] text-gray-400 mt-0.5">{filtered.length} orders · GMV ₹{Math.round(totalGMV).toLocaleString('en-IN')}</p>
+        </div>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={handleExport}
+            className="flex items-center gap-1.5 h-8 px-3 rounded-lg border border-gray-200 bg-white text-gray-600 text-sm font-medium hover:border-gray-300 hover:bg-gray-50 transition-colors"
+          >
+            <Download size={13} /> Export
+          </button>
+          <Link to="/orders/new">
+            <Button size="sm"><Plus size={14} /> New Order</Button>
+          </Link>
+        </div>
       </div>
 
       {/* Risk banner */}
       {highRiskPending > 0 && (
         <div
-          className="flex items-center gap-3 p-3 bg-amber-50 border border-amber-200 rounded-md text-amber-800 text-sm cursor-pointer"
+          className="flex items-center gap-3 px-4 py-3 bg-amber-500/[0.07] border border-amber-500/20 dark:border-amber-400/20 rounded-xl cursor-pointer group"
           onClick={() => { setTab('review'); setSelected([]) }}
         >
-          <AlertTriangle size={16} />
-          <span>{highRiskPending} high-RTO order{highRiskPending > 1 ? 's' : ''} need review before shipping</span>
-          <button className="ml-auto text-amber-700 font-medium text-xs hover:underline">Review now →</button>
+          <span className="w-2 h-2 rounded-full bg-amber-500 shrink-0 animate-pulse" />
+          <span className="text-[13px] font-medium text-amber-700 dark:text-amber-400">
+            {highRiskPending} order{highRiskPending > 1 ? 's' : ''} flagged for RTO review — hold before shipping
+          </span>
+          <span className="ml-auto text-[12px] font-semibold text-amber-600 dark:text-amber-400 group-hover:underline whitespace-nowrap">
+            Review now →
+          </span>
         </div>
       )}
 
       {/* Tabs */}
       <div className="flex gap-6 border-b border-gray-100">
-        <TabBtn active={tab === 'all'} onClick={() => { setTab('all'); setSelected([]) }}>
+        <TabBtn active={tab === 'all'} onClick={() => { setTab('all'); setSelected([]); setPage(1) }}>
           All Orders
         </TabBtn>
-        <TabBtn active={tab === 'ready'} onClick={() => { setTab('ready'); setSelected([]) }} badge={readyOrders.length}>
+        <TabBtn active={tab === 'ready'} onClick={() => { setTab('ready'); setSelected([]); setPage(1) }} badge={readyOrders.length}>
           Ready to Pack
         </TabBtn>
-        <TabBtn active={tab === 'review'} onClick={() => { setTab('review'); setSelected([]) }} badge={pendingReviewCount} badgeDanger>
+        <TabBtn active={tab === 'review'} onClick={() => { setTab('review'); setSelected([]); setPage(1) }} badge={pendingReviewCount} badgeDanger>
           Review Queue
         </TabBtn>
       </div>
@@ -148,46 +193,60 @@ export default function OrderList() {
       )}
 
       {/* Filters */}
-      <Card className="p-4">
-        <div className="flex flex-wrap gap-3">
-          <div className="relative flex-1 min-w-48">
-            <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-            <Input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search orders, customers…" className="pl-8" />
-          </div>
-          <Select value={filterChannel} onChange={e => setFilterChannel(e.target.value)} className="w-36">
-            <option value="">All Channels</option>
-            <option value="SHOPIFY">Shopify</option>
-            <option value="WHATSAPP">WhatsApp</option>
-            <option value="MANUAL">Manual</option>
-            <option value="AMAZON">Amazon</option>
-            <option value="FLIPKART">Flipkart</option>
-          </Select>
-          <Select value={filterPayment} onChange={e => setFilterPayment(e.target.value)} className="w-36">
-            <option value="">Payment Status</option>
-            <option value="PAID">Paid</option>
-            <option value="AWAITING_PAYMENT">Awaiting</option>
-            <option value="PENDING">Pending</option>
-            <option value="FAILED">Failed</option>
-          </Select>
-          <Select value={filterFulfillment} onChange={e => setFilterFulfillment(e.target.value)} className="w-36">
-            <option value="">Fulfillment</option>
-            <option value="CONFIRMED">Confirmed</option>
-            <option value="PROCESSING">Processing</option>
-            <option value="PACKING">Packing</option>
-            <option value="READY_TO_SHIP">Ready to Ship</option>
-            <option value="SHIPPED">Shipped</option>
-            <option value="IN_TRANSIT">In Transit</option>
-            <option value="DELIVERED">Delivered</option>
-            <option value="RTO_INITIATED">RTO</option>
-          </Select>
-          <Select value={filterRTO} onChange={e => setFilterRTO(e.target.value)} className="w-28">
-            <option value="">RTO Risk</option>
-            <option value="low">Low</option>
-            <option value="medium">Medium</option>
-            <option value="high">High</option>
-          </Select>
+      <div className="flex flex-wrap items-center gap-2">
+        <div className="relative flex-1 min-w-48">
+          <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+          <Input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search orders, customers…" className="pl-8 h-8 text-sm" />
         </div>
-      </Card>
+        <FilterPill
+          value={filterChannel}
+          onChange={setFilterChannel}
+          placeholder="Channel"
+          options={[
+            { value: 'SHOPIFY', label: 'Shopify' },
+            { value: 'WHATSAPP', label: 'WhatsApp' },
+            { value: 'MANUAL', label: 'Manual' },
+            { value: 'AMAZON', label: 'Amazon' },
+            { value: 'FLIPKART', label: 'Flipkart' },
+          ]}
+        />
+        <FilterPill
+          value={filterPayment}
+          onChange={setFilterPayment}
+          placeholder="Payment"
+          options={[
+            { value: 'PAID', label: 'Paid' },
+            { value: 'AWAITING_PAYMENT', label: 'Awaiting' },
+            { value: 'PENDING', label: 'Pending' },
+            { value: 'FAILED', label: 'Failed' },
+          ]}
+        />
+        <FilterPill
+          value={filterFulfillment}
+          onChange={setFilterFulfillment}
+          placeholder="Fulfillment"
+          options={[
+            { value: 'CONFIRMED', label: 'Confirmed' },
+            { value: 'PROCESSING', label: 'Processing' },
+            { value: 'PACKING', label: 'Packing' },
+            { value: 'READY_TO_SHIP', label: 'Ready to Ship' },
+            { value: 'SHIPPED', label: 'Shipped' },
+            { value: 'IN_TRANSIT', label: 'In Transit' },
+            { value: 'DELIVERED', label: 'Delivered' },
+            { value: 'RTO_INITIATED', label: 'RTO' },
+          ]}
+        />
+        <FilterPill
+          value={filterRTO}
+          onChange={setFilterRTO}
+          placeholder="RTO Risk"
+          options={[
+            { value: 'low', label: 'Low' },
+            { value: 'medium', label: 'Medium' },
+            { value: 'high', label: 'High' },
+          ]}
+        />
+      </div>
 
       {/* Empty state for ready tab */}
       {tab === 'ready' && filtered.length === 0 && (
@@ -205,7 +264,7 @@ export default function OrderList() {
             <table className="w-full">
               <thead>
                 <tr className="border-b border-gray-100">
-                  <th className="px-4 py-3 text-left">
+                  <th className="px-4 py-2.5 text-left">
                     <input
                       type="checkbox"
                       checked={selected.length === filtered.length && filtered.length > 0}
@@ -213,21 +272,21 @@ export default function OrderList() {
                       className="rounded"
                     />
                   </th>
-                  <th className="px-4 py-3 text-left text-[11px] font-medium text-gray-400 uppercase tracking-wider">Order</th>
-                  <th className="px-4 py-3 text-left text-[11px] font-medium text-gray-400 uppercase tracking-wider">Customer</th>
-                  <th className="px-4 py-3 text-left text-[11px] font-medium text-gray-400 uppercase tracking-wider hidden sm:table-cell">Channel</th>
-                  <th className="px-4 py-3 text-left text-[11px] font-medium text-gray-400 uppercase tracking-wider">Amount</th>
-                  <th className="px-4 py-3 text-left text-[11px] font-medium text-gray-400 uppercase tracking-wider hidden md:table-cell">Payment</th>
-                  <th className="px-4 py-3 text-left text-[11px] font-medium text-gray-400 uppercase tracking-wider hidden md:table-cell">Status</th>
-                  <th className="px-4 py-3 text-left text-[11px] font-medium text-gray-400 uppercase tracking-wider">RTO</th>
-                  <th className="px-4 py-3 text-left text-[11px] font-medium text-gray-400 uppercase tracking-wider hidden lg:table-cell">Date</th>
+                  <th className="px-4 py-2.5 text-left text-[10px] font-semibold text-gray-400 uppercase tracking-wider">Order</th>
+                  <th className="px-4 py-2.5 text-left text-[10px] font-semibold text-gray-400 uppercase tracking-wider">Customer</th>
+                  <th className="px-4 py-2.5 text-left text-[10px] font-semibold text-gray-400 uppercase tracking-wider hidden sm:table-cell">Channel</th>
+                  <th className="px-4 py-2.5 text-left text-[10px] font-semibold text-gray-400 uppercase tracking-wider">Amount</th>
+                  <th className="px-4 py-2.5 text-left text-[10px] font-semibold text-gray-400 uppercase tracking-wider hidden md:table-cell">Payment</th>
+                  <th className="px-4 py-2.5 text-left text-[10px] font-semibold text-gray-400 uppercase tracking-wider hidden md:table-cell">Status</th>
+                  <th className="px-4 py-2.5 text-left text-[10px] font-semibold text-gray-400 uppercase tracking-wider">RTO</th>
+                  <th className="px-4 py-2.5 text-left text-[10px] font-semibold text-gray-400 uppercase tracking-wider hidden lg:table-cell">Date</th>
                   {tab === 'review' && (
-                    <th className="px-4 py-3 text-left text-[11px] font-medium text-gray-400 uppercase tracking-wider">Action</th>
+                    <th className="px-4 py-2.5 text-left text-[10px] font-semibold text-gray-400 uppercase tracking-wider">Action</th>
                   )}
                 </tr>
               </thead>
               <tbody className="stagger-rows">
-                {filtered.map(order => (
+                {pagedOrders.map(order => (
                   <OrderRow
                     key={order.id}
                     order={order}
@@ -238,7 +297,7 @@ export default function OrderList() {
                     onHold={() => holdOrder(order.id)}
                   />
                 ))}
-                {filtered.length === 0 && tab !== 'ready' && (
+                {pagedOrders.length === 0 && tab !== 'ready' && (
                   <tr>
                     <td colSpan={10} className="px-4 py-12 text-center text-gray-500 text-sm">
                       No orders match your filters
@@ -249,9 +308,9 @@ export default function OrderList() {
             </table>
           </div>
           <div className="px-4 py-3 border-t border-gray-100 flex items-center justify-between text-xs text-gray-500">
-            <span>{filtered.length} orders</span>
-            <span>GMV: ₹{Math.round(totalGMV).toLocaleString('en-IN')}</span>
+            <span>{filtered.length} orders · GMV ₹{Math.round(totalGMV).toLocaleString('en-IN')}</span>
           </div>
+          <Pagination page={page} pageSize={PAGE_SIZE} total={filtered.length} onChange={p => { setPage(p); setSelected([]) }} />
         </Card>
       )}
     </div>
@@ -270,38 +329,39 @@ function OrderRow({
 }) {
   return (
     <tr className={`border-b border-gray-50 hover:bg-gray-50/50 transition-colors ${selected ? 'bg-brand-50' : ''}`}>
-      <td className="px-4 py-3">
+      <td className="px-4 py-2.5">
         <input type="checkbox" checked={selected} onChange={onSelect} className="rounded" />
       </td>
-      <td className="px-4 py-3">
-        <Link to={`/orders/${order.id}`} className="text-sm font-medium text-brand-600 hover:underline">
+      <td className="px-4 py-2.5">
+        <Link to={`/orders/${order.id}`} className="text-sm font-medium text-brand-600 hover:underline tabular-nums">
           {order.order_number}
         </Link>
       </td>
-      <td className="px-4 py-3">
+      <td className="px-4 py-2.5">
         <div>
-          <p className="text-sm font-medium text-gray-900">{order.customer?.name}</p>
-          <p className="text-xs text-gray-500">{order.customer?.phone}</p>
+          <p className="text-[13px] font-medium text-gray-900">{order.customer?.name}</p>
+          <p className="text-[11px] text-gray-400">{order.customer?.phone}</p>
         </div>
       </td>
-      <td className="px-4 py-3 hidden sm:table-cell">
+      <td className="px-4 py-2.5 hidden sm:table-cell">
         <ChannelBadge channel={order.channel} />
       </td>
-      <td className="px-4 py-3">
-        <span className="text-sm font-medium text-gray-900">
+      <td className="px-4 py-2.5">
+        <span className="text-[13px] font-semibold text-gray-900 tabular-nums">
           ₹{(order.gross_amount - order.discount_amount).toLocaleString('en-IN')}
         </span>
       </td>
-      <td className="px-4 py-3 hidden md:table-cell">
-        <div className="flex flex-col gap-1">
+      <td className="px-4 py-2.5 hidden md:table-cell">
+        <div className="flex items-center gap-1.5 flex-wrap">
           <PaymentBadge status={order.payment_status} />
+          <span className="text-gray-200 dark:text-white/10 text-[10px]">·</span>
           <PaymentMethodBadge method={order.payment_method} />
         </div>
       </td>
-      <td className="px-4 py-3 hidden md:table-cell">
+      <td className="px-4 py-2.5 hidden md:table-cell">
         <FulfillmentBadge status={order.fulfillment_status} />
       </td>
-      <td className="px-4 py-3">
+      <td className="px-4 py-2.5">
         <RTOScoreBar score={order.rto_risk_score} />
       </td>
       <td className="px-4 py-3 hidden lg:table-cell">

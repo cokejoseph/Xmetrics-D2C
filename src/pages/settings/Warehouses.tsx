@@ -22,7 +22,10 @@ export default function Warehouses() {
   return (
     <div className="space-y-6 max-w-3xl">
       <div className="flex items-center justify-between">
-        <h1 className="text-lg font-semibold text-gray-900">Warehouses</h1>
+        <div>
+          <h1 className="text-xl font-semibold tracking-tight text-gray-900">Warehouses</h1>
+          <p className="text-[13px] text-gray-400 mt-0.5">{warehouses.length} location{warehouses.length !== 1 ? 's' : ''}</p>
+        </div>
         <Button size="sm" onClick={() => setShowAdd(true)}>
           <Plus size={14} /> Add Warehouse
         </Button>

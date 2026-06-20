@@ -33,7 +33,7 @@ export default function Sidebar() {
   const userInitial = userName[0]?.toUpperCase() ?? 'U'
 
   return (
-    <aside className="flex w-[220px] shrink-0 flex-col h-screen bg-white dark:bg-[#0f0f1a] border-r border-gray-100 dark:border-white/[0.06]">
+    <aside className="flex w-[220px] shrink-0 flex-col h-screen bg-white dark:bg-[#080D14] border-r border-gray-100 dark:border-white/[0.05]">
       {/* Logo */}
       <div className="px-4 py-4 border-b border-gray-100 dark:border-white/[0.05]">
         <div className="flex items-center gap-2.5">

@@ -1,5 +1,5 @@
 import { useParams, Link } from 'react-router-dom'
-import { ArrowLeft, Phone, Mail, MapPin, MessageCircle } from 'lucide-react'
+import { ChevronRight, Phone, Mail, MapPin, MessageCircle } from 'lucide-react'
 import { useAppStore } from '../../stores/appStore'
 import { Card } from '../../components/ui'
 import { FulfillmentBadge, PaymentBadge, ChannelBadge } from '../../components/shared/StatusBadge'
@@ -36,19 +36,22 @@ export default function CustomerDetail() {
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center gap-3">
-        <Link to="/customers" className="p-2 rounded-lg hover:bg-gray-100 text-gray-500">
-          <ArrowLeft size={16} />
-        </Link>
-        <div>
-          <h1 className="text-lg font-semibold text-gray-900">{customer.name}</h1>
-          <div className="flex gap-1 mt-0.5">
-            {customer.tags.map(tag => (
-              <span key={tag} className="px-1.5 py-0.5 bg-gray-100 text-gray-600 rounded text-[10px] font-medium">
-                {tag}
-              </span>
-            ))}
-          </div>
+      {/* Breadcrumb */}
+      <nav className="flex items-center gap-1.5 text-sm">
+        <Link to="/customers" className="text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300 transition-colors">Customers</Link>
+        <ChevronRight size={12} className="text-gray-300 dark:text-gray-600" />
+        <span className="text-gray-700 dark:text-gray-200 font-medium">{customer.name}</span>
+      </nav>
+
+      {/* Header */}
+      <div>
+        <h1 className="text-xl font-semibold tracking-tight text-gray-900">{customer.name}</h1>
+        <div className="flex gap-1 mt-0.5">
+          {customer.tags.map(tag => (
+            <span key={tag} className="px-1.5 py-0.5 bg-gray-100 text-gray-600 rounded text-[10px] font-medium">
+              {tag}
+            </span>
+          ))}
         </div>
       </div>
 

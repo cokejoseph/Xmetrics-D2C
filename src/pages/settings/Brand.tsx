@@ -33,7 +33,10 @@ export default function BrandSettings() {
 
   return (
     <div className="space-y-6 max-w-2xl">
-      <h1 className="text-lg font-semibold text-gray-900">Brand Settings</h1>
+      <div>
+        <h1 className="text-xl font-semibold tracking-tight text-gray-900">Brand Settings</h1>
+        <p className="text-[13px] text-gray-400 mt-0.5">Identity, market type, and preferences</p>
+      </div>
 
       <Card className="p-6 space-y-5">
         <h2 className="text-[11px] font-medium text-gray-400 uppercase tracking-wider">Brand Identity</h2>

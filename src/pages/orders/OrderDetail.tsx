@@ -1,6 +1,6 @@
 import { useParams, Link } from 'react-router-dom'
 import { useState, useEffect } from 'react'
-import { ArrowLeft, MapPin, Package, Clock, User, Truck, CreditCard, ShieldAlert } from 'lucide-react'
+import { ChevronRight, MapPin, Package, Clock, User, Truck, CreditCard, ShieldAlert, Lock } from 'lucide-react'
 import { useAppStore } from '../../stores/appStore'
 import { Card, Badge } from '../../components/ui'
 import {
@@ -9,6 +9,7 @@ import {
 } from '../../components/shared/StatusBadge'
 import { calculateRTOScore } from '../../lib/services'
 import { lookupPincode } from '../../lib/pincodeService'
+import { useCanViewFinancials } from '../../hooks/useCurrentRole'
 import type { PincodeResult } from '../../lib/pincodeService'
 
 export default function OrderDetail() {
@@ -61,24 +62,26 @@ export default function OrderDetail() {
   })
 
   const shipment = order.shipments?.[0]
+  const canViewFinancials = useCanViewFinancials()
 
   return (
     <div className="space-y-4">
-      {/* Header */}
-      <div className="flex items-center gap-3">
-        <Link to="/orders" className="p-2 rounded-lg hover:bg-gray-100 text-gray-500 transition-colors">
-          <ArrowLeft size={16} />
-        </Link>
-        <div className="flex-1">
-          <div className="flex items-center gap-3 flex-wrap">
-            <h1 className="text-lg font-semibold text-gray-900">{order.order_number}</h1>
+      {/* Sticky action header */}
+      <div className="sticky top-0 z-20 -mx-6 px-6 py-3 bg-white/95 dark:bg-[#0C1118]/97 backdrop-blur-sm border-b border-gray-100 dark:border-white/[0.04]">
+        <div className="flex items-center gap-3 flex-wrap">
+          <nav className="flex items-center gap-1.5 text-sm">
+            <Link to="/orders" className="text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300 transition-colors">Orders</Link>
+            <ChevronRight size={12} className="text-gray-300 dark:text-gray-600" />
+            <h1 className="text-gray-900 dark:text-gray-100 font-semibold">{order.order_number}</h1>
+          </nav>
+          <div className="flex items-center gap-2 ml-1">
             <ChannelBadge channel={order.channel} />
             <FulfillmentBadge status={order.fulfillment_status} />
             <PaymentBadge status={order.payment_status} />
           </div>
-          <p className="text-sm text-gray-500 mt-0.5">
-            {new Date(order.created_at).toLocaleString('en-IN', { dateStyle: 'long', timeStyle: 'short' })}
-          </p>
+          <span className="ml-auto text-xs text-gray-400 dark:text-gray-500 hidden sm:block">
+            {new Date(order.created_at).toLocaleString('en-IN', { dateStyle: 'medium', timeStyle: 'short' })}
+          </span>
         </div>
       </div>
 
@@ -122,32 +125,39 @@ export default function OrderDetail() {
           </Card>
 
           {/* P&L Waterfall */}
-          <Card className="p-5">
-            <h2 className="text-sm font-medium text-gray-900 mb-4">P&L Breakdown</h2>
-            <div className="space-y-2">
-              <PLRow label="Gross Revenue" value={revenue} positive />
-              {discount > 0 && <PLRow label="Discount" value={-discount} />}
-              <PLRow label="COGS" value={-cogs} />
-              <PLRow label="Shipping Cost" value={-shippingCost} />
-              {txnFee > 0
-                ? <PLRow label={`Transaction Fee${order.razorpay_tax ? ' (incl. GST)' : ''}`} value={-txnFee} />
-                : <div className="flex justify-between text-sm">
-                    <span className="text-gray-500">Transaction Fee</span>
-                    <span className="text-gray-400 text-xs italic">pending payment</span>
+          {canViewFinancials ? (
+            <Card className="p-5">
+              <h2 className="text-sm font-medium text-gray-900 mb-4">P&L Breakdown</h2>
+              <div className="space-y-2">
+                <PLRow label="Gross Revenue" value={revenue} positive />
+                {discount > 0 && <PLRow label="Discount" value={-discount} />}
+                <PLRow label="COGS" value={-cogs} />
+                <PLRow label="Shipping Cost" value={-shippingCost} />
+                {txnFee > 0
+                  ? <PLRow label={`Transaction Fee${order.razorpay_tax ? ' (incl. GST)' : ''}`} value={-txnFee} />
+                  : <div className="flex justify-between text-sm">
+                      <span className="text-gray-500">Transaction Fee</span>
+                      <span className="text-gray-400 text-xs italic">pending payment</span>
+                    </div>
+                }
+                {rtoReserve > 0 && <PLRow label="RTO Reserve (5%)" value={-rtoReserve} />}
+                <div className={`mt-2 rounded-xl px-4 py-3.5 flex items-center justify-between ${netProfit >= 0 ? 'bg-emerald-50 dark:bg-emerald-400/[0.08]' : 'bg-red-50 dark:bg-red-400/[0.08]'}`}>
+                  <div>
+                    <p className={`text-[10px] font-bold uppercase tracking-widest mb-0.5 ${netProfit >= 0 ? 'text-emerald-600/60 dark:text-emerald-400/50' : 'text-red-600/60 dark:text-red-400/50'}`}>Net Profit</p>
+                    <p className={`text-[11px] ${netProfit >= 0 ? 'text-emerald-600/70 dark:text-emerald-400/60' : 'text-red-600/70 dark:text-red-400/60'}`}>{Math.round(margin)}% margin</p>
                   </div>
-              }
-              {rtoReserve > 0 && <PLRow label="RTO Reserve (5%)" value={-rtoReserve} />}
-              <div className="border-t border-gray-200 pt-2 flex justify-between items-center">
-                <span className="text-sm font-medium text-gray-900">Net Profit</span>
-                <div className="text-right">
-                  <span className={`text-base font-medium ${netProfit >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                  <span className={`text-[28px] font-bold tabular-nums tracking-tight leading-none ${netProfit >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-600 dark:text-red-400'}`}>
                     ₹{Math.round(netProfit).toLocaleString('en-IN')}
                   </span>
-                  <span className="text-xs text-gray-500 ml-2">({Math.round(margin)}% margin)</span>
                 </div>
               </div>
-            </div>
-          </Card>
+            </Card>
+          ) : (
+            <Card className="p-5 flex items-center gap-3 text-gray-400">
+              <Lock size={16} />
+              <span className="text-sm">P&L data is restricted to Editor and above</span>
+            </Card>
+          )}
 
           {/* Shipment tracking */}
           {shipment && (

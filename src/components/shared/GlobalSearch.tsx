@@ -406,6 +406,19 @@ export default function GlobalSearch() {
     return () => document.removeEventListener('mousedown', handler)
   }, [])
 
+  // Cmd+K / Ctrl+K global shortcut
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+        e.preventDefault()
+        inputRef.current?.focus()
+        inputRef.current?.select()
+      }
+    }
+    document.addEventListener('keydown', handler)
+    return () => document.removeEventListener('keydown', handler)
+  }, [])
+
   // Map nav index to position in allResults
   let navCounter = -1
 
@@ -427,10 +440,14 @@ export default function GlobalSearch() {
           placeholder="Search orders, customers, products, exceptions…"
           className="flex-1 bg-transparent outline-none placeholder-gray-400 dark:placeholder-gray-600 text-gray-700 dark:text-gray-200 [&::-webkit-search-cancel-button]:hidden"
         />
-        {query && (
+        {query ? (
           <button onClick={() => { setQuery(''); setOpen(false) }} className="shrink-0 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300">
             <X size={14} />
           </button>
+        ) : (
+          <kbd className="hidden sm:inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded border border-gray-200 dark:border-white/10 text-[10px] text-gray-400 dark:text-gray-600 font-mono shrink-0 select-none">
+            ⌘K
+          </kbd>
         )}
       </div>
 
@@ -438,7 +455,7 @@ export default function GlobalSearch() {
       {open && hasResults && (
         <div
           ref={listRef}
-          className="absolute top-full left-0 right-0 mt-1.5 bg-white dark:bg-[#161620] rounded-xl shadow-xl shadow-black/10 border border-gray-100 dark:border-white/[0.08] z-50 overflow-hidden animate-dropdown-in"
+          className="absolute top-full left-0 right-0 mt-1.5 bg-white dark:bg-[#1E2840] rounded-xl border border-gray-100 dark:border-white/[0.05] dark:shadow-[0_0_0_1px_rgba(255,255,255,0.04),_0_12px_40px_rgba(0,0,0,0.65)] z-50 overflow-hidden animate-dropdown-in"
           style={{ maxHeight: '480px', overflowY: 'auto', minWidth: '420px' }}
         >
           {allResults.map((item, i) => {
@@ -492,7 +509,7 @@ export default function GlobalSearch() {
 
       {/* No results */}
       {open && query.length >= 2 && !hasResults && (
-        <div className="absolute top-full left-0 right-0 mt-1.5 bg-white dark:bg-[#161620] rounded-xl shadow-xl shadow-black/10 border border-gray-100 dark:border-white/[0.08] z-50 px-4 py-8 text-center animate-dropdown-in">
+        <div className="absolute top-full left-0 right-0 mt-1.5 bg-white dark:bg-[#1E2840] rounded-xl border border-gray-100 dark:border-white/[0.05] dark:shadow-[0_0_0_1px_rgba(255,255,255,0.04),_0_12px_40px_rgba(0,0,0,0.65)] z-50 px-4 py-8 text-center animate-dropdown-in">
           <p className="text-sm text-gray-500 dark:text-gray-400">No results for "<strong>{query}</strong>"</p>
           <p className="text-xs text-gray-400 dark:text-gray-600 mt-1">Try order number, customer name, SKU, or AWB</p>
         </div>
