@@ -8,26 +8,26 @@ const ACCENT_LIGHT = '#1658E3'
 const ACCENT_DARK  = '#4DA6FF'
 
 const STATUS_COLORS: Record<string, string> = {
-  DELIVERED:        '#22C55E',
-  OUT_FOR_DELIVERY: '#34D399',
-  IN_TRANSIT:       '#6B8AB8',
-  SHIPPED:          '#93B5D4',
-  PICKUP_SCHEDULED: '#A5B4FC',
-  READY_FOR_PICKUP: '#C4B5FD',
-  READY_TO_SHIP:    '#FCD34D',
-  PACKING:          '#FDE68A',
-  PROCESSING:       '#94A3B8',
-  CONFIRMED:        '#CBD5E1',
-  PENDING:          '#E2E8F0',
-  RTO_INITIATED:    '#F87171',
-  RTO_DELIVERED:    '#EF4444',
-  CANCELLED:        '#D1D5DB',
-  LOST:             '#9CA3AF',
+  DELIVERED:        '#10b981',
+  OUT_FOR_DELIVERY: '#34d399',
+  IN_TRANSIT:       '#60a5fa',
+  SHIPPED:          '#818cf8',
+  PICKUP_SCHEDULED: '#a78bfa',
+  READY_FOR_PICKUP: '#c084fc',
+  READY_TO_SHIP:    '#f59e0b',
+  PACKING:          '#fbbf24',
+  PROCESSING:       '#94a3b8',
+  CONFIRMED:        '#64748b',
+  PENDING:          '#cbd5e1',
+  RTO_INITIATED:    '#f87171',
+  RTO_DELIVERED:    '#ef4444',
+  CANCELLED:        '#9ca3af',
+  LOST:             '#6b7280',
 }
 
 function getStatusColor(name: string, index: number): string {
   return STATUS_COLORS[name] ?? [
-    ACCENT_LIGHT, '#93B5D4', '#34D399', '#FCD34D', '#F87171', '#A5B4FC', '#94A3B8',
+    '#1658E3', '#10b981', '#f59e0b', '#f87171', '#818cf8', '#34d399', '#60a5fa',
   ][index % 7]
 }
 
@@ -35,29 +35,30 @@ function useChartTheme() {
   const { dark } = useThemeStore()
   return {
     accent:       dark ? ACCENT_DARK : ACCENT_LIGHT,
-    grid:         dark ? 'rgba(255,255,255,0.06)' : '#F1F5F9',
+    grid:         dark ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.05)',
     tickFill:     dark ? '#4A5E78' : '#94a3b8',
     tickFillAlt:  dark ? '#3A4E68' : '#64748b',
-    tooltipStyle: dark
-      ? {
-          background:   '#1E2840',
-          border:       '1px solid rgba(255,255,255,0.07)',
-          boxShadow:    '0 0 0 1px rgba(255,255,255,0.05), 0 8px 32px rgba(0,0,0,0.7)',
-          borderRadius: 8,
-          fontSize:     12,
-          padding:      '6px 10px',
-          color:        '#E8EEF8',
-        }
-      : {
-          background:   '#fff',
-          border:       '1px solid #e5e7eb',
-          boxShadow:    '0 4px 16px rgba(0,0,0,0.06)',
-          borderRadius: 8,
-          fontSize:     12,
-          padding:      '6px 10px',
-        },
-    donutStroke:  dark ? '#141C28' : 'white',
+    tooltipBg:    dark ? '#0f1829' : '#ffffff',
+    tooltipBorder:dark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)',
+    tooltipShadow:dark
+      ? '0 0 0 1px rgba(255,255,255,0.05), 0 8px 32px rgba(0,0,0,0.8)'
+      : '0 4px 24px rgba(0,0,0,0.08)',
+    tooltipColor: dark ? '#e2e8f0' : '#0f172a',
+    donutStroke:  dark ? '#0C1118' : '#ffffff',
     dark,
+  }
+}
+
+function tooltipStyle(t: ReturnType<typeof useChartTheme>) {
+  return {
+    background:   t.tooltipBg,
+    border:       `1px solid ${t.tooltipBorder}`,
+    boxShadow:    t.tooltipShadow,
+    borderRadius: '8px',
+    fontSize:     '12px',
+    padding:      '8px 12px',
+    color:        t.tooltipColor,
+    fontFamily:   'DM Sans, sans-serif',
   }
 }
 
@@ -70,18 +71,27 @@ export function RevenueAreaChart({ data }: { data: RevenuePoint[] }) {
       <AreaChart data={data} margin={{ top: 8, right: 8, bottom: 0, left: 0 }}>
         <defs>
           <linearGradient id="revenueGrad" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="5%"  stopColor={t.accent} stopOpacity={t.dark ? 0.18 : 0.1} />
-            <stop offset="95%" stopColor={t.accent} stopOpacity={0} />
+            <stop offset="0%"   stopColor={t.accent} stopOpacity={t.dark ? 0.22 : 0.12} />
+            <stop offset="100%" stopColor={t.accent} stopOpacity={0} />
           </linearGradient>
         </defs>
-        <CartesianGrid strokeDasharray="3 3" stroke={t.grid} vertical={false} />
-        <XAxis dataKey="label" tick={{ fontSize: 11, fill: t.tickFill }} axisLine={false} tickLine={false} />
-        <YAxis tick={{ fontSize: 11, fill: t.tickFill }} axisLine={false} tickLine={false}
+        <CartesianGrid strokeDasharray="0" stroke={t.grid} vertical={false} />
+        <XAxis dataKey="label" tick={{ fontSize: 11, fill: t.tickFill, fontFamily: 'DM Sans, sans-serif' }} axisLine={false} tickLine={false} />
+        <YAxis tick={{ fontSize: 11, fill: t.tickFill, fontFamily: 'DM Sans, sans-serif' }} axisLine={false} tickLine={false}
           tickFormatter={v => `₹${(v / 1000).toFixed(0)}k`} />
-        <Tooltip contentStyle={t.tooltipStyle}
-          formatter={(v: unknown) => [`₹${Number(v).toLocaleString('en-IN')}`, 'Revenue']} />
-        <Area type="monotone" dataKey="revenue" stroke={t.accent} strokeWidth={2.5}
-          fill="url(#revenueGrad)" dot={false} activeDot={{ r: 4, fill: t.accent }} />
+        <Tooltip
+          contentStyle={tooltipStyle(t)}
+          formatter={(v: unknown) => [`₹${Number(v).toLocaleString('en-IN')}`, 'Revenue']}
+          labelStyle={{ color: t.tickFill, fontSize: 11, marginBottom: 2 }}
+          cursor={{ stroke: t.accent, strokeWidth: 1, strokeOpacity: 0.3 }}
+        />
+        <Area
+          type="monotone" dataKey="revenue"
+          stroke={t.accent} strokeWidth={2}
+          fill="url(#revenueGrad)"
+          dot={false}
+          activeDot={{ r: 4, fill: t.accent, stroke: t.tooltipBg, strokeWidth: 2 }}
+        />
       </AreaChart>
     </ResponsiveContainer>
   )
@@ -91,12 +101,16 @@ export function OrdersBarChart({ data }: { data: Array<{ label: string; orders: 
   const t = useChartTheme()
   return (
     <ResponsiveContainer width="100%" height={200}>
-      <BarChart data={data} margin={{ top: 8, right: 8, bottom: 0, left: 0 }}>
-        <CartesianGrid strokeDasharray="3 3" stroke={t.grid} vertical={false} />
-        <XAxis dataKey="label" tick={{ fontSize: 11, fill: t.tickFill }} axisLine={false} tickLine={false} />
-        <YAxis tick={{ fontSize: 11, fill: t.tickFill }} axisLine={false} tickLine={false} />
-        <Tooltip contentStyle={t.tooltipStyle} />
-        <Bar dataKey="orders" fill={t.accent} radius={[5, 5, 0, 0]} />
+      <BarChart data={data} margin={{ top: 8, right: 8, bottom: 0, left: 0 }} barSize={12}>
+        <CartesianGrid strokeDasharray="0" stroke={t.grid} vertical={false} />
+        <XAxis dataKey="label" tick={{ fontSize: 11, fill: t.tickFill, fontFamily: 'DM Sans, sans-serif' }} axisLine={false} tickLine={false} />
+        <YAxis tick={{ fontSize: 11, fill: t.tickFill, fontFamily: 'DM Sans, sans-serif' }} axisLine={false} tickLine={false} />
+        <Tooltip
+          contentStyle={tooltipStyle(t)}
+          cursor={{ fill: t.dark ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.03)' }}
+          labelStyle={{ color: t.tickFill, fontSize: 11 }}
+        />
+        <Bar dataKey="orders" fill={t.accent} radius={[3, 3, 0, 0]} />
       </BarChart>
     </ResponsiveContainer>
   )
@@ -108,12 +122,16 @@ export function ChannelBarChart({ data }: { data: ChannelPoint[] }) {
   const t = useChartTheme()
   return (
     <ResponsiveContainer width="100%" height={200}>
-      <BarChart data={data} layout="vertical" margin={{ top: 5, right: 12, bottom: 5, left: 64 }}>
-        <CartesianGrid strokeDasharray="3 3" stroke={t.grid} horizontal={false} />
-        <XAxis type="number" tick={{ fontSize: 11, fill: t.tickFill }} axisLine={false} tickLine={false} />
-        <YAxis dataKey="channel" type="category" tick={{ fontSize: 11, fill: t.tickFillAlt }} axisLine={false} tickLine={false} />
-        <Tooltip contentStyle={t.tooltipStyle} />
-        <Bar dataKey="orders" fill={t.accent} radius={[0, 5, 5, 0]} />
+      <BarChart data={data} layout="vertical" margin={{ top: 5, right: 12, bottom: 5, left: 64 }} barSize={8}>
+        <CartesianGrid strokeDasharray="0" stroke={t.grid} horizontal={false} />
+        <XAxis type="number" tick={{ fontSize: 11, fill: t.tickFill, fontFamily: 'DM Sans, sans-serif' }} axisLine={false} tickLine={false} />
+        <YAxis dataKey="channel" type="category" tick={{ fontSize: 11, fill: t.tickFillAlt, fontFamily: 'DM Sans, sans-serif' }} axisLine={false} tickLine={false} />
+        <Tooltip
+          contentStyle={tooltipStyle(t)}
+          cursor={{ fill: t.dark ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.03)' }}
+          labelStyle={{ color: t.tickFill, fontSize: 11 }}
+        />
+        <Bar dataKey="orders" fill={t.accent} radius={[0, 3, 3, 0]} />
       </BarChart>
     </ResponsiveContainer>
   )
@@ -123,12 +141,18 @@ interface DonutData { name: string; value: number }
 
 function DonutLegend({ data }: { data: DonutData[] }) {
   return (
-    <div className="flex flex-wrap gap-x-4 gap-y-1.5 justify-center mt-3">
+    <div className="flex flex-wrap gap-x-4 gap-y-2 justify-center mt-4 px-2">
       {data.map((entry, i) => (
         <div key={entry.name} className="flex items-center gap-1.5">
-          <span className="w-2 h-2 rounded-full shrink-0" style={{ background: getStatusColor(entry.name, i) }} />
-          <span className="text-[11px] text-gray-500 font-medium">{entry.name.replace(/_/g, ' ')}</span>
-          <span className="text-[11px] text-gray-400">({entry.value})</span>
+          <span
+            className="w-2 h-2 rounded-full shrink-0"
+            style={{ background: getStatusColor(entry.name, i) }}
+            aria-hidden="true"
+          />
+          <span className="text-[11px] text-gray-500 dark:text-gray-400 font-medium">
+            {entry.name.replace(/_/g, ' ')}
+          </span>
+          <span className="text-[11px] text-gray-400 dark:text-gray-600 tabular-nums">({entry.value})</span>
         </div>
       ))}
     </div>
@@ -164,8 +188,11 @@ export function StatusDonut({ data }: { data: DonutData[] }) {
               />
             ))}
           </Pie>
-          <Tooltip contentStyle={t.tooltipStyle}
-            formatter={(v: unknown, name: unknown) => [Number(v), String(name).replace(/_/g, ' ')]} />
+          <Tooltip
+            contentStyle={tooltipStyle(t)}
+            formatter={(v: unknown, name: unknown) => [Number(v), String(name).replace(/_/g, ' ')]}
+            labelStyle={{ display: 'none' }}
+          />
         </PieChart>
       </ResponsiveContainer>
       <DonutLegend data={sorted} />

@@ -34,6 +34,9 @@ export default {
           medium:   '#eab308',
           low:      '#22c55e',
         },
+        card: {
+          surface: '#182032',  /* dark mode card elevation */
+        },
       },
       fontFamily: {
         sans: ['Inter', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'sans-serif'],

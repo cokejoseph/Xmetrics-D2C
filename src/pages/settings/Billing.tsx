@@ -493,7 +493,10 @@ export default function Billing() {
       {/* ── Invoice history ── */}
       <Card className="p-5">
         <p className="text-[11px] font-medium text-gray-400 uppercase tracking-wider mb-3">Invoice History</p>
-        <p className="text-sm text-gray-400 text-center py-4">No invoices yet.</p>
+        <div className="text-center py-8">
+          <p className="text-sm font-medium text-gray-500 dark:text-gray-400">No invoices yet</p>
+          <p className="text-[12px] text-gray-400 dark:text-gray-600 mt-1">Invoices will appear here after your first payment is processed.</p>
+        </div>
       </Card>
 
       {/* ── Cancel modal ── */}

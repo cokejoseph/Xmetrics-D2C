@@ -3,6 +3,7 @@ import { UserPlus, Trash2, Shield } from 'lucide-react'
 import { useAppStore } from '../../stores/appStore'
 import { useAuthStore } from '../../stores/authStore'
 import { Card, Button, Modal, Input, Select, Badge } from '../../components/ui'
+import { useConfirm } from '../../hooks/useConfirm'
 import type { BrandMember } from '../../types'
 
 type Role = BrandMember['role']
@@ -19,6 +20,7 @@ const ROLE_COLOR: Record<Role, BadgeVariant> = {
 export default function Team() {
   const { teamMembers, inviteTeamMember, removeTeamMember, updateTeamMember } = useAppStore()
   const { user } = useAuthStore()
+  const confirm = useConfirm()
   const [showInvite, setShowInvite] = useState(false)
   const [showMatrix, setShowMatrix] = useState(false)
   const [inviteForm, setInviteForm] = useState({ name: '', email: '', role: 'EDITOR' as Role })
@@ -92,8 +94,18 @@ export default function Team() {
                     <td className="px-4 py-3 text-right">
                       {!isOwner && !isCurrentUser && (
                         <button
-                          onClick={() => removeTeamMember(member.id)}
-                          className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                          onClick={async () => {
+                            const ok = await confirm({
+                              title: 'Remove team member?',
+                              message: `${member.name} will lose access to this workspace immediately.`,
+                              confirmText: 'Remove',
+                              cancelText: 'Keep Access',
+                              isDangerous: true,
+                            })
+                            if (ok) removeTeamMember(member.id)
+                          }}
+                          className="p-1.5 text-gray-400 hover:text-red-500 rounded-lg transition-colors"
+                          aria-label={`Remove ${member.name} from team`}
                         >
                           <Trash2 size={14} />
                         </button>

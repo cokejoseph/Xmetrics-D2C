@@ -7,6 +7,7 @@ import {
 import { useAppStore } from '../../stores/appStore'
 import { Card, Button, Input, Modal } from '../../components/ui'
 import { showToast } from '../../lib/toast'
+import { useConfirm } from '../../hooks/useConfirm'
 import {
   fetchReturns,
   initiateReturn,
@@ -282,6 +283,7 @@ const STATUS_FILTERS: { value: string; label: string }[] = [
 
 export default function Returns() {
   const { currentBrand, returns, setReturns, addReturn, updateReturn } = useAppStore()
+  const confirm = useConfirm()
   const [loading, setLoading] = useState(!DEMO_MODE)
   const [search, setSearch] = useState('')
   const [filterStatus, setFilterStatus] = useState('')
@@ -365,6 +367,15 @@ export default function Returns() {
   }
 
   const handleDeny = async (ret: Return) => {
+    const orderNum = (ret.order as { order_number?: string } | undefined)?.order_number ?? ret.order_id.slice(0, 8)
+    const confirmed = await confirm({
+      title: 'Deny return request?',
+      message: `This will deny the return for order ${orderNum}. The customer will be notified. This action cannot be undone.`,
+      confirmText: 'Deny Return',
+      cancelText: 'Keep Open',
+      isDangerous: true,
+    })
+    if (!confirmed) return
     setActionLoading(`deny-${ret.id}`)
     try {
       if (DEMO_MODE) {

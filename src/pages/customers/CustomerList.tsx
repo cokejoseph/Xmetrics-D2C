@@ -1,6 +1,6 @@
 import { useState, useMemo, useEffect } from 'react'
 import { Link } from 'react-router-dom'
-import { Search, Download } from 'lucide-react'
+import { Search, Download, Users } from 'lucide-react'
 import { useAppStore } from '../../stores/appStore'
 import { Card, Input, Pagination } from '../../components/ui'
 import { exportCSV } from '../../lib/exportCSV'
@@ -76,6 +76,7 @@ export default function CustomerList() {
             onChange={e => setSearch(e.target.value)}
             placeholder="Search by name, phone, email…"
             className="pl-8"
+            aria-label="Search customers by name, phone, or email"
           />
         </div>
         </div>
@@ -125,7 +126,13 @@ export default function CustomerList() {
               ))}
               {filtered.length === 0 && (
                 <tr>
-                  <td colSpan={7} className="px-4 py-12 text-center text-gray-500 text-sm">No customers found</td>
+                  <td colSpan={7} className="py-16 text-center">
+                    <Users size={28} className="mx-auto text-gray-300 dark:text-gray-600 mb-3" />
+                    <p className="text-sm font-medium text-gray-500 dark:text-gray-400">No customers found</p>
+                    <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">
+                      {search ? 'Try a different name, phone, or email' : 'Customers will appear here once orders are placed'}
+                    </p>
+                  </td>
                 </tr>
               )}
             </tbody>

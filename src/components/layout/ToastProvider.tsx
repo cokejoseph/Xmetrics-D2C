@@ -6,28 +6,32 @@ export default function ToastProvider() {
       position="top-right"
       reverseOrder={false}
       toastOptions={{
-        duration: 3000,
+        duration: 3500,
         style: {
-          background: '#1e1e24',
-          color: '#f1f5f9',
-          borderRadius: '12px',
-          border: '1px solid rgba(255,255,255,0.1)',
-          boxShadow: '0 8px 30px rgba(0,0,0,0.4)',
+          background: '#182032',
+          color: '#e2e8f0',
+          borderRadius: '10px',
+          border: '1px solid rgba(255,255,255,0.08)',
+          boxShadow: '0 0 0 1px rgba(255,255,255,0.05), 0 8px 30px rgba(0,0,0,0.45)',
+          fontSize: '13px',
+          fontWeight: 500,
+          padding: '10px 14px',
+          gap: '8px',
         },
         success: {
-          icon: '✅',
+          iconTheme: { primary: '#10b981', secondary: '#182032' },
           style: {
-            borderLeft: '4px solid #10b981',
+            borderTop: '2px solid #10b981',
           },
         },
         error: {
-          icon: '❌',
+          iconTheme: { primary: '#ef4444', secondary: '#182032' },
           style: {
-            borderLeft: '4px solid #ef4444',
+            borderTop: '2px solid #ef4444',
           },
         },
         loading: {
-          icon: '⏳',
+          iconTheme: { primary: '#4DA6FF', secondary: '#182032' },
         },
       }}
     />

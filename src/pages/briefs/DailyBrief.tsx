@@ -111,9 +111,9 @@ export default function DailyBrief() {
             </div>
           )}
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
-            <PLStat label="RTO Rate" value={`${Math.round(d.rto_rate * 100)}%`} highlight={d.spiked ? 'red' : undefined} />
-            <PLStat label="Avg RTO Score" value={String(Math.round(d.avg_rto_score))} sub="out of 100" />
-            <PLStat label="High Risk Orders" value={String(d.high_risk_orders.length)} sub="score ≥ 60" />
+            <PLStat label="RTO Rate" value={`${Math.round(d.rto_rate * 100)}%`} highlight={d.spiked ? 'red' : undefined} tooltip="Return-to-Origin rate: percentage of shipped orders being returned. Industry benchmark for D2C is under 20%." />
+            <PLStat label="Avg RTO Score" value={String(Math.round(d.avg_rto_score))} sub="out of 100" tooltip="Average risk score across all orders today. Scores above 60 are flagged for manual review. Lower is better." />
+            <PLStat label="High Risk Orders" value={String(d.high_risk_orders.length)} sub="score ≥ 60" tooltip="Orders with RTO risk score ≥ 60 — these have a high probability of being returned. Review before shipping." />
           </div>
           {d.high_risk_orders.length > 0 && (
             <div className="mt-3 flex flex-wrap gap-2">
@@ -226,13 +226,14 @@ export default function DailyBrief() {
 }
 
 function PLStat({
-  label, value, sub, dimmed, highlight,
+  label, value, sub, dimmed, highlight, tooltip,
 }: {
   label: string
   value: string
   sub?: string
   dimmed?: boolean
   highlight?: 'green' | 'red'
+  tooltip?: string
 }) {
   const valueColor = highlight === 'green'
     ? 'text-green-700'
@@ -240,7 +241,7 @@ function PLStat({
       ? 'text-red-600'
       : dimmed ? 'text-gray-500' : 'text-gray-900'
   return (
-    <div>
+    <div title={tooltip} className={tooltip ? 'cursor-help' : undefined}>
       <p className={`text-lg font-bold ${valueColor}`}>{value}</p>
       <p className="text-xs text-gray-500">{label}</p>
       {sub && <p className="text-[10px] text-gray-400">{sub}</p>}

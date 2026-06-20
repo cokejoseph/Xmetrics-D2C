@@ -118,23 +118,23 @@ export default function Dashboard() {
         <div className="bg-brand-600 rounded-xl px-6 py-5">
           <div className="flex flex-col sm:flex-row sm:items-start gap-4">
             <div className="flex-1 min-w-0">
-              <div className="flex items-center gap-1.5 mb-2">
+              <div className="flex items-center gap-1.5 mb-2" aria-hidden="true">
                 <Zap size={11} className="text-white/50" />
                 <span className="text-[10px] font-semibold uppercase tracking-widest text-white/50">Today's Intelligence</span>
               </div>
               <p className="text-[18px] font-semibold text-white leading-tight">
                 {brief.headline.total_orders} orders · ₹{Math.round(brief.headline.total_revenue).toLocaleString('en-IN')} revenue
               </p>
-              <p className="text-[13px] text-white/55 mt-1">
+              <p className="text-[13px] text-white/90 mt-1">
                 {Math.round(brief.headline.true_margin)}% margin · {brief.headline.rto_count} RTO today
               </p>
             </div>
             {brief.actions.length > 0 && (
               <div className="flex flex-wrap gap-2 sm:max-w-[380px]">
                 {brief.actions.slice(0, 2).map((action, i) => (
-                  <div key={i} className="flex items-start gap-2 bg-white/[0.10] rounded-lg px-3 py-2 flex-1 min-w-[150px]">
+                  <div key={i} className="flex items-start gap-2 bg-white/[0.12] rounded-lg px-3 py-2 flex-1 min-w-[150px]">
                     <span className={`w-1.5 h-1.5 rounded-full mt-[4px] shrink-0 ${action.priority === 'HIGH' ? 'bg-red-300' : 'bg-amber-300'}`} />
-                    <span className="text-[12px] text-white/75 leading-[1.45]">{action.text}</span>
+                    <span className="text-[12px] text-white/95 leading-[1.45]">{action.text}</span>
                   </div>
                 ))}
               </div>
@@ -144,7 +144,7 @@ export default function Dashboard() {
       )}
 
       {/* ── KPI strip — single surface, 4 columns ───────── */}
-      <div className="bg-white dark:bg-[#141C28] rounded-xl border border-gray-100 dark:border-white/[0.05] shadow-card dark:shadow-[0_0_0_1px_rgba(255,255,255,0.05),_inset_0_1px_0_rgba(255,255,255,0.05)] grid grid-cols-2 lg:grid-cols-4 divide-y lg:divide-y-0 divide-x-0 lg:divide-x divide-gray-100 dark:divide-white/[0.05]">
+      <div className="bg-white dark:bg-card-surface rounded-xl border border-gray-100 dark:border-white/[0.07] shadow-card dark:shadow-[0_0_0_1px_rgba(255,255,255,0.07),0_1px_3px_rgba(0,0,0,0.4),inset_0_1px_0_rgba(255,255,255,0.06)] grid grid-cols-2 lg:grid-cols-4 divide-y lg:divide-y-0 divide-x-0 lg:divide-x divide-gray-100 dark:divide-white/[0.07]">
         <KPIMetric
           title="Revenue Today"
           value={`₹${Math.round(todayRevenue).toLocaleString('en-IN')}`}
@@ -165,6 +165,7 @@ export default function Dashboard() {
           sub="All-time · WoW"
           trend={{ value: rtoTrendPct, positive: !rtoTrendPositive }}
           invertTrend={true}
+          tooltip="Return-to-Origin rate: percentage of shipped orders returned to warehouse. Industry benchmark for D2C is under 20%. Lower is better."
         />
         <KPIMetric
           title="Open Exceptions"
@@ -172,6 +173,7 @@ export default function Dashboard() {
           sub="Need attention"
           trend={{ value: openExceptions, positive: openExceptions > 0 }}
           invertTrend={true}
+          tooltip="Unresolved operational exceptions — high RTO risk, payment failures, stuck shipments, or inventory alerts requiring your action."
         />
       </div>
 
@@ -319,18 +321,23 @@ export default function Dashboard() {
 
 // ── KPI Metric ──────────────────────────────────────────────────────────────
 function KPIMetric({
-  title, value, sub, trend, invertTrend = false,
+  title, value, sub, trend, invertTrend = false, tooltip,
 }: {
   title: string
   value: string
   sub: string
   trend: { value: number; positive: boolean }
   invertTrend?: boolean
+  tooltip?: string
 }) {
   const isGood = invertTrend ? !trend.positive : trend.positive
   return (
     <div className="px-6 py-5">
-      <p className="text-[10px] font-semibold uppercase tracking-widest text-gray-400 mb-3">{title}</p>
+      <p
+        className="text-[10px] font-semibold uppercase tracking-widest text-gray-400 mb-3"
+        title={tooltip}
+        aria-label={tooltip ? `${title}: ${tooltip}` : undefined}
+      >{title}</p>
       <p className="text-[36px] font-semibold tracking-tight text-gray-900 leading-none mb-2 tabular-nums">{value}</p>
       <div className="flex items-center gap-2">
         <p className="text-[11px] text-gray-400">{sub}</p>

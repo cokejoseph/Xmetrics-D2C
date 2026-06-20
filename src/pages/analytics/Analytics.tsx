@@ -177,7 +177,7 @@ function PeriodPicker({ value, onChange }: { value: Period; onChange: (v: Period
               key={o.value}
               onClick={() => { onChange(o.value); setOpen(false) }}
               className={`w-full flex items-center gap-2 px-2 py-1.5 text-sm rounded-md cursor-pointer transition-colors text-left ${
-                value === o.value ? 'text-brand-600 font-medium bg-blue-50' : 'text-gray-700 hover:bg-gray-50'
+                value === o.value ? 'text-brand-700 font-semibold bg-brand-50 dark:text-brand-300 dark:bg-brand-900/20' : 'text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-white/[0.05]'
               }`}
             >
               {o.label}
@@ -409,7 +409,7 @@ export default function Analytics() {
         )}
       </div>
 
-      <div className="flex gap-6 border-b border-gray-100">
+      <div className="flex gap-6 border-b border-gray-100 overflow-x-auto">
         {TABS.map(t => (
           <button key={t.key} onClick={() => setTab(t.key)} className={`tab-line ${tab === t.key ? 'active' : ''}`}>
             {t.label}
@@ -710,6 +710,7 @@ export default function Analytics() {
                   onChange={e => setReorderSearch(e.target.value)}
                   placeholder="Search customers…"
                   className="pl-7 py-1.5 text-xs h-8"
+                  aria-label="Search customers for reorder nudges"
                 />
               </div>
             </div>
@@ -817,7 +818,7 @@ export default function Analytics() {
               <h3 className="text-[11px] font-medium text-gray-400 uppercase tracking-wider flex-1">Pincode Performance</h3>
               <div className="relative w-56">
                 <Search size={12} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-400" />
-                <Input value={pincodeSearch} onChange={e => setPincodeSearch(e.target.value)} placeholder="Search pincode or city…" className="pl-7 py-1.5 text-xs h-8" />
+                <Input value={pincodeSearch} onChange={e => setPincodeSearch(e.target.value)} placeholder="Search pincode or city…" className="pl-7 py-1.5 text-xs h-8" aria-label="Search by pincode or city" />
               </div>
             </div>
             {filteredPincodes.length === 0 ? (

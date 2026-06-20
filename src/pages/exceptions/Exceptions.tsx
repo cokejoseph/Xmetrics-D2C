@@ -4,7 +4,7 @@ import { useAppStore } from '../../stores/appStore'
 import { Card, Button } from '../../components/ui'
 import { SeverityBadge } from '../../components/shared/StatusBadge'
 import { showToast } from '../../lib/toast'
-import type { Exception } from '../../types'
+import type { Exception, ExceptionStatus } from '../../types'
 
 const TYPE_LABELS: Record<string, string> = {
   HIGH_RTO_RISK: 'High RTO Risk',
@@ -18,7 +18,7 @@ const TYPE_LABELS: Record<string, string> = {
 }
 
 export default function Exceptions() {
-  const { exceptions, resolveException, dismissException } = useAppStore()
+  const { exceptions, resolveException, dismissException, restoreException } = useAppStore()
 
   const unresolved = exceptions.filter(e => e.status === 'UNRESOLVED' || e.status === 'IN_PROGRESS')
   const resolved = exceptions.filter(e => e.status === 'RESOLVED' || e.status === 'DISMISSED')
@@ -35,7 +35,7 @@ export default function Exceptions() {
       </div>
 
       {criticalCount > 0 && (
-        <div className="flex items-center gap-3 p-4 bg-red-50 border border-red-200 rounded-md text-red-800">
+        <div className="flex items-center gap-3 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800/50 rounded-md text-red-800 dark:text-red-300">
           <AlertOctagon size={18} className="shrink-0" />
           <p className="text-sm font-medium">
             {criticalCount} critical exception{criticalCount > 1 ? 's' : ''} require immediate attention
@@ -60,12 +60,14 @@ export default function Exceptions() {
               key={exc.id}
               exception={exc}
               onResolve={() => {
+                const prev = exc.status as ExceptionStatus
                 resolveException(exc.id)
-                showToast.exceptionResolved()
+                showToast.exceptionResolved(() => restoreException(exc.id, prev))
               }}
               onDismiss={() => {
+                const prev = exc.status as ExceptionStatus
                 dismissException(exc.id)
-                showToast.exceptionDismissed()
+                showToast.exceptionDismissed(() => restoreException(exc.id, prev))
               }}
             />
           ))}
@@ -132,7 +134,7 @@ function ExceptionCard({
               size="sm"
               variant="secondary"
               aria-label="Resolve exception"
-              className="text-green-700 border-green-100 hover:bg-green-50"
+              className="text-green-700 dark:text-green-400 border-green-100 dark:border-green-800/50 hover:bg-green-50 dark:hover:bg-green-900/20"
               onClick={onResolve}
             >
               <Check size={13} /> Resolve
@@ -142,7 +144,7 @@ function ExceptionCard({
               variant="ghost"
               aria-label="Dismiss exception"
               onClick={onDismiss}
-              className="text-gray-500"
+              className="text-gray-500 dark:text-gray-400"
             >
               <X size={13} /> Dismiss
             </Button>

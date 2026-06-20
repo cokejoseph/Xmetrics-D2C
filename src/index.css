@@ -23,8 +23,36 @@
 
   ::-webkit-scrollbar { width: 4px; height: 4px; }
   ::-webkit-scrollbar-track { background: transparent; }
-  ::-webkit-scrollbar-thumb { background: #bfdbfe; border-radius: 4px; }
-  ::-webkit-scrollbar-thumb:hover { background: #60a5fa; }
+  ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+  ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+
+/* Skip navigation — screen reader and keyboard-nav users */
+  .skip-nav {
+    position: absolute;
+    top: -100%;
+    left: 1rem;
+    z-index: 9999;
+    padding: 0.5rem 1rem;
+    background: #1658E3;
+    color: #fff;
+    font-size: 0.875rem;
+    font-weight: 600;
+    border-radius: 0 0 0.5rem 0.5rem;
+    text-decoration: none;
+    transition: top 0.15s ease;
+  }
+  .skip-nav:focus { top: 0; }
+
+  /* Focus-visible: crisp outline for keyboard navigation */
+  :focus-visible {
+    outline: 2px solid #1658E3;
+    outline-offset: 2px;
+    border-radius: 4px;
+  }
+  .dark :focus-visible {
+    outline-color: #4DA6FF;
+  }
+
 }
 
 @layer components {
@@ -263,13 +291,37 @@
   box-shadow: 0 0 0 3px rgba(77,166,255,0.10);
 }
 
-/* ── Card surface — rim-light elevation ── */
+/* ── Bare select / textarea (modals, inline forms) ── */
+.dark select {
+  background-color: rgba(255,255,255,0.05);
+  border-color: rgba(255,255,255,0.08);
+  color: #E8EEF8;
+}
+.dark select option {
+  background-color: #182032;
+  color: #E8EEF8;
+}
+.dark textarea {
+  background-color: rgba(255,255,255,0.05);
+  border-color: rgba(255,255,255,0.08);
+  color: #E8EEF8;
+}
+.dark textarea::placeholder { color: #4A5E78; }
+.dark textarea:focus {
+  border-color: rgba(77,166,255,0.45);
+  box-shadow: 0 0 0 3px rgba(77,166,255,0.10);
+}
+
+/* ── Card surface — visible elevation above page ── */
 .dark .shadow-card {
   box-shadow:
-    0 0 0 1px rgba(255,255,255,0.05),
-    inset 0 1px 0 rgba(255,255,255,0.05);
+    0 0 0 1px rgba(255,255,255,0.07),
+    0 1px 3px rgba(0,0,0,0.4),
+    inset 0 1px 0 rgba(255,255,255,0.06);
 }
-.dark .border-gray-100\/80 { border-color: rgba(255,255,255,0.05); }
+.dark .border-gray-100\/80 { border-color: rgba(255,255,255,0.07); }
+/* Give bg-white cards in dark mode a stronger lift (card-surface token = #182032) */
+.dark .bg-white { background-color: #182032; }
 .dark .shadow-dropdown {
   box-shadow:
     0 0 0 1px rgba(255,255,255,0.06),
@@ -408,17 +460,40 @@
 .form-field-group > *:nth-child(4) { animation-delay: 180ms; }
 .form-field-group > *:nth-child(n+5) { animation-delay: 240ms; }
 
-/* FAQ accordion — slide-down with height animation */
+/* FAQ accordion — grid-rows trick (no layout reflow) */
+.accordion-body {
+  display: grid;
+  grid-template-rows: 0fr;
+  opacity: 0;
+  transition: grid-template-rows 0.35s cubic-bezier(0.22, 1, 0.36, 1),
+              opacity 0.25s ease;
+}
+.accordion-body.open {
+  grid-template-rows: 1fr;
+  opacity: 1;
+}
+.accordion-body > * { overflow: hidden; }
+/* Legacy keyframe aliases kept for any remaining usage */
 @keyframes slideDown {
-  from { opacity: 0; max-height: 0; }
-  to   { opacity: 1; max-height: 500px; }
+  from { opacity: 0; transform: translateY(-6px); }
+  to   { opacity: 1; transform: translateY(0); }
 }
 @keyframes slideUp {
-  from { opacity: 1; max-height: 500px; }
-  to   { opacity: 0; max-height: 0; }
+  from { opacity: 1; transform: translateY(0); }
+  to   { opacity: 0; transform: translateY(-6px); }
 }
 .accordion-enter { animation: slideDown 0.35s cubic-bezier(0.22, 1, 0.36, 1); }
 .accordion-exit  { animation: slideUp 0.25s cubic-bezier(0.22, 1, 0.36, 1); }
+
+/* Score bar fill — transform instead of width (no layout reflow) */
+@keyframes scoreFill {
+  from { transform: scaleX(0); }
+  to   { transform: scaleX(1); }
+}
+.animate-score-fill {
+  animation: scoreFill 0.9s cubic-bezier(0.22, 1, 0.36, 1) both;
+  transform-origin: left;
+}
 
 /* Skeleton shimmer — animated loading placeholder */
 @keyframes shimmer {
@@ -446,11 +521,11 @@
 /* Success pulse — celebrate action completion */
 @keyframes successPulse {
   0%   { transform: scale(1); }
-  50%  { transform: scale(1.05); background-color: rgba(16, 185, 129, 0.1); }
+  50%  { transform: scale(1.03); background-color: rgba(16, 185, 129, 0.1); }
   100% { transform: scale(1); background-color: transparent; }
 }
 .animate-success {
-  animation: successPulse 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+  animation: successPulse 0.45s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 /* Button press — scale-down on active */
@@ -537,7 +612,7 @@ html.has-custom-cursor *::after {
 
 .cursor-arrow svg {
   display: block;
-  transition: transform 0.18s cubic-bezier(0.34, 1.56, 0.64, 1);
+  transition: transform 0.18s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .cursor-arrow--hover svg {
@@ -573,17 +648,37 @@ html.has-custom-cursor *::after {
 }
 
 @media (prefers-reduced-motion: reduce) {
+  /* Landing page animations */
   .animate-float, .animate-float-slow,
   .animate-aurora, .animate-aurora-2, .animate-pulse-dot,
   .animate-draw-line, .animate-chart-fill, .animate-shimmer-text,
   .animate-bell-ring, .animate-border-pan, .stagger-rows tr,
   .btn-shine::after, .flow-line, .animate-tick-flash,
-  .word-reveal, .cursor-arrow svg {
+  .word-reveal, .word-reveal-noclip, .cursor-arrow svg,
+  .announce-dot {
     animation: none;
   }
+  /* Product UI animations */
+  .stagger-children > *,
+  .animate-fade-in-up,
+  .animate-fade-in,
+  .animate-page-enter,
+  .animate-dropdown-in,
+  .animate-modal-in,
+  .animate-fade-in,
+  .page-enter, .page-exit,
+  .form-field-group > *,
+  .accordion-enter, .accordion-exit,
+  .animate-success,
+  .animate-score-fill,
+  .animate-slide-in-row {
+    animation: none;
+  }
+  .accordion-body { transition: none; }
   .animate-draw-line { stroke-dashoffset: 0; }
   .word-reveal { transform: translateY(0); opacity: 1; }
   .word-reveal-noclip { transform: translateY(0); opacity: 1; }
+  .animate-score-fill { transform: scaleX(1); }
 }
 
 /* ══════════════════════════════════════════════

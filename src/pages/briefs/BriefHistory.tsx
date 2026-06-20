@@ -45,6 +45,7 @@ export default function BriefHistory() {
             onChange={e => setSearch(e.target.value)}
             placeholder="Search dates…"
             className="pl-8"
+            aria-label="Search brief history by date"
           />
         </div>
 

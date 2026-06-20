@@ -1,6 +1,6 @@
 import { useState, useMemo, useEffect } from 'react'
 import { Link } from 'react-router-dom'
-import { Download } from 'lucide-react'
+import { Download, CreditCard } from 'lucide-react'
 import { useAppStore } from '../../stores/appStore'
 import { Card, Pagination } from '../../components/ui'
 import { PaymentMethodBadge } from '../../components/shared/StatusBadge'
@@ -143,6 +143,17 @@ export default function Payments() {
               </tr>
             </thead>
             <tbody className="stagger-rows">
+              {pagedPayments.length === 0 && (
+                <tr>
+                  <td colSpan={7} className="py-16 text-center">
+                    <CreditCard size={28} className="mx-auto text-gray-300 dark:text-gray-600 mb-3" />
+                    <p className="text-sm font-medium text-gray-500 dark:text-gray-400">No payments found</p>
+                    <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">
+                      {filterStatus || filterMethod ? 'Try clearing your filters' : 'Payments will appear here as orders are processed'}
+                    </p>
+                  </td>
+                </tr>
+              )}
               {pagedPayments.map(payment => {
                 const order = orders.find(o => o.id === payment.order_id)
                 return (

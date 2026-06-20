@@ -9,7 +9,7 @@ import { createShipment } from '../lib/shiprocket'
 import type { ShipmentPayload } from '../lib/shiprocket'
 import type {
   Brand, BrandMember, Warehouse, Product, Customer, Order,
-  Payment, Exception, Integration, PlanType, Return, SubscriptionData,
+  Payment, Exception, Integration, PlanType, Return, SubscriptionData, ExceptionStatus,
 } from '../types'
 import { supabase } from '../lib/supabase'
 import {
@@ -79,6 +79,7 @@ interface AppState {
   addOrder: (order: Omit<Order, 'id' | 'brand_id' | 'created_at' | 'order_number'>) => Order
   resolveException: (id: string) => void
   dismissException: (id: string) => void
+  restoreException: (id: string, previousStatus: string) => void
   addProduct: (product: Omit<Product, 'id' | 'brand_id' | 'created_at'>) => void
   updateProduct: (id: string, changes: Partial<Product>) => void
   addWarehouse: (warehouse: Omit<Warehouse, 'id' | 'brand_id' | 'created_at'>) => void
@@ -465,6 +466,13 @@ export const useAppStore = create<AppState>((set, get) => ({
     set(state => ({ exceptions: state.exceptions.map(e => e.id === id ? { ...e, status: 'DISMISSED' } : e) }))
     if (!DEMO_MODE) {
       updateExceptionDB(id, { status: 'DISMISSED' }).catch(console.error)
+    }
+  },
+
+  restoreException: (id, previousStatus) => {
+    set(state => ({ exceptions: state.exceptions.map(e => e.id === id ? { ...e, status: previousStatus as ExceptionStatus } : e) }))
+    if (!DEMO_MODE) {
+      updateExceptionDB(id, { status: previousStatus as ExceptionStatus }).catch(console.error)
     }
   },
 

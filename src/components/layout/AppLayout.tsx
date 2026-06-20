@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { Outlet, useLocation, Link } from 'react-router-dom'
 import { AlertTriangle } from 'lucide-react'
 import Sidebar from './Sidebar'
@@ -10,16 +11,29 @@ import { useAppStore } from '../../stores/appStore'
 export default function AppLayout() {
   const location = useLocation()
   const { subscription } = useAppStore()
+  const [sidebarOpen, setSidebarOpen] = useState(false)
 
   return (
     <div className="flex h-screen bg-page-bg dark:bg-[#0C1118] overflow-hidden">
-      {/* Sidebar — desktop */}
-      <Sidebar />
+      {/* Skip navigation for keyboard/screen-reader users */}
+      <a href="#main-content" className="skip-nav">Skip to main content</a>
+
+      {/* Sidebar — desktop always visible, mobile as overlay */}
+      <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
+
+      {/* Mobile backdrop */}
+      {sidebarOpen && (
+        <div
+          className="fixed inset-0 z-30 bg-black/40 md:hidden"
+          onClick={() => setSidebarOpen(false)}
+          aria-hidden="true"
+        />
+      )}
 
       {/* Main content */}
-      <div className="flex-1 flex flex-col overflow-hidden">
+      <div className="flex-1 flex flex-col overflow-hidden min-w-0">
         {DEMO_MODE && <DemoModeBanner />}
-        <TopBar />
+        <TopBar onMenuClick={() => setSidebarOpen(true)} />
 
         {/* Order-limit capacity banner */}
         {subscription?.at_order_limit && (
@@ -39,11 +53,10 @@ export default function AppLayout() {
           </div>
         )}
 
-        <main className="flex-1 overflow-y-auto">
-          {/* key re-mounts on every route change → triggers animate-page-enter */}
+        <main id="main-content" className="flex-1 overflow-y-auto pb-16 md:pb-0" role="main">
           <div
             key={location.pathname}
-            className="max-w-[1400px] mx-auto px-5 py-6 animate-page-enter"
+            className="max-w-[1400px] mx-auto px-4 sm:px-5 py-5 sm:py-6 animate-page-enter"
           >
             <Outlet />
           </div>

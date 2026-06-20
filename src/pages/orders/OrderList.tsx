@@ -144,7 +144,7 @@ export default function OrderList() {
       )}
 
       {/* Tabs */}
-      <div className="flex gap-6 border-b border-gray-100">
+      <div className="flex gap-6 border-b border-gray-100 overflow-x-auto">
         <TabBtn active={tab === 'all'} onClick={() => { setTab('all'); setSelected([]); setPage(1) }}>
           All Orders
         </TabBtn>
@@ -196,7 +196,7 @@ export default function OrderList() {
       <div className="flex flex-wrap items-center gap-2">
         <div className="relative flex-1 min-w-48">
           <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-          <Input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search orders, customers…" className="pl-8 h-8 text-sm" />
+          <Input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search orders, customers…" className="pl-8 h-8 text-sm" aria-label="Search orders and customers" />
         </div>
         <FilterPill
           value={filterChannel}
@@ -261,27 +261,28 @@ export default function OrderList() {
       {(tab !== 'ready' || filtered.length > 0) && (
         <Card>
           <div className="overflow-x-auto">
-            <table className="w-full">
+            <table className="w-full" aria-label={`${filtered.length} orders`} role="table">
               <thead>
-                <tr className="border-b border-gray-100">
-                  <th className="px-4 py-2.5 text-left">
+                <tr className="border-b border-gray-100 dark:border-white/[0.05]">
+                  <th scope="col" className="px-4 py-2.5 text-left">
                     <input
                       type="checkbox"
                       checked={selected.length === filtered.length && filtered.length > 0}
                       onChange={toggleSelectAll}
                       className="rounded"
+                      aria-label="Select all orders"
                     />
                   </th>
-                  <th className="px-4 py-2.5 text-left text-[10px] font-semibold text-gray-400 uppercase tracking-wider">Order</th>
-                  <th className="px-4 py-2.5 text-left text-[10px] font-semibold text-gray-400 uppercase tracking-wider">Customer</th>
-                  <th className="px-4 py-2.5 text-left text-[10px] font-semibold text-gray-400 uppercase tracking-wider hidden sm:table-cell">Channel</th>
-                  <th className="px-4 py-2.5 text-left text-[10px] font-semibold text-gray-400 uppercase tracking-wider">Amount</th>
-                  <th className="px-4 py-2.5 text-left text-[10px] font-semibold text-gray-400 uppercase tracking-wider hidden md:table-cell">Payment</th>
-                  <th className="px-4 py-2.5 text-left text-[10px] font-semibold text-gray-400 uppercase tracking-wider hidden md:table-cell">Status</th>
-                  <th className="px-4 py-2.5 text-left text-[10px] font-semibold text-gray-400 uppercase tracking-wider">RTO</th>
-                  <th className="px-4 py-2.5 text-left text-[10px] font-semibold text-gray-400 uppercase tracking-wider hidden lg:table-cell">Date</th>
+                  <th scope="col" className="px-4 py-2.5 text-left text-[11px] font-semibold text-gray-400 uppercase tracking-wider">Order</th>
+                  <th scope="col" className="px-4 py-2.5 text-left text-[11px] font-semibold text-gray-400 uppercase tracking-wider">Customer</th>
+                  <th scope="col" className="px-4 py-2.5 text-left text-[11px] font-semibold text-gray-400 uppercase tracking-wider hidden sm:table-cell">Channel</th>
+                  <th scope="col" className="px-4 py-2.5 text-left text-[11px] font-semibold text-gray-400 uppercase tracking-wider">Amount</th>
+                  <th scope="col" className="px-4 py-2.5 text-left text-[11px] font-semibold text-gray-400 uppercase tracking-wider hidden md:table-cell">Payment</th>
+                  <th scope="col" className="px-4 py-2.5 text-left text-[11px] font-semibold text-gray-400 uppercase tracking-wider hidden md:table-cell">Status</th>
+                  <th scope="col" className="px-4 py-2.5 text-left text-[11px] font-semibold text-gray-400 uppercase tracking-wider" title="RTO Risk Score (0–100). Higher scores indicate greater return-to-origin risk.">RTO Risk</th>
+                  <th scope="col" className="px-4 py-2.5 text-left text-[11px] font-semibold text-gray-400 uppercase tracking-wider hidden lg:table-cell">Date</th>
                   {tab === 'review' && (
-                    <th className="px-4 py-2.5 text-left text-[10px] font-semibold text-gray-400 uppercase tracking-wider">Action</th>
+                    <th className="px-4 py-2.5 text-left text-[11px] font-semibold text-gray-400 uppercase tracking-wider">Action</th>
                   )}
                 </tr>
               </thead>
@@ -330,7 +331,7 @@ function OrderRow({
   return (
     <tr className={`border-b border-gray-50 hover:bg-gray-50/50 transition-colors ${selected ? 'bg-brand-50' : ''}`}>
       <td className="px-4 py-2.5">
-        <input type="checkbox" checked={selected} onChange={onSelect} className="rounded" />
+        <input type="checkbox" checked={selected} onChange={onSelect} className="rounded" aria-label={`Select order ${order.order_number}`} />
       </td>
       <td className="px-4 py-2.5">
         <Link to={`/orders/${order.id}`} className="text-sm font-medium text-brand-600 hover:underline tabular-nums">

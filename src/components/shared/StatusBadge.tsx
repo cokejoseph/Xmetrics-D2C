@@ -64,14 +64,25 @@ export function ChannelBadge({ channel }: { channel: OrderChannel }) {
 }
 
 export function RTOScoreBar({ score }: { score: number }) {
-  const color = score >= 60 ? 'bg-red-400' : score >= 30 ? 'bg-amber-400' : 'bg-green-400'
-  const textColor = score >= 60 ? 'text-red-500' : score >= 30 ? 'text-amber-500' : 'text-green-500'
+  const level = score >= 60 ? 'High' : score >= 30 ? 'Medium' : 'Low'
+  const color = score >= 60 ? 'bg-red-400' : score >= 30 ? 'bg-amber-400' : 'bg-emerald-400'
+  const trackColor = score >= 60 ? 'bg-red-50 dark:bg-red-900/20' : score >= 30 ? 'bg-amber-50 dark:bg-amber-900/20' : 'bg-emerald-50 dark:bg-emerald-900/20'
+  const textColor = score >= 60 ? 'text-red-500 dark:text-red-400' : score >= 30 ? 'text-amber-500 dark:text-amber-400' : 'text-emerald-600 dark:text-emerald-400'
+  const tooltip = `RTO Risk Score: ${score}/100 (${level} risk). Scores above 60 require manual review before shipping.`
   return (
-    <div className="flex items-center gap-2">
-      <div className="w-14 h-1 bg-gray-100 rounded-full overflow-hidden">
-        <div className={`h-full rounded-full ${color}`} style={{ width: `${score}%` }} />
+    <div
+      className="flex items-center gap-2"
+      title={tooltip}
+      aria-label={tooltip}
+      role="meter"
+      aria-valuenow={score}
+      aria-valuemin={0}
+      aria-valuemax={100}
+    >
+      <div className={`w-16 h-1.5 ${trackColor} rounded-full overflow-hidden`}>
+        <div className={`h-full rounded-full ${color} transition-all duration-500`} style={{ width: `${score}%` }} />
       </div>
-      <span className={`text-[11px] font-medium ${textColor}`}>{score}</span>
+      <span className={`text-[11px] font-semibold tabular-nums ${textColor}`}>{score}</span>
     </div>
   )
 }

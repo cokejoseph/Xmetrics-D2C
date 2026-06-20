@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Plus } from 'lucide-react'
+import { Plus, Pill, Leaf, Droplets, Cpu, Tag, Home, Box } from 'lucide-react'
 import { useAppStore } from '../../stores/appStore'
 import { Card, Button, Modal, Input, Select } from '../../components/ui'
 import type { ProductCategory } from '../../types'
@@ -9,14 +9,14 @@ const CATEGORIES: ProductCategory[] = [
   'Electronics', 'Home & Kitchen', 'Other',
 ]
 
-const CATEGORY_STYLE: Record<ProductCategory, { bg: string; text: string }> = {
-  'Supplements':     { bg: 'bg-violet-100 dark:bg-violet-400/15', text: 'text-violet-600 dark:text-violet-400' },
-  'Food & Beverage': { bg: 'bg-orange-100 dark:bg-orange-400/15', text: 'text-orange-600 dark:text-orange-400' },
-  'Skincare':        { bg: 'bg-pink-100 dark:bg-pink-400/15',     text: 'text-pink-600 dark:text-pink-400' },
-  'Electronics':     { bg: 'bg-blue-100 dark:bg-blue-400/15',     text: 'text-blue-600 dark:text-blue-400' },
-  'Fashion':         { bg: 'bg-indigo-100 dark:bg-indigo-400/15', text: 'text-indigo-600 dark:text-indigo-400' },
-  'Home & Kitchen':  { bg: 'bg-emerald-100 dark:bg-emerald-400/15', text: 'text-emerald-600 dark:text-emerald-400' },
-  'Other':           { bg: 'bg-gray-100 dark:bg-white/[0.07]',    text: 'text-gray-500 dark:text-gray-400' },
+const CATEGORY_STYLE: Record<ProductCategory, { bg: string; text: string; icon: React.ReactNode }> = {
+  'Supplements':     { bg: 'bg-violet-50 dark:bg-violet-400/10', text: 'text-violet-600 dark:text-violet-400', icon: <Pill size={15} /> },
+  'Food & Beverage': { bg: 'bg-orange-50 dark:bg-orange-400/10', text: 'text-orange-600 dark:text-orange-400', icon: <Leaf size={15} /> },
+  'Skincare':        { bg: 'bg-pink-50 dark:bg-pink-400/10',     text: 'text-pink-600 dark:text-pink-400',     icon: <Droplets size={15} /> },
+  'Electronics':     { bg: 'bg-blue-50 dark:bg-blue-400/10',     text: 'text-blue-600 dark:text-blue-400',     icon: <Cpu size={15} /> },
+  'Fashion':         { bg: 'bg-indigo-50 dark:bg-indigo-400/10', text: 'text-indigo-600 dark:text-indigo-400', icon: <Tag size={15} /> },
+  'Home & Kitchen':  { bg: 'bg-emerald-50 dark:bg-emerald-400/10', text: 'text-emerald-600 dark:text-emerald-400', icon: <Home size={15} /> },
+  'Other':           { bg: 'bg-gray-100 dark:bg-white/[0.07]',   text: 'text-gray-500 dark:text-gray-400',    icon: <Box size={15} /> },
 }
 
 export default function Products() {
@@ -60,8 +60,9 @@ export default function Products() {
           return (
             <Card key={product.id} className="p-4">
               <div className="flex items-start justify-between mb-3">
-                <div className={`w-9 h-9 rounded-lg flex items-center justify-center text-[15px] font-bold shrink-0 ${catStyle.bg} ${catStyle.text}`}>
-                  {product.name[0]}
+                <div className={`w-9 h-9 rounded-lg flex items-center justify-center shrink-0 ${catStyle.bg} ${catStyle.text}`}
+                  aria-label={product.category}>
+                  {catStyle.icon}
                 </div>
                 {isLow && (
                   <span className={`px-1.5 py-0.5 text-[10px] font-bold rounded-md ${product.inventory_count === 0 ? 'bg-red-100 dark:bg-red-400/15 text-red-700 dark:text-red-400' : 'bg-amber-100 dark:bg-amber-400/15 text-amber-700 dark:text-amber-400'}`}>
