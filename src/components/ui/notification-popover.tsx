@@ -235,7 +235,10 @@ export function NotificationPopover() {
                 </button>
               ))}
             </div>
-            <button className="p-2 rounded-md text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-50 dark:hover:bg-white/5 mr-1 transition-colors">
+            <button
+              onClick={() => { navigate('/settings'); handleClose() }}
+              className="p-2 rounded-md text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-50 dark:hover:bg-white/5 mr-1 transition-colors"
+            >
               <Settings size={14} />
             </button>
           </div>

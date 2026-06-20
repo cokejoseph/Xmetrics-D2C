@@ -82,7 +82,7 @@ export default function DailyBrief() {
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
             <PLStat label="Revenue" value={`₹${Math.round(h.total_revenue).toLocaleString('en-IN')}`} sub={`${h.total_orders} orders`} />
             <PLStat label="COGS" value={`₹${Math.round(h.cogs).toLocaleString('en-IN')}`} sub="estimated" dimmed />
-            <PLStat label="Shipping Cost" value={`₹${(h.total_orders * 60).toLocaleString('en-IN')}`} sub="@₹60/order" dimmed />
+            <PLStat label="Shipping Cost" value={`₹${Math.round(h.shipping_cost).toLocaleString('en-IN')}`} sub="actual" dimmed />
             <PLStat
               label="True Profit"
               value={`₹${Math.round(h.true_profit).toLocaleString('en-IN')}`}

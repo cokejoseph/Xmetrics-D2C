@@ -17,7 +17,7 @@ interface LineItem {
 
 export default function NewOrder() {
   const navigate = useNavigate()
-  const { products, customers } = useAppStore()
+  const { products, customers, addOrder } = useAppStore()
 
   const [customerName, setCustomerName] = useState('')
   const [customerPhone, setCustomerPhone] = useState('')
@@ -74,12 +74,34 @@ export default function NewOrder() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    if (lines.some(l => !l.product_id)) return
     setSubmitting(true)
-    // In demo mode just navigate back
-    setTimeout(() => {
-      setSubmitting(false)
-      navigate('/orders')
-    }, 800)
+    const order = addOrder({
+      customer_id: null,
+      channel,
+      payment_method: paymentMethod,
+      payment_status: paymentMethod === 'COD' ? 'AWAITING_PAYMENT' : 'PAID',
+      fulfillment_status: 'CONFIRMED',
+      rto_review_status: rtoPreview?.level === 'HIGH' ? 'PENDING' : 'NOT_REQUIRED',
+      gross_amount: total,
+      discount_amount: 0,
+      shipping_charge: shipping,
+      shipping_cost: shipping,
+      rto_risk_score: rtoPreview?.score ?? 0,
+      shipping_address: { name: customerName, phone: customerPhone, address, city, state, pincode },
+      warehouse_id: null,
+      notes: notes || null,
+      items: lines.map((l, idx) => ({
+        id: `item-${Date.now()}-${idx}`,
+        order_id: '',
+        product_id: l.product_id,
+        sku: l.sku,
+        quantity: l.quantity,
+        unit_price: l.unit_price,
+      })),
+    })
+    setSubmitting(false)
+    navigate(`/orders/${order.id}`)
   }
 
   return (

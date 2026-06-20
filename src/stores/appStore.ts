@@ -75,6 +75,7 @@ interface AppState {
   bulkHold: (ids: string[]) => void
   startPacking: (ids: string[]) => void
   generateLabels: (ids: string[]) => { results: ReturnType<typeof mockGenerateLabels>['results']; merged_pdf_url: string }
+  addOrder: (order: Omit<Order, 'id' | 'brand_id' | 'created_at' | 'order_number'>) => Order
   resolveException: (id: string) => void
   dismissException: (id: string) => void
   addProduct: (product: Omit<Product, 'id' | 'brand_id' | 'created_at'>) => void
@@ -388,6 +389,24 @@ export const useAppStore = create<AppState>((set, get) => ({
     })
     set({ orders: updatedOrders })
     return result
+  },
+
+  // ─── Manual Order Creation ─────────────────────────────────────────────────
+
+  addOrder: (orderData) => {
+    const brandId = get().currentBrand?.id ?? 'demo'
+    const num = String(Math.floor(Math.random() * 9000) + 1000)
+    const newOrder: Order = {
+      ...orderData,
+      id: `ord-${Date.now()}`,
+      brand_id: brandId,
+      order_number: `#XM-${num}`,
+      created_at: new Date().toISOString(),
+    }
+    // Patch item order_ids
+    newOrder.items = (newOrder.items ?? []).map(item => ({ ...item, order_id: newOrder.id }))
+    set(state => ({ orders: [newOrder, ...state.orders] }))
+    return newOrder
   },
 
   // ─── Exceptions ────────────────────────────────────────────────────────────

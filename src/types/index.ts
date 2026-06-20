@@ -311,6 +311,7 @@ export interface BriefHeadline {
   total_orders: number
   total_revenue: number
   cogs: number
+  shipping_cost: number
   true_profit: number
   true_margin: number
   paid_count: number

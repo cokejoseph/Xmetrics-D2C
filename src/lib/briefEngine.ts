@@ -182,6 +182,7 @@ export function generateDailyBrief(
       total_orders: dayOrders.length,
       total_revenue: totalRevenue,
       cogs,
+      shipping_cost: totalShippingCost,
       true_profit: trueProfit,
       true_margin: trueMargin,
       paid_count: paidOrders.length,

@@ -51,10 +51,8 @@ export const useAuthStore = create<AuthState>((set) => ({
     const { data, error } = await supabase!.auth.signInWithPassword({ email, password })
     if (!error && data.user) {
       const user: AuthUser = { id: data.user.id, email: data.user.email! }
-      // Persist @xmetrics.app demo sessions across reloads
-      if (email.endsWith('@xmetrics.app')) {
-        try { sessionStorage.setItem(SESSION_KEY, JSON.stringify(user)) } catch {}
-      }
+      try { sessionStorage.setItem(SESSION_KEY, JSON.stringify(user)) } catch {}
+      set({ user })
     }
     return { error: error?.message ?? null }
   },
