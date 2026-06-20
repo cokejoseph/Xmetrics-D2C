@@ -1,3 +1,4 @@
+import React from 'react'
 import toast from 'react-hot-toast'
 
 export const showToast = {
@@ -12,36 +13,26 @@ export const showToast = {
   exceptionResolved: (onUndo?: () => void) => {
     if (!onUndo) { toast.success('Exception resolved'); return }
     toast(
-      (t) => {
-        const el = document.createElement('div')
-        el.className = 'flex items-center gap-3'
-        const msg = document.createElement('span')
-        msg.textContent = 'Exception resolved'
-        const btn = document.createElement('button')
-        btn.textContent = 'Undo'
-        btn.className = 'text-xs font-semibold text-brand-600 underline underline-offset-2 hover:text-brand-500'
-        btn.onclick = () => { onUndo(); toast.dismiss(t.id) }
-        el.appendChild(msg); el.appendChild(btn)
-        return el
-      },
+      (t) => React.createElement('div', { className: 'flex items-center gap-3' },
+        React.createElement('span', null, 'Exception resolved'),
+        React.createElement('button', {
+          className: 'text-xs font-semibold text-brand-600 underline underline-offset-2 hover:text-brand-500',
+          onClick: () => { onUndo(); toast.dismiss(t.id) },
+        }, 'Undo')
+      ),
       { duration: 5000 }
     )
   },
   exceptionDismissed: (onUndo?: () => void) => {
     if (!onUndo) { toast.success('Exception dismissed'); return }
     toast(
-      (t) => {
-        const el = document.createElement('div')
-        el.className = 'flex items-center gap-3'
-        const msg = document.createElement('span')
-        msg.textContent = 'Exception dismissed'
-        const btn = document.createElement('button')
-        btn.textContent = 'Undo'
-        btn.className = 'text-xs font-semibold text-brand-600 underline underline-offset-2 hover:text-brand-500'
-        btn.onclick = () => { onUndo(); toast.dismiss(t.id) }
-        el.appendChild(msg); el.appendChild(btn)
-        return el
-      },
+      (t) => React.createElement('div', { className: 'flex items-center gap-3' },
+        React.createElement('span', null, 'Exception dismissed'),
+        React.createElement('button', {
+          className: 'text-xs font-semibold text-brand-600 underline underline-offset-2 hover:text-brand-500',
+          onClick: () => { onUndo(); toast.dismiss(t.id) },
+        }, 'Undo')
+      ),
       { duration: 5000 }
     )
   },

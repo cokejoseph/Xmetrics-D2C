@@ -440,7 +440,7 @@ export default function GlobalSearch() {
           placeholder="Search orders, customers, products, exceptions…"
           aria-label="Global search — orders, customers, products, exceptions"
           role="combobox"
-          aria-expanded={open && results.length > 0}
+          aria-expanded={open && hasResults}
           aria-autocomplete="list"
           className="flex-1 bg-transparent outline-none placeholder-gray-400 dark:placeholder-gray-600 text-gray-700 dark:text-gray-200 [&::-webkit-search-cancel-button]:hidden"
         />
