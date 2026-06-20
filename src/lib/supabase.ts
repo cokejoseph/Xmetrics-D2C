@@ -29,3 +29,25 @@ export async function callEdgeFunction(name: string, body: object) {
   if (!res.ok) throw new Error(json.error ?? `Edge function ${name} failed (${res.status})`)
   return json
 }
+
+/**
+ * Call a JWT-protected Supabase edge function using the user's active session token.
+ * Use this for subscription-* functions that verify the caller's identity server-side.
+ */
+export async function callAuthEdgeFunction(name: string, body: object): Promise<unknown> {
+  if (!supabase) throw new Error('Supabase not configured')
+  const { data: { session } } = await supabase.auth.getSession()
+  if (!session) throw new Error('No active session')
+  const res = await fetch(`${SUPABASE_URL}/functions/v1/${name}`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'apikey': SUPABASE_ANON_KEY!,
+      'Authorization': `Bearer ${session.access_token}`,
+    },
+    body: JSON.stringify(body),
+  })
+  const json = await res.json()
+  if (!res.ok) throw new Error((json as { error?: string }).error ?? `Edge function ${name} failed (${res.status})`)
+  return json
+}

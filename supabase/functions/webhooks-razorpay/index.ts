@@ -68,21 +68,21 @@ serve(async (req) => {
         // ── 1. Update subscription row (plan checkout payments) ────────────
         if (razorpayOrderId) {
           const { data: sub } = await supabase
-            .from('subscriptions')
+            .from('checkout_payments')
             .select('id')
             .eq('razorpay_order_id', razorpayOrderId)
             .single()
 
           if (sub) {
             await supabase
-              .from('subscriptions')
+              .from('checkout_payments')
               .update({
                 status: 'PAID',
                 razorpay_payment_id: razorpayPaymentId,
                 paid_at: new Date().toISOString(),
               })
               .eq('id', sub.id)
-            console.log('Subscription marked PAID:', sub.id)
+            console.log('Checkout payment marked PAID:', sub.id)
           } else {
             // ── 2. Fallback: D2C order payment ─────────────────────────────
             const { data: payment } = await supabase
@@ -126,13 +126,13 @@ serve(async (req) => {
         // Mark subscription as FAILED
         if (razorpayOrderId) {
           const { data: sub } = await supabase
-            .from('subscriptions')
+            .from('checkout_payments')
             .select('id')
             .eq('razorpay_order_id', razorpayOrderId)
             .single()
 
           if (sub) {
-            await supabase.from('subscriptions').update({ status: 'FAILED' }).eq('id', sub.id)
+            await supabase.from('checkout_payments').update({ status: 'FAILED' }).eq('id', sub.id)
           } else {
             // D2C order payment failed
             const { data: payment } = await supabase
@@ -165,15 +165,15 @@ serve(async (req) => {
         const paymentId = entity?.payment_id
         const amount = entity?.amount
 
-        // Check subscription refund first
+        // Check checkout payment refund first
         const { data: sub } = await supabase
-          .from('subscriptions')
+          .from('checkout_payments')
           .select('id')
           .eq('razorpay_payment_id', paymentId)
           .single()
 
         if (sub) {
-          await supabase.from('subscriptions').update({ status: 'REFUNDED' }).eq('id', sub.id)
+          await supabase.from('checkout_payments').update({ status: 'REFUNDED' }).eq('id', sub.id)
         } else {
           // D2C order refund
           const { data: payment } = await supabase

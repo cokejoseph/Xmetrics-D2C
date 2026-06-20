@@ -9,7 +9,7 @@ import { createShipment } from '../lib/shiprocket'
 import type { ShipmentPayload } from '../lib/shiprocket'
 import type {
   Brand, BrandMember, Warehouse, Product, Customer, Order,
-  Payment, Exception, Integration, PlanType, Return,
+  Payment, Exception, Integration, PlanType, Return, SubscriptionData,
 } from '../types'
 import { supabase } from '../lib/supabase'
 import {
@@ -61,6 +61,7 @@ interface AppState {
   integrations: Integration[]
   returns: Return[]
   currentPlan: PlanType
+  subscription: SubscriptionData | null
   isLoading: boolean
   bootstrapError: string | null
 
@@ -92,6 +93,45 @@ interface AppState {
   setReturns: (returns: Return[]) => void
   addReturn: (ret: Return) => void
   updateReturn: (id: string, changes: Partial<Return>) => void
+  setSubscription: (sub: SubscriptionData | null) => void
+}
+
+// ─── Demo subscription factory ─────────────────────────────────────────────
+
+function makeDemoSubscription(plan: PlanType): SubscriptionData {
+  const LIMITS: Record<PlanType, { orders: number | null; team: number | null; integrations: number | null; paise: number }> = {
+    STARTER:    { orders: 500,   team: 1,    integrations: 2,    paise: 99900  },
+    GROWTH:     { orders: 3000,  team: 5,    integrations: 6,    paise: 299900 },
+    SCALE:      { orders: 15000, team: 20,   integrations: 10,   paise: 799900 },
+    ENTERPRISE: { orders: null,  team: null, integrations: null, paise: 0      },
+  }
+  const lim          = LIMITS[plan]
+  const orders_used  = 287
+  const team_used    = 2
+  const integrations_used = 3
+  const today        = new Date()
+  const startDate    = new Date(today.getTime() - 12 * 86400000).toISOString().slice(0, 10)
+  const renewalDate  = new Date(today.getTime() + 18 * 86400000).toISOString().slice(0, 10)
+
+  return {
+    plan_type:          plan,
+    status:             'ACTIVE',
+    feature_flags:      { daily_briefs: true, whatsapp_export: true, rto_intelligence: true },
+    billing_start_date: startDate,
+    next_renewal_date:  renewalDate,
+    plan_amount_paise:  lim.paise,
+    orders_used,
+    orders_limit:       lim.orders,
+    orders_pct:         lim.orders ? Math.round(orders_used / lim.orders * 100) : 0,
+    at_order_limit:     lim.orders !== null && orders_used >= lim.orders,
+    team_used,
+    team_limit:         lim.team,
+    at_team_limit:      lim.team !== null && team_used >= lim.team,
+    integrations_used,
+    integrations_limit: lim.integrations,
+    at_integration_limit: lim.integrations !== null && integrations_used >= lim.integrations,
+    at_capacity:        false,
+  }
 }
 
 // ─── Store ──────────────────────────────────────────────────────────────────
@@ -110,6 +150,7 @@ export const useAppStore = create<AppState>((set, get) => ({
   integrations: [],
   returns: [],
   currentPlan: 'GROWTH',
+  subscription: null,
   isLoading: true,
   bootstrapError: null,
 
@@ -132,6 +173,7 @@ export const useAppStore = create<AppState>((set, get) => ({
         integrations: DEMO_INTEGRATIONS,
         returns: DEMO_RETURNS,
         currentPlan: 'GROWTH',
+        subscription: makeDemoSubscription('GROWTH'),
         isLoading: false,
         bootstrapError: null,
       })
@@ -186,6 +228,7 @@ export const useAppStore = create<AppState>((set, get) => ({
         teamMembers,
         integrations,
         currentPlan: 'GROWTH',
+        subscription: null,
         isLoading: false,
         bootstrapError: null,
       })
@@ -622,4 +665,8 @@ export const useAppStore = create<AppState>((set, get) => ({
 
   updateReturn: (id, changes) =>
     set(state => ({ returns: state.returns.map(r => r.id === id ? { ...r, ...changes } : r) })),
+
+  // ─── Subscription ──────────────────────────────────────────────────────────
+
+  setSubscription: (sub) => set({ subscription: sub }),
 }))

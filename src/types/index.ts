@@ -479,3 +479,37 @@ export interface Return {
   customer?: Customer
 }
 
+// ─── Subscription & Billing ─────────────────────────────────────────────────
+
+export type SubscriptionStatus =
+  | 'TRIAL'
+  | 'ACTIVE'
+  | 'PAYMENT_FAILED'
+  | 'PAUSED'
+  | 'CANCELLED'
+  | 'EXPIRED'
+
+export interface SubscriptionData {
+  plan_type: PlanType
+  status: SubscriptionStatus
+  feature_flags: Record<string, boolean>
+  billing_start_date: string
+  next_renewal_date: string | null
+  plan_amount_paise: number
+
+  orders_used: number
+  orders_limit: number | null
+  orders_pct: number
+  at_order_limit: boolean
+
+  team_used: number
+  team_limit: number | null
+  at_team_limit: boolean
+
+  integrations_used: number
+  integrations_limit: number | null
+  at_integration_limit: boolean
+
+  at_capacity: boolean
+}
+
