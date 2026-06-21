@@ -13,7 +13,7 @@ const TABS = [
   { key: 'ready',     label: 'Ready for Pickup' },
   { key: 'pickup',    label: 'Pickup Scheduled' },
   { key: 'transit',   label: 'In Transit' },
-  { key: 'ndr',       label: 'NDR' },
+  { key: 'ndr',       label: 'NDR', title: 'Non-Delivery Report — courier failed delivery attempt' },
   { key: 'delivered', label: 'Delivered' },
   { key: 'rto',       label: 'RTO / Returned' },
 ] as const
@@ -50,6 +50,8 @@ export default function Fulfillment() {
   const [showPickupDate, setShowPickupDate] = useState(false)
 
   const tabOrders = getTabOrders(orders, tab)
+  // Only show status column on "transit" where multiple fulfillment statuses coexist
+  const showStatusCol = tab === 'transit'
 
   const toggleSelect = (id: string) =>
     setSelected(prev => prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id])
@@ -93,6 +95,7 @@ export default function Fulfillment() {
               key={t.key}
               onClick={() => { setTab(t.key); setSelected([]); setShowPickupDate(false) }}
               className={`tab-line flex items-center gap-1.5 ${tab === t.key ? 'active' : ''}`}
+              title={'title' in t ? t.title : undefined}
             >
               {t.label}
               {count > 0 && (
@@ -106,18 +109,19 @@ export default function Fulfillment() {
       <Card>
         {/* Packing: Generate Labels */}
         {tab === 'packing' && selected.length > 0 && (
-          <div className="flex items-center gap-3 px-4 pt-4 pb-2">
-            <span className="text-sm text-gray-600">{selected.length} selected</span>
-            <Button size="sm" onClick={handleGenerateLabels}>
+          <div className="flex items-center gap-3 px-4 py-3 bg-brand-600 rounded-t-xl border-b border-brand-700">
+            <span className="text-sm font-medium text-white">{selected.length} order{selected.length > 1 ? 's' : ''} selected</span>
+            <Button size="sm" onClick={handleGenerateLabels} className="ml-auto bg-white text-brand-700 hover:bg-brand-50">
               <Tag size={14} /> Generate Labels ({selected.length})
             </Button>
+            <button onClick={() => setSelected([])} className="text-white/70 hover:text-white text-sm">✕</button>
           </div>
         )}
 
         {/* Ready for Pickup: Schedule Pickup with date */}
         {tab === 'ready' && selected.length > 0 && (
-          <div className="flex items-center gap-3 px-4 pt-4 pb-2 flex-wrap">
-            <span className="text-sm text-gray-600">{selected.length} selected</span>
+          <div className="flex items-center gap-3 px-4 py-3 bg-gray-800 dark:bg-white/[0.05] rounded-t-xl border-b border-gray-700 dark:border-white/[0.08] flex-wrap">
+            <span className="text-sm font-medium text-white dark:text-gray-200">{selected.length} selected</span>
             {!showPickupDate ? (
               <Button size="sm" variant="secondary" onClick={() => setShowPickupDate(true)}>
                 <Calendar size={14} /> Schedule Pickup
@@ -149,7 +153,7 @@ export default function Fulfillment() {
                     type="checkbox"
                     checked={selected.length === tabOrders.length && tabOrders.length > 0}
                     onChange={toggleAll}
-                    className="rounded"
+                    className="rounded accent-brand-600 w-4 h-4 cursor-pointer"
                   />
                 </th>
                 <th className="px-4 py-3 text-left text-[11px] font-medium text-gray-400 uppercase tracking-wider">Order</th>
@@ -157,7 +161,7 @@ export default function Fulfillment() {
                 <th className="px-4 py-3 text-left text-[11px] font-medium text-gray-400 uppercase tracking-wider hidden sm:table-cell">Channel</th>
                 <th className="px-4 py-3 text-left text-[11px] font-medium text-gray-400 uppercase tracking-wider">Amount</th>
                 <th className="px-4 py-3 text-left text-[11px] font-medium text-gray-400 uppercase tracking-wider hidden md:table-cell">Payment</th>
-                <th className="px-4 py-3 text-left text-[11px] font-medium text-gray-400 uppercase tracking-wider">Status</th>
+                {showStatusCol && <th className="px-4 py-3 text-left text-[11px] font-medium text-gray-400 uppercase tracking-wider">Status</th>}
                 {(tab === 'pickup') && (
                   <th className="px-4 py-3 text-left text-[11px] font-medium text-gray-400 uppercase tracking-wider hidden lg:table-cell">Pickup Date</th>
                 )}
@@ -175,7 +179,7 @@ export default function Fulfillment() {
                     className={`border-b border-gray-50 hover:bg-gray-50/50 transition-colors ${selected.includes(order.id) ? 'bg-brand-50' : ''}`}
                   >
                     <td className="px-4 py-3">
-                      <input type="checkbox" checked={selected.includes(order.id)} onChange={() => toggleSelect(order.id)} className="rounded" />
+                      <input type="checkbox" checked={selected.includes(order.id)} onChange={() => toggleSelect(order.id)} className="rounded accent-brand-600 w-4 h-4 cursor-pointer" />
                     </td>
                     <td className="px-4 py-3">
                       <Link to={`/orders/${order.id}`} className="text-sm font-medium text-brand-600 hover:underline">
@@ -195,9 +199,11 @@ export default function Fulfillment() {
                     <td className="px-4 py-3 hidden md:table-cell">
                       <PaymentMethodBadge method={order.payment_method} />
                     </td>
-                    <td className="px-4 py-3">
-                      <FulfillmentBadge status={order.fulfillment_status} />
-                    </td>
+                    {showStatusCol && (
+                      <td className="px-4 py-3">
+                        <FulfillmentBadge status={order.fulfillment_status} />
+                      </td>
+                    )}
                     {tab === 'pickup' && (
                       <td className="px-4 py-3 hidden lg:table-cell">
                         <span className="text-xs text-gray-600">

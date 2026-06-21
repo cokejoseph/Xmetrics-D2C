@@ -281,7 +281,7 @@ export default function OrderList() {
                       type="checkbox"
                       checked={pagedOrders.length > 0 && pagedOrders.every(o => selected.includes(o.id))}
                       onChange={toggleSelectAll}
-                      className="rounded"
+                      className="rounded accent-brand-600 w-4 h-4 cursor-pointer"
                       aria-label="Select all orders on this page"
                     />
                   </th>
@@ -343,10 +343,10 @@ function OrderRow({
   return (
     <tr className={`border-b border-gray-50 hover:bg-gray-50/50 transition-colors ${selected ? 'bg-brand-50' : ''}`}>
       <td className="px-4 py-2.5">
-        <input type="checkbox" checked={selected} onChange={onSelect} className="rounded" aria-label={`Select order ${order.order_number}`} />
+        <input type="checkbox" checked={selected} onChange={onSelect} className="rounded accent-brand-600 w-4 h-4 cursor-pointer" aria-label={`Select order ${order.order_number}`} />
       </td>
-      <td className="px-4 py-2.5">
-        <Link to={`/orders/${order.id}`} className="text-sm font-medium text-brand-600 hover:underline tabular-nums">
+      <td className="px-4 py-2.5 whitespace-nowrap">
+        <Link to={`/orders/${order.id}`} className="text-sm font-medium text-brand-600 hover:underline tabular-nums whitespace-nowrap">
           {order.order_number}
         </Link>
       </td>
@@ -419,7 +419,7 @@ function TabBtn({
       {children}
       {badge != null && badge > 0 ? (
         <span className={`text-[10px] font-medium tabular-nums ${
-          badgeDanger ? 'text-red-500' : 'text-gray-400'
+          badgeDanger ? 'text-amber-500' : 'text-gray-400'
         }`}>
           {badge}
         </span>

@@ -6,12 +6,12 @@ import { Card, Input, Pagination } from '../../components/ui'
 import { exportCSV } from '../../lib/exportCSV'
 
 function tagStyle(tag: string): string {
-  if (tag === 'vip') return 'bg-amber-50 text-amber-700'
-  if (tag === 'repeat') return 'bg-blue-50 text-blue-600'
-  if (tag === 'new') return 'bg-emerald-50 text-emerald-700'
-  if (tag === 'cod-risk') return 'bg-orange-50 text-orange-600'
-  if (tag === 'rto-history') return 'bg-red-50 text-red-600'
-  return 'bg-gray-100 text-gray-600'
+  if (tag === 'vip') return 'bg-amber-50 text-amber-700 dark:bg-amber-400/10 dark:text-amber-400'
+  if (tag === 'repeat') return 'bg-blue-50 text-blue-600 dark:bg-blue-400/10 dark:text-blue-400'
+  if (tag === 'new') return 'bg-emerald-50 text-emerald-700 dark:bg-emerald-400/10 dark:text-emerald-400'
+  if (tag === 'cod-risk') return 'bg-orange-50 text-orange-600 dark:bg-orange-400/10 dark:text-orange-400'
+  if (tag === 'rto-history') return 'bg-red-50 text-red-600 dark:bg-red-400/10 dark:text-red-400'
+  return 'bg-gray-100 text-gray-600 dark:bg-white/[0.06] dark:text-gray-400'
 }
 
 export default function CustomerList() {

@@ -120,31 +120,31 @@ export default function NewOrder() {
           <h2 className="text-sm font-semibold text-gray-900 mb-4">Customer Details</h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Name *</label>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Name *</label>
               <Input value={customerName} onChange={e => setCustomerName(e.target.value)} placeholder="Customer name" required />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Phone *</label>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Phone *</label>
               <Input value={customerPhone} onChange={e => setCustomerPhone(e.target.value)} placeholder="+91 98765 43210" required />
             </div>
             <div className="sm:col-span-2">
-              <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Email</label>
               <Input type="email" value={customerEmail} onChange={e => setCustomerEmail(e.target.value)} placeholder="customer@email.com" />
             </div>
             <div className="sm:col-span-2">
-              <label className="block text-sm font-medium text-gray-700 mb-1">Address *</label>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Address *</label>
               <Input value={address} onChange={e => setAddress(e.target.value)} placeholder="Street address, flat/house no." required />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">City *</label>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">City *</label>
               <Input value={city} onChange={e => setCity(e.target.value)} placeholder="City" required />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">State *</label>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">State *</label>
               <Input value={state} onChange={e => setState(e.target.value)} placeholder="State" required />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Pincode *</label>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Pincode *</label>
               <Input value={pincode} onChange={e => setPincode(e.target.value)} placeholder="6-digit pincode" maxLength={6} required />
             </div>
           </div>
@@ -157,7 +157,7 @@ export default function NewOrder() {
             {lines.map((line, i) => (
               <div key={i} className="flex gap-3 items-end">
                 <div className="flex-1">
-                  <label className="block text-xs text-gray-500 mb-1">Product</label>
+                  <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">Product</label>
                   <Select value={line.product_id} onChange={e => selectProduct(i, e.target.value)} required>
                     <option value="">Select product…</option>
                     {products.filter(p => p.is_active).map(p => (
@@ -166,7 +166,7 @@ export default function NewOrder() {
                   </Select>
                 </div>
                 <div className="w-20">
-                  <label className="block text-xs text-gray-500 mb-1">Qty</label>
+                  <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">Qty</label>
                   <Input
                     type="number"
                     min={1}
@@ -175,7 +175,7 @@ export default function NewOrder() {
                   />
                 </div>
                 <div className="w-28">
-                  <label className="block text-xs text-gray-500 mb-1">Unit Price</label>
+                  <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">Unit Price</label>
                   <Input
                     type="number"
                     value={line.unit_price}
@@ -204,7 +204,7 @@ export default function NewOrder() {
           <h2 className="text-sm font-semibold text-gray-900 mb-4">Order Settings</h2>
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Channel</label>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Channel</label>
               <Select value={channel} onChange={e => setChannel(e.target.value as OrderChannel)}>
                 <option value="MANUAL">Manual</option>
                 <option value="SHOPIFY">Shopify</option>
@@ -212,7 +212,7 @@ export default function NewOrder() {
               </Select>
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Payment Method</label>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Payment Method</label>
               <Select value={paymentMethod} onChange={e => setPaymentMethod(e.target.value as PaymentMethod)}>
                 <option value="COD">COD</option>
                 <option value="UPI">UPI</option>
@@ -223,7 +223,7 @@ export default function NewOrder() {
               </Select>
             </div>
             <div className="col-span-2">
-              <label className="block text-sm font-medium text-gray-700 mb-1">Notes</label>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Notes</label>
               <Input value={notes} onChange={e => setNotes(e.target.value)} placeholder="Internal notes…" />
             </div>
           </div>

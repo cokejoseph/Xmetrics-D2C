@@ -37,11 +37,14 @@ export default function Exceptions() {
       </div>
 
       {criticalCount > 0 && (
-        <div className="flex items-center gap-3 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800/50 rounded-md text-red-800 dark:text-red-300">
-          <AlertOctagon size={18} className="shrink-0" />
-          <p className="text-sm font-medium">
-            {criticalCount} critical exception{criticalCount > 1 ? 's' : ''} require immediate attention
-          </p>
+        <div className="flex items-center gap-3 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800/50 rounded-xl text-red-800 dark:text-red-300">
+          <AlertOctagon size={18} className="shrink-0 text-red-500" />
+          <div>
+            <p className="text-base font-bold leading-none">{criticalCount} Critical</p>
+            <p className="text-xs mt-0.5 text-red-700/70 dark:text-red-400/70">
+              exception{criticalCount > 1 ? 's' : ''} require immediate attention
+            </p>
+          </div>
         </div>
       )}
 

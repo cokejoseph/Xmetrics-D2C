@@ -91,25 +91,28 @@ export default function Sidebar({ isOpen = false, onClose }: SidebarProps) {
 
       {/* Nav */}
       <nav className="flex-1 px-2 py-2 overflow-y-auto" aria-label="Application">
-        <p className="px-3 py-2 text-[10px] font-semibold uppercase tracking-widest text-gray-400 dark:text-gray-600">
-          Menu
-        </p>
 
+        {/* Daily workflow */}
         <div className="space-y-0.5">
-          <SidebarItem to="/dashboard"   icon={<LayoutDashboard size={15} />} label="Dashboard"   onClick={handleNavClick} />
-          <SidebarItem to="/orders"      icon={<ShoppingBag size={15} />}     label="Orders"      badge={ordersBadge} badgeTitle={`${ordersBadge} orders pending review`} onClick={handleNavClick} />
-          <SidebarItem to="/payments"    icon={<CreditCard size={15} />}      label="Payments"    onClick={handleNavClick} />
-          <SidebarItem to="/exceptions"  icon={<AlertTriangle size={15} />}   label="Exceptions"  badge={exceptionsBadge} badgeDanger badgeTitle={`${exceptionsBadge} unresolved exceptions`} onClick={handleNavClick} />
-          <SidebarItem to="/fulfillment" icon={<Truck size={15} />}           label="Fulfillment" onClick={handleNavClick} />
-          <SidebarItem to="/customers"   icon={<Users size={15} />}           label="Customers"   onClick={handleNavClick} />
-          <SidebarItem to="/products"    icon={<Package size={15} />}         label="Products"    onClick={handleNavClick} />
-          <SidebarItem to="/analytics"   icon={<BarChart3 size={15} />}       label="Analytics"   badge={analyticsBadge} badgeTitle={analyticsBadgeTitle || `${analyticsBadge} items need attention`} onClick={handleNavClick} />
-          <SidebarItem to="/returns"     icon={<RotateCcw size={15} />}       label="Returns"     onClick={handleNavClick} />
+          <SidebarItem to="/briefs/history"  icon={<History size={15} />}       label="Brief"       onClick={handleNavClick} />
+          <SidebarItem to="/orders"          icon={<ShoppingBag size={15} />}   label="Orders"      badge={ordersBadge} badgeTitle={`${ordersBadge} orders pending review`} onClick={handleNavClick} />
+          <SidebarItem to="/fulfillment"     icon={<Truck size={15} />}         label="Fulfillment" onClick={handleNavClick} />
+          <SidebarItem to="/exceptions"      icon={<AlertTriangle size={15} />} label="Exceptions"  badge={exceptionsBadge} badgeDanger badgeTitle={`${exceptionsBadge} unresolved exceptions`} onClick={handleNavClick} />
+          <SidebarItem to="/returns"         icon={<RotateCcw size={15} />}     label="Returns"     onClick={handleNavClick} />
+          <SidebarItem to="/payments"        icon={<CreditCard size={15} />}    label="Payments"    onClick={handleNavClick} />
+          <SidebarItem to="/analytics"       icon={<BarChart3 size={15} />}     label="Analytics"   badge={analyticsBadge} badgeTitle={analyticsBadgeTitle || `${analyticsBadge} items need attention`} onClick={handleNavClick} />
         </div>
 
-        <div className="mt-4 pt-4 border-t border-gray-100 dark:border-white/[0.05] space-y-0.5">
-          <SidebarItem to="/settings/brand"  icon={<Settings size={15} />} label="Settings"      onClick={handleNavClick} />
-          <SidebarItem to="/briefs/history"  icon={<History size={15} />}  label="Brief History" onClick={handleNavClick} />
+        {/* Reference */}
+        <div className="mt-3 pt-3 border-t border-gray-100 dark:border-white/[0.05] space-y-0.5">
+          <SidebarItem to="/dashboard"   icon={<LayoutDashboard size={15} />} label="Dashboard" onClick={handleNavClick} />
+          <SidebarItem to="/customers"   icon={<Users size={15} />}           label="Customers" onClick={handleNavClick} />
+          <SidebarItem to="/products"    icon={<Package size={15} />}         label="Products"  onClick={handleNavClick} />
+        </div>
+
+        {/* Settings */}
+        <div className="mt-3 pt-3 border-t border-gray-100 dark:border-white/[0.05] space-y-0.5">
+          <SidebarItem to="/settings/brand" icon={<Settings size={15} />} label="Settings" onClick={handleNavClick} />
         </div>
       </nav>
 

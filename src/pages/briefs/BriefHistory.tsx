@@ -50,18 +50,25 @@ export default function BriefHistory() {
           />
         </div>
 
-        <div className="space-y-2">
-          {briefs.map(brief => (
-            <BriefCard
-              key={brief.date}
-              brief={brief}
-              active={selected === brief.date}
-              onClick={() => setSelected(brief.date)}
-            />
-          ))}
+        <div className="space-y-1">
           {briefs.length === 0 && (
             <p className="text-sm text-gray-400 text-center py-8">No briefs found</p>
           )}
+          {groupDateBriefs(briefs).map(({ group, briefs: groupBriefs }) => (
+            <div key={group}>
+              <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider px-1 pt-3 pb-1.5">{group}</p>
+              <div className="space-y-2">
+                {groupBriefs.map(brief => (
+                  <BriefCard
+                    key={brief.date}
+                    brief={brief}
+                    active={selected === brief.date}
+                    onClick={() => setSelected(brief.date)}
+                  />
+                ))}
+              </div>
+            </div>
+          ))}
         </div>
       </div>
 
@@ -89,7 +96,7 @@ export default function BriefHistory() {
               </h2>
               <button
                 onClick={() => { setShowExport(true); setCopied(false) }}
-                className="flex items-center gap-1.5 px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold rounded-xl transition-colors"
+                className="flex items-center gap-1.5 px-3 py-1.5 border border-emerald-600 text-emerald-700 dark:text-emerald-400 dark:border-emerald-600/60 text-xs font-semibold rounded-xl hover:bg-emerald-50 dark:hover:bg-emerald-900/20 transition-colors"
               >
                 <MessageCircle size={13} />
                 Export to WhatsApp
@@ -138,13 +145,13 @@ export default function BriefHistory() {
 
             {/* Actions */}
             {selectedBrief.actions.length > 0 && (
-              <Card className="p-4">
-                <h3 className="text-sm font-semibold text-gray-900 mb-3">Actions</h3>
+              <Card className="p-4 border border-amber-100 dark:border-amber-800/30 bg-amber-50/40 dark:bg-amber-900/10">
+                <h3 className="text-sm font-semibold text-gray-900 dark:text-white mb-3">Actions</h3>
                 <div className="space-y-1.5">
                   {selectedBrief.actions.map((a, i) => {
                     const dot = a.priority === 'HIGH' ? 'bg-red-500' : a.priority === 'MEDIUM' ? 'bg-amber-500' : 'bg-green-500'
                     return (
-                      <div key={i} className="flex items-start gap-2 text-sm text-gray-700">
+                      <div key={i} className="flex items-start gap-2 text-sm text-gray-700 dark:text-gray-300">
                         <span className={`mt-1.5 w-2 h-2 rounded-full shrink-0 ${dot}`} />
                         <span>{a.text}</span>
                       </div>
@@ -210,6 +217,31 @@ function WhatsAppExportModal({
       </div>
     </div>
   )
+}
+
+function groupDateBriefs(briefs: BriefData[]): { group: string; briefs: BriefData[] }[] {
+  const today = new Date()
+  const todayStr = today.toISOString().slice(0, 10)
+  const yesterday = new Date(today); yesterday.setDate(today.getDate() - 1)
+  const yesterdayStr = yesterday.toISOString().slice(0, 10)
+  const dow = today.getDay()
+  const weekStart = new Date(today)
+  weekStart.setDate(today.getDate() - (dow === 0 ? 6 : dow - 1))
+  weekStart.setHours(0, 0, 0, 0)
+  const weekStartStr = weekStart.toISOString().slice(0, 10)
+
+  const recent: BriefData[] = [], thisWeek: BriefData[] = [], older: BriefData[] = []
+  for (const b of briefs) {
+    if (b.date === todayStr || b.date === yesterdayStr) recent.push(b)
+    else if (b.date >= weekStartStr) thisWeek.push(b)
+    else older.push(b)
+  }
+
+  const groups: { group: string; briefs: BriefData[] }[] = []
+  if (recent.length) groups.push({ group: 'Recent', briefs: recent })
+  if (thisWeek.length) groups.push({ group: 'This Week', briefs: thisWeek })
+  if (older.length) groups.push({ group: 'Earlier', briefs: older })
+  return groups
 }
 
 function BriefCard({ brief, active, onClick }: { brief: BriefData; active: boolean; onClick: () => void }) {

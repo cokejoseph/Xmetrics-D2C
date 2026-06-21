@@ -319,6 +319,11 @@ function ShipmentRow({ awb, courier, orderNum }: { awb: string; courier: string;
   )
 }
 
+// ── Platform detection ────────────────────────────────────────────────────────
+
+const isMac = typeof navigator !== 'undefined' &&
+  /Mac|iPhone|iPad|iPod/.test(navigator.platform)
+
 // ── Main component ─────────────────────────────────────────────────────────────
 
 export default function GlobalSearch() {
@@ -450,7 +455,7 @@ export default function GlobalSearch() {
           </button>
         ) : (
           <kbd className="hidden sm:inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded border border-gray-200 dark:border-white/10 text-[10px] text-gray-400 dark:text-gray-600 font-mono shrink-0 select-none">
-            ⌘K
+            {isMac ? '⌘K' : 'Ctrl K'}
           </kbd>
         )}
       </div>

@@ -18,22 +18,8 @@ import {
   RETURN_CONDITION_LABELS,
 } from '../../lib/returns'
 import { DEMO_MODE } from '../../lib/supabase'
+import { KPICard } from '../../components/shared/KPICard'
 import type { Return, ReturnStatus, ReturnCondition, ReturnReason } from '../../types'
-
-// ── KPI row ───────────────────────────────────────────────────────────────────
-
-function KPICard({ label, value, sub }: {
-  label: string; value: string | number; sub?: string;
-  icon?: React.ReactNode; color?: string
-}) {
-  return (
-    <Card className="p-4">
-      <p className="text-[11px] font-medium text-gray-400 uppercase tracking-wider mb-1">{label}</p>
-      <p className="text-2xl font-semibold text-gray-900 dark:text-white">{value}</p>
-      {sub && <p className="text-xs text-gray-400 mt-0.5">{sub}</p>}
-    </Card>
-  )
-}
 
 // ── Status badge ──────────────────────────────────────────────────────────────
 
@@ -522,7 +508,7 @@ export default function Returns() {
                   <th className="text-left px-4 py-3 text-[11px] font-medium text-gray-400 uppercase tracking-wider">AWB</th>
                   <th className="text-right px-4 py-3 text-[11px] font-medium text-gray-400 uppercase tracking-wider">Refund</th>
                   <th className="text-left px-4 py-3 text-[11px] font-medium text-gray-400 uppercase tracking-wider">Date</th>
-                  <th className="text-right px-4 py-3 text-[11px] font-medium text-gray-400 uppercase tracking-wider">Action</th>
+                  <th className="text-right px-4 py-3 text-[11px] font-medium text-gray-400 uppercase tracking-wider sticky right-0 bg-white dark:bg-card-surface">Action</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-50">
@@ -602,7 +588,7 @@ export default function Returns() {
                       </td>
 
                       {/* Action */}
-                      <td className="px-4 py-3 text-right">
+                      <td className="px-4 py-3 text-right sticky right-0 bg-white dark:bg-card-surface shadow-[-8px_0_12px_-4px_rgba(0,0,0,0.06)]">
                         <ActionCell
                           ret={ret}
                           isActing={isActing}

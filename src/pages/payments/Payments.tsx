@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom'
 import { Download, CreditCard } from 'lucide-react'
 import { useAppStore } from '../../stores/appStore'
 import { Card, Pagination } from '../../components/ui'
+import { KPICard } from '../../components/shared/KPICard'
 import { PaymentMethodBadge } from '../../components/shared/StatusBadge'
 import { FilterPill } from '../../components/shared/FilterPill'
 import { exportCSV } from '../../lib/exportCSV'
@@ -111,21 +112,26 @@ export default function Payments() {
 
       {/* KPIs */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <Card className="p-4">
-          <p className="text-[11px] font-medium text-gray-400 uppercase tracking-wider mb-1">Total Collected</p>
-          <p className="text-2xl font-semibold text-gray-900 dark:text-white">₹{Math.round(totalCollected).toLocaleString('en-IN')}</p>
-          <p className="text-xs text-green-600 mt-1">{payments.filter(p => p.status === 'PAID').length} payments</p>
-        </Card>
-        <Card className="p-4">
-          <p className="text-[11px] font-medium text-gray-400 uppercase tracking-wider mb-1">COD Pending</p>
-          <p className="text-2xl font-semibold text-gray-900 dark:text-white">{codPending}</p>
-          <p className="text-xs text-amber-600 mt-1">orders awaiting payment</p>
-        </Card>
-        <Card className="p-4">
-          <p className="text-[11px] font-medium text-gray-400 uppercase tracking-wider mb-1">Failed Payments</p>
-          <p className="text-2xl font-semibold text-red-600">{failedCount}</p>
-          <p className="text-xs text-gray-500 mt-1">require attention</p>
-        </Card>
+        <KPICard
+          label="Total Collected"
+          value={`₹${Math.round(totalCollected).toLocaleString('en-IN')}`}
+          sub={`${payments.filter(p => p.status === 'PAID').length} payments`}
+          subColor="green"
+        />
+        <KPICard
+          label="COD Pending"
+          value={codPending}
+          sub="orders awaiting payment"
+          subColor="amber"
+          className="border-l-2 border-amber-400 dark:border-amber-500"
+        />
+        <KPICard
+          label="Failed Payments"
+          value={failedCount}
+          sub="require attention"
+          valueColor="red"
+          pulse={failedCount > 0}
+        />
       </div>
 
       {/* Table */}

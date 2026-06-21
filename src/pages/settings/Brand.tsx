@@ -41,7 +41,7 @@ export default function BrandSettings() {
       </div>
 
       <Card className="p-6 space-y-5">
-        <h2 className="text-[11px] font-medium text-gray-400 uppercase tracking-wider">Brand Identity</h2>
+        <h2 className="text-xs font-semibold text-gray-500 dark:text-gray-400">Brand Identity</h2>
 
         <div className="grid grid-cols-2 gap-4">
           <div>
@@ -83,7 +83,7 @@ export default function BrandSettings() {
       </Card>
 
       <Card className="p-6 space-y-5">
-        <h2 className="text-[11px] font-medium text-gray-400 uppercase tracking-wider">Business Metrics</h2>
+        <h2 className="text-xs font-semibold text-gray-500 dark:text-gray-400">Business Metrics</h2>
 
         <div className="grid grid-cols-2 gap-4">
           <div>
@@ -118,11 +118,11 @@ export default function BrandSettings() {
         </div>
       </Card>
 
-      <div className="flex items-center gap-3">
+      <div className="flex items-center gap-3 pt-2 border-t border-gray-100 dark:border-white/[0.07]">
         <Button onClick={handleSave} disabled={!form.name}>
           {saved ? 'Saved!' : 'Save Changes'}
         </Button>
-        {saved && <p className="text-sm text-green-600 font-medium">Changes saved successfully</p>}
+        {saved && <p className="text-sm text-green-600 font-medium">Changes saved</p>}
       </div>
     </div>
   )

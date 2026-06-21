@@ -46,31 +46,35 @@ export default function DailyBrief() {
   return (
     <div className="flex gap-4 min-h-0">
       {/* Date sidebar */}
-      <div className="w-44 shrink-0 space-y-1">
-        <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide px-2 mb-2">Dates</p>
-        {dates.slice(0, 30).map(date => (
-          <button
-            key={date}
-            onClick={() => setSelectedDate(date)}
-            className={`w-full text-left px-3 py-2 rounded-lg text-sm transition-colors ${
-              selectedDate === date
-                ? 'bg-brand-600 text-white font-medium'
-                : 'text-gray-600 hover:bg-gray-100'
-            }`}
-          >
-            {dayLabel(date)}
-          </button>
-        ))}
+      <div className="w-44 shrink-0 space-y-1 overflow-y-auto max-h-[80vh] pb-2">
         {dates.length === 0 && (
           <p className="text-xs text-gray-400 px-2">No order history</p>
         )}
+        {groupDates(dates.slice(0, 30)).map(({ group, dates: groupDates }) => (
+          <div key={group}>
+            <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider px-3 pt-3 pb-1">{group}</p>
+            {groupDates.map(date => (
+              <button
+                key={date}
+                onClick={() => setSelectedDate(date)}
+                className={`w-full text-left px-3 py-2 rounded-lg text-sm transition-colors ${
+                  selectedDate === date
+                    ? 'bg-brand-600 text-white font-medium'
+                    : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-white/[0.05]'
+                }`}
+              >
+                {dayLabel(date)}
+              </button>
+            ))}
+          </div>
+        ))}
       </div>
 
       {/* Main brief */}
       <div className="flex-1 min-w-0 space-y-4">
         <div className="flex items-center justify-between">
           <h1 className="text-xl font-semibold tracking-tight text-gray-900 dark:text-white">Daily Brief — {dayLabel(selectedDate)}</h1>
-          <Button size="sm" onClick={() => setShowWhatsApp(true)}>
+          <Button size="sm" variant="secondary" onClick={() => setShowWhatsApp(true)}>
             Export to WhatsApp
           </Button>
         </div>
@@ -224,6 +228,31 @@ export default function DailyBrief() {
       </Modal>
     </div>
   )
+}
+
+function groupDates(dates: string[]): { group: string; dates: string[] }[] {
+  const today = new Date()
+  const todayStr = today.toISOString().slice(0, 10)
+  const yesterday = new Date(today); yesterday.setDate(today.getDate() - 1)
+  const yesterdayStr = yesterday.toISOString().slice(0, 10)
+  const dow = today.getDay()
+  const weekStart = new Date(today)
+  weekStart.setDate(today.getDate() - (dow === 0 ? 6 : dow - 1))
+  weekStart.setHours(0, 0, 0, 0)
+  const weekStartStr = weekStart.toISOString().slice(0, 10)
+
+  const recent: string[] = [], thisWeek: string[] = [], older: string[] = []
+  for (const d of dates) {
+    if (d === todayStr || d === yesterdayStr) recent.push(d)
+    else if (d >= weekStartStr) thisWeek.push(d)
+    else older.push(d)
+  }
+
+  const groups: { group: string; dates: string[] }[] = []
+  if (recent.length) groups.push({ group: 'Recent', dates: recent })
+  if (thisWeek.length) groups.push({ group: 'This Week', dates: thisWeek })
+  if (older.length) groups.push({ group: 'Earlier', dates: older })
+  return groups
 }
 
 function PLStat({
