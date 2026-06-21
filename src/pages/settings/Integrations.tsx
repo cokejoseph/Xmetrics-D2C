@@ -1,7 +1,8 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { CheckCircle, XCircle, AlertCircle, Clock, Plus, Loader2, RefreshCw } from 'lucide-react'
 import { useAppStore } from '../../stores/appStore'
 import { Card, Button, Modal, Input } from '../../components/ui'
+import { useConfirm } from '../../hooks/useConfirm'
 import { connectShopify, testShopifyConnection, normaliseShopDomain } from '../../lib/shopify'
 import { connectRazorpay, testRazorpayConnection } from '../../lib/razorpay'
 import { connectShiprocket, testShiprocketConnection } from '../../lib/shiprocket'
@@ -288,7 +289,9 @@ function ConnectModal({
 // ─── Main page ──────────────────────────────────────────────────────────────
 
 export default function Integrations() {
+  useEffect(() => { document.title = 'Integrations · Settings · Xmetrics' }, [])
   const { integrations, connectIntegration, updateIntegration, currentBrand } = useAppStore()
+  const confirm = useConfirm()
   const [connectPlatform, setConnectPlatform] = useState<IntegrationPlatform | null>(null)
   const [testingPlatform, setTestingPlatform] = useState<IntegrationPlatform | null>(null)
   const [testResults, setTestResults] = useState<Record<string, string>>({})
@@ -304,7 +307,16 @@ export default function Integrations() {
     setConnectPlatform(null)
   }
 
-  const handleDisconnect = (integration: Integration) => {
+  const handleDisconnect = async (integration: Integration) => {
+    const meta = PLATFORM_META[integration.platform]
+    const ok = await confirm({
+      title: `Disconnect ${meta.name}?`,
+      message: `This will remove your ${meta.name} credentials and stop all syncing. You can reconnect at any time.`,
+      confirmText: 'Disconnect',
+      cancelText: 'Keep Connected',
+      isDangerous: true,
+    })
+    if (!ok) return
     updateIntegration(integration.id, {
       status: 'DISCONNECTED',
       credentials: {},
@@ -372,7 +384,7 @@ export default function Integrations() {
   return (
     <div className="space-y-6 max-w-3xl">
       <div>
-        <h1 className="text-xl font-semibold tracking-tight text-gray-900">Integrations</h1>
+        <h1 className="text-xl font-semibold tracking-tight text-gray-900 dark:text-white">Integrations</h1>
         <p className="text-[13px] text-gray-400 mt-0.5">Connect your tools to sync orders, process payments, and automate shipments.</p>
       </div>
 

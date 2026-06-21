@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { Tag, Calendar, CheckCircle } from 'lucide-react'
 import { useAppStore } from '../../stores/appStore'
@@ -42,6 +42,7 @@ function getTabOrders(orders: Order[], tab: TabKey): Order[] {
 }
 
 export default function Fulfillment() {
+  useEffect(() => { document.title = 'Fulfillment · Xmetrics' }, [])
   const { orders, generateLabels, updateOrder } = useAppStore()
   const [tab, setTab] = useState<TabKey>('packing')
   const [selected, setSelected] = useState<string[]>([])
@@ -79,7 +80,7 @@ export default function Fulfillment() {
   return (
     <div className="space-y-4">
       <div>
-        <h1 className="text-xl font-semibold tracking-tight text-gray-900">Fulfillment</h1>
+        <h1 className="text-xl font-semibold tracking-tight text-gray-900 dark:text-white">Fulfillment</h1>
         <p className="text-[13px] text-gray-400 mt-0.5">{tabOrders.length} orders in {TABS.find(t => t.key === tab)?.label.toLowerCase()}</p>
       </div>
 

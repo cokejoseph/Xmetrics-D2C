@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import { Copy, CheckCheck, TrendingUp, TrendingDown, Package, Users, Zap, AlertTriangle } from 'lucide-react'
 import { useAppStore } from '../../stores/appStore'
 import { generateDailyBrief, buildWhatsAppText, getOrderDates, dayLabel } from '../../lib/briefEngine'
@@ -17,6 +17,7 @@ const PRIORITY_DOT = {
 }
 
 export default function DailyBrief() {
+  useEffect(() => { document.title = 'Daily Brief · Xmetrics' }, [])
   const { orders, customers, products, exceptions } = useAppStore()
   const [showWhatsApp, setShowWhatsApp] = useState(false)
   const [copied, setCopied] = useState(false)
@@ -68,7 +69,7 @@ export default function DailyBrief() {
       {/* Main brief */}
       <div className="flex-1 min-w-0 space-y-4">
         <div className="flex items-center justify-between">
-          <h1 className="text-xl font-semibold tracking-tight text-gray-900">Daily Brief — {dayLabel(selectedDate)}</h1>
+          <h1 className="text-xl font-semibold tracking-tight text-gray-900 dark:text-white">Daily Brief — {dayLabel(selectedDate)}</h1>
           <Button size="sm" onClick={() => setShowWhatsApp(true)}>
             Export to WhatsApp
           </Button>

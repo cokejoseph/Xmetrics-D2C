@@ -1,3 +1,4 @@
+import { useEffect } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import { ChevronRight, Phone, Mail, MapPin, MessageCircle } from 'lucide-react'
 import { useAppStore } from '../../stores/appStore'
@@ -8,6 +9,10 @@ export default function CustomerDetail() {
   const { id } = useParams<{ id: string }>()
   const { customers, orders } = useAppStore()
   const customer = customers.find(c => c.id === id)
+
+  useEffect(() => {
+    document.title = customer ? `${customer.name} · Xmetrics` : 'Customer · Xmetrics'
+  }, [customer])
 
   if (!customer) {
     return (
@@ -45,7 +50,7 @@ export default function CustomerDetail() {
 
       {/* Header */}
       <div>
-        <h1 className="text-xl font-semibold tracking-tight text-gray-900">{customer.name}</h1>
+        <h1 className="text-xl font-semibold tracking-tight text-gray-900 dark:text-white">{customer.name}</h1>
         <div className="flex gap-1 mt-0.5">
           {customer.tags.map(tag => (
             <span key={tag} className="px-1.5 py-0.5 bg-gray-100 text-gray-600 rounded text-[10px] font-medium">

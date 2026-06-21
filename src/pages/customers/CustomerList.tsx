@@ -15,6 +15,7 @@ function tagStyle(tag: string): string {
 }
 
 export default function CustomerList() {
+  useEffect(() => { document.title = 'Customers · Xmetrics' }, [])
   const { customers } = useAppStore()
   const [search, setSearch] = useState('')
   const [page, setPage] = useState(1)
@@ -59,7 +60,7 @@ export default function CustomerList() {
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-xl font-semibold tracking-tight text-gray-900">Customers</h1>
+          <h1 className="text-xl font-semibold tracking-tight text-gray-900 dark:text-white">Customers</h1>
           <p className="text-[13px] text-gray-400 mt-0.5">{customers.length} total · {filtered.length} shown</p>
         </div>
         <div className="flex items-center gap-2">

@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Plus, Pill, Leaf, Droplets, Cpu, Tag, Home, Box } from 'lucide-react'
 import { useAppStore } from '../../stores/appStore'
 import { Card, Button, Modal, Input, Select } from '../../components/ui'
@@ -20,6 +20,7 @@ const CATEGORY_STYLE: Record<ProductCategory, { bg: string; text: string; icon: 
 }
 
 export default function Products() {
+  useEffect(() => { document.title = 'Products · Xmetrics' }, [])
   const { products, addProduct, updateProduct } = useAppStore()
   const [showAdd, setShowAdd] = useState(false)
   const [form, setForm] = useState({
@@ -41,7 +42,7 @@ export default function Products() {
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-xl font-semibold tracking-tight text-gray-900">Products</h1>
+          <h1 className="text-xl font-semibold tracking-tight text-gray-900 dark:text-white">Products</h1>
           <p className="text-[13px] text-gray-400 mt-0.5">{activeProducts.length} active · {inactiveProducts.length} archived</p>
         </div>
         <Button size="sm" onClick={() => setShowAdd(true)}>

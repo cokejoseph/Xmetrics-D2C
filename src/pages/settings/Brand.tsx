@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useAppStore } from '../../stores/appStore'
 import { Card, Button, Input, Select } from '../../components/ui'
 import type { Brand } from '../../types'
@@ -15,6 +15,8 @@ export default function BrandSettings() {
     monthly_order_volume: currentBrand?.settings?.monthly_order_volume ?? 0,
     average_order_value: currentBrand?.settings?.average_order_value ?? 0,
   })
+
+  useEffect(() => { document.title = 'Brand · Settings · Xmetrics' }, [])
 
   if (!currentBrand) return null
 
@@ -34,7 +36,7 @@ export default function BrandSettings() {
   return (
     <div className="space-y-6 max-w-2xl">
       <div>
-        <h1 className="text-xl font-semibold tracking-tight text-gray-900">Brand Settings</h1>
+        <h1 className="text-xl font-semibold tracking-tight text-gray-900 dark:text-white">Brand Settings</h1>
         <p className="text-[13px] text-gray-400 mt-0.5">Identity, market type, and preferences</p>
       </div>
 

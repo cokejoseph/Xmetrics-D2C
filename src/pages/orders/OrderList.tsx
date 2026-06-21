@@ -14,7 +14,8 @@ import type { Order } from '../../types'
 type TabType = 'all' | 'ready' | 'review'
 
 export default function OrderList() {
-  const { orders, approveOrder, holdOrder, startPacking } = useAppStore()
+  useEffect(() => { document.title = 'Orders · Xmetrics' }, [])
+  const { orders, approveOrder, holdOrder, bulkApprove, bulkHold, startPacking } = useAppStore()
   const [tab, setTab] = useState<TabType>('all')
   const [search, setSearch] = useState('')
   const [filterChannel, setFilterChannel] = useState('')
@@ -113,7 +114,7 @@ export default function OrderList() {
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-xl font-semibold tracking-tight text-gray-900">Orders</h1>
+          <h1 className="text-xl font-semibold tracking-tight text-gray-900 dark:text-white">Orders</h1>
           <p className="text-[13px] text-gray-400 mt-0.5">{filtered.length} orders · GMV ₹{Math.round(totalGMV).toLocaleString('en-IN')}</p>
         </div>
         <div className="flex items-center gap-2">
@@ -186,13 +187,13 @@ export default function OrderList() {
           <span className="text-sm font-medium">{selected.length} order{selected.length > 1 ? 's' : ''} selected</span>
           <div className="flex gap-2 ml-auto">
             <button
-              onClick={() => { selected.forEach(id => approveOrder(id)); setSelected([]) }}
+              onClick={() => { bulkApprove(selected); setSelected([]) }}
               className="px-3 py-1.5 bg-green-500 text-white text-sm font-medium rounded-md hover:bg-green-400 transition-colors"
             >
               Approve All
             </button>
             <button
-              onClick={() => { selected.forEach(id => holdOrder(id)); setSelected([]) }}
+              onClick={() => { bulkHold(selected); setSelected([]) }}
               className="px-3 py-1.5 bg-amber-500 text-white text-sm font-medium rounded-md hover:bg-amber-400 transition-colors"
             >
               Hold All

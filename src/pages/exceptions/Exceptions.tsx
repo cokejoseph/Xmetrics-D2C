@@ -1,3 +1,4 @@
+import { useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { AlertOctagon, ExternalLink, Check, CheckCircle, X } from 'lucide-react'
 import { useAppStore } from '../../stores/appStore'
@@ -18,6 +19,7 @@ const TYPE_LABELS: Record<string, string> = {
 }
 
 export default function Exceptions() {
+  useEffect(() => { document.title = 'Exceptions · Xmetrics' }, [])
   const { exceptions, resolveException, dismissException, restoreException } = useAppStore()
 
   const unresolved = exceptions.filter(e => e.status === 'UNRESOLVED' || e.status === 'IN_PROGRESS')
@@ -29,7 +31,7 @@ export default function Exceptions() {
     <div className="space-y-4">
       <div className="flex items-start justify-between">
         <div>
-          <h1 className="text-xl font-semibold tracking-tight text-gray-900">Exceptions</h1>
+          <h1 className="text-xl font-semibold tracking-tight text-gray-900 dark:text-white">Exceptions</h1>
           <p className="text-[13px] text-gray-400 mt-0.5">{unresolved.length} unresolved · {resolved.length} resolved</p>
         </div>
       </div>

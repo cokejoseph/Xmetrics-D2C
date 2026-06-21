@@ -10,6 +10,7 @@ import { exportCSV } from '../../lib/exportCSV'
 // ── Page ──────────────────────────────────────────────────────────────────────
 
 export default function Payments() {
+  useEffect(() => { document.title = 'Payments · Xmetrics' }, [])
   const { payments, orders } = useAppStore()
   const [filterStatus, setFilterStatus] = useState('')
   const [filterMethod, setFilterMethod] = useState('')
@@ -70,7 +71,7 @@ export default function Payments() {
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-xl font-semibold tracking-tight text-gray-900">Payments</h1>
+          <h1 className="text-xl font-semibold tracking-tight text-gray-900 dark:text-white">Payments</h1>
           <p className="text-[13px] text-gray-400 mt-0.5">₹{Math.round(totalCollected).toLocaleString('en-IN')} collected · {codPending} COD pending</p>
         </div>
         <div className="flex items-center gap-2">
@@ -112,12 +113,12 @@ export default function Payments() {
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <Card className="p-4">
           <p className="text-[11px] font-medium text-gray-400 uppercase tracking-wider mb-1">Total Collected</p>
-          <p className="text-2xl font-semibold text-gray-900">₹{Math.round(totalCollected).toLocaleString('en-IN')}</p>
+          <p className="text-2xl font-semibold text-gray-900 dark:text-white">₹{Math.round(totalCollected).toLocaleString('en-IN')}</p>
           <p className="text-xs text-green-600 mt-1">{payments.filter(p => p.status === 'PAID').length} payments</p>
         </Card>
         <Card className="p-4">
           <p className="text-[11px] font-medium text-gray-400 uppercase tracking-wider mb-1">COD Pending</p>
-          <p className="text-2xl font-semibold text-gray-900">{codPending}</p>
+          <p className="text-2xl font-semibold text-gray-900 dark:text-white">{codPending}</p>
           <p className="text-xs text-amber-600 mt-1">orders awaiting payment</p>
         </Card>
         <Card className="p-4">

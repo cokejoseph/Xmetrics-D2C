@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { UserPlus, Trash2, Shield } from 'lucide-react'
 import { useAppStore } from '../../stores/appStore'
 import { useAuthStore } from '../../stores/authStore'
@@ -18,6 +18,7 @@ const ROLE_COLOR: Record<Role, BadgeVariant> = {
 }
 
 export default function Team() {
+  useEffect(() => { document.title = 'Team · Settings · Xmetrics' }, [])
   const { teamMembers, inviteTeamMember, removeTeamMember, updateTeamMember } = useAppStore()
   const { user } = useAuthStore()
   const confirm = useConfirm()
@@ -35,7 +36,7 @@ export default function Team() {
     <div className="space-y-6 max-w-3xl">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-xl font-semibold tracking-tight text-gray-900">Team</h1>
+          <h1 className="text-xl font-semibold tracking-tight text-gray-900 dark:text-white">Team</h1>
           <p className="text-[13px] text-gray-400 mt-0.5">Manage members and permissions</p>
         </div>
         <div className="flex gap-2">

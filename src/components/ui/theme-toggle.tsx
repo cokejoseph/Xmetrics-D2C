@@ -19,8 +19,9 @@ export function ThemeToggle({ isDark, onToggle, className }: ThemeToggleProps) {
       )}
       onClick={onToggle}
       role="button"
+      aria-label={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
       tabIndex={0}
-      onKeyDown={e => e.key === 'Enter' && onToggle()}
+      onKeyDown={e => (e.key === 'Enter' || e.key === ' ') && onToggle()}
     >
       <div className="flex justify-between items-center w-full">
         <div

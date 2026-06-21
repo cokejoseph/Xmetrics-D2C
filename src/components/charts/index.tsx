@@ -77,8 +77,8 @@ export function RevenueAreaChart({ data }: { data: RevenuePoint[] }) {
         </defs>
         <CartesianGrid strokeDasharray="0" stroke={t.grid} vertical={false} />
         <XAxis dataKey="label" tick={{ fontSize: 11, fill: t.tickFill, fontFamily: 'DM Sans, sans-serif' }} axisLine={false} tickLine={false} />
-        <YAxis tick={{ fontSize: 11, fill: t.tickFill, fontFamily: 'DM Sans, sans-serif' }} axisLine={false} tickLine={false}
-          tickFormatter={v => `₹${(v / 1000).toFixed(0)}k`} />
+        <YAxis tick={{ fontSize: 10, fill: t.tickFill, fontFamily: 'DM Sans, sans-serif' }} axisLine={false} tickLine={false}
+          tickFormatter={v => `₹${(v / 1000).toFixed(0)}k`} width={44} tickCount={5} />
         <Tooltip
           contentStyle={tooltipStyle(t)}
           formatter={(v: unknown) => [`₹${Number(v).toLocaleString('en-IN')}`, 'Revenue']}

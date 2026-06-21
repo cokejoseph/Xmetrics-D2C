@@ -1,4 +1,4 @@
-import { useMemo } from 'react'
+import { useMemo, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { ArrowUpRight, ArrowDownRight, ChevronRight, Zap, CheckCircle } from 'lucide-react'
 import { useAppStore } from '../../stores/appStore'
@@ -8,6 +8,7 @@ import { RevenueAreaChart, StatusDonut, ChannelBarChart } from '../../components
 import { FulfillmentBadge, RTOScoreBar, SeverityBadge } from '../../components/shared/StatusBadge'
 
 export default function Dashboard() {
+  useEffect(() => { document.title = 'Dashboard · Xmetrics' }, [])
   const { orders, customers, products, exceptions } = useAppStore()
 
   const today = new Date().toISOString().slice(0, 10)
@@ -102,7 +103,7 @@ export default function Dashboard() {
       {/* ── Page header ─────────────────────────────────── */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-xl font-semibold tracking-tight text-gray-900">Dashboard</h1>
+          <h1 className="text-xl font-semibold tracking-tight text-gray-900 dark:text-white">Dashboard</h1>
           <p className="text-[13px] text-gray-400 mt-0.5">{formattedDate}</p>
         </div>
         <Link
@@ -182,7 +183,7 @@ export default function Dashboard() {
         <Card className="p-5">
           <div className="flex items-start justify-between mb-4">
             <div>
-              <h3 className="text-[13px] font-semibold text-gray-900">Revenue</h3>
+              <h3 className="text-[13px] font-semibold text-gray-900 dark:text-white">Revenue</h3>
               <p className="text-[11px] text-gray-400 mt-0.5">14-day trend</p>
             </div>
             <span className="text-[11px] text-gray-400 tabular-nums">
@@ -193,7 +194,7 @@ export default function Dashboard() {
         </Card>
         <Card className="p-5">
           <div className="mb-3">
-            <h3 className="text-[13px] font-semibold text-gray-900">Order Status</h3>
+            <h3 className="text-[13px] font-semibold text-gray-900 dark:text-white">Order Status</h3>
             <p className="text-[11px] text-gray-400 mt-0.5">{orders.length} total orders</p>
           </div>
           <StatusDonut data={statusCounts} />
@@ -205,7 +206,7 @@ export default function Dashboard() {
         <Card className="p-5">
           <div className="flex items-center justify-between mb-4">
             <div>
-              <h3 className="text-[13px] font-semibold text-gray-900">Exceptions</h3>
+              <h3 className="text-[13px] font-semibold text-gray-900 dark:text-white">Exceptions</h3>
               <p className="text-[11px] text-gray-400 mt-0.5">{unresolved.length} unresolved</p>
             </div>
             <Link to="/exceptions" className="text-[11px] font-medium text-brand-600 hover:text-brand-700 transition-colors">
@@ -237,7 +238,7 @@ export default function Dashboard() {
 
         <Card className="p-5">
           <div className="mb-4">
-            <h3 className="text-[13px] font-semibold text-gray-900">Channel Performance</h3>
+            <h3 className="text-[13px] font-semibold text-gray-900 dark:text-white">Channel Performance</h3>
             <p className="text-[11px] text-gray-400 mt-0.5">Orders by channel</p>
           </div>
           <ChannelBarChart data={channelData} />
@@ -249,7 +250,7 @@ export default function Dashboard() {
         <Card className="p-5">
           <div className="flex items-center justify-between mb-3">
             <div>
-              <h3 className="text-[13px] font-semibold text-gray-900">Ready to Pack</h3>
+              <h3 className="text-[13px] font-semibold text-gray-900 dark:text-white">Ready to Pack</h3>
               <p className="text-[11px] text-gray-400 mt-0.5">{readyToPack.length} orders waiting</p>
             </div>
             <Link to="/fulfillment" className="text-[11px] font-medium text-brand-600 hover:text-brand-700 transition-colors">
@@ -271,7 +272,7 @@ export default function Dashboard() {
                     <p className="text-[11px] text-gray-400">{order.customer?.name}</p>
                   </div>
                   <div className="flex items-center gap-2 shrink-0">
-                    <span className="text-[13px] font-semibold text-gray-900 tabular-nums">
+                    <span className="text-[13px] font-semibold text-gray-900 dark:text-white tabular-nums">
                       ₹{order.gross_amount.toLocaleString('en-IN')}
                     </span>
                     <FulfillmentBadge status={order.fulfillment_status} />
@@ -285,7 +286,7 @@ export default function Dashboard() {
         <Card className="p-5">
           <div className="flex items-center justify-between mb-3">
             <div>
-              <h3 className="text-[13px] font-semibold text-gray-900">Recent Orders</h3>
+              <h3 className="text-[13px] font-semibold text-gray-900 dark:text-white">Recent Orders</h3>
               <p className="text-[11px] text-gray-400 mt-0.5">Latest activity</p>
             </div>
             <Link to="/orders" className="text-[11px] font-medium text-brand-600 hover:text-brand-700 transition-colors">
@@ -304,7 +305,7 @@ export default function Dashboard() {
                   <p className="text-[11px] text-gray-400 truncate">{order.customer?.name}</p>
                 </div>
                 <div className="flex items-center gap-3 shrink-0">
-                  <span className="text-[13px] font-semibold text-gray-900 tabular-nums">
+                  <span className="text-[13px] font-semibold text-gray-900 dark:text-white tabular-nums">
                     ₹{order.gross_amount.toLocaleString('en-IN')}
                   </span>
                   <RTOScoreBar score={order.rto_risk_score} />
@@ -338,7 +339,7 @@ function KPIMetric({
         title={tooltip}
         aria-label={tooltip ? `${title}: ${tooltip}` : undefined}
       >{title}</p>
-      <p className="text-[36px] font-semibold tracking-tight text-gray-900 leading-none mb-2 tabular-nums">{value}</p>
+      <p className="text-[36px] font-semibold tracking-tight text-gray-900 dark:text-white leading-none mb-2 tabular-nums">{value}</p>
       <div className="flex items-center gap-2">
         <p className="text-[11px] text-gray-400">{sub}</p>
         {trend.value !== 0 && (

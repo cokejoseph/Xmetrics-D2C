@@ -84,7 +84,7 @@ export default function Sidebar({ isOpen = false, onClose }: SidebarProps) {
       {/* Brand indicator */}
       {currentBrand && (
         <div className="mx-3 mt-3 mb-1 px-3 py-2 rounded-lg bg-gray-50 dark:bg-white/5 border border-gray-100 dark:border-white/10">
-          <p className="text-gray-800 dark:text-white text-xs font-medium truncate">{currentBrand.name}</p>
+          <p className="text-gray-800 dark:text-white text-xs font-medium truncate" title={currentBrand.name}>{currentBrand.name}</p>
           <p className="text-gray-400 dark:text-gray-500 text-[10px] mt-0.5">{currentBrand.market_type}</p>
         </div>
       )}

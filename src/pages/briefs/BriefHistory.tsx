@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import { Search, MessageCircle, Copy, Check, X, History } from 'lucide-react'
 import { useAppStore } from '../../stores/appStore'
 import { generateDailyBrief, getOrderDates, dayLabel, buildWhatsAppText } from '../../lib/briefEngine'
@@ -6,6 +6,7 @@ import { Card, Input } from '../../components/ui'
 import type { BriefData } from '../../types'
 
 export default function BriefHistory() {
+  useEffect(() => { document.title = 'Brief History · Xmetrics' }, [])
   const { orders, customers, products, exceptions } = useAppStore()
   const [search, setSearch] = useState('')
   const [selected, setSelected] = useState<string | null>(null)
@@ -35,7 +36,7 @@ export default function BriefHistory() {
       {/* List */}
       <div className="w-80 shrink-0 space-y-3">
         <div className="flex items-center justify-between">
-          <h1 className="text-xl font-semibold text-gray-900">Brief History</h1>
+          <h1 className="text-xl font-semibold text-gray-900 dark:text-white">Brief History</h1>
         </div>
 
         <div className="relative">

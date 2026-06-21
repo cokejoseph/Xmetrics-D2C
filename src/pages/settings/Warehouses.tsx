@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { MapPin, Plus } from 'lucide-react'
 import { useAppStore } from '../../stores/appStore'
 import { Card, Button, Modal, Input } from '../../components/ui'
@@ -9,6 +9,7 @@ const EMPTY_FORM = {
 }
 
 export default function Warehouses() {
+  useEffect(() => { document.title = 'Warehouses · Settings · Xmetrics' }, [])
   const { warehouses, addWarehouse, setDefaultWarehouse } = useAppStore()
   const [showAdd, setShowAdd] = useState(false)
   const [form, setForm] = useState(EMPTY_FORM)
@@ -23,7 +24,7 @@ export default function Warehouses() {
     <div className="space-y-6 max-w-3xl">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-xl font-semibold tracking-tight text-gray-900">Warehouses</h1>
+          <h1 className="text-xl font-semibold tracking-tight text-gray-900 dark:text-white">Warehouses</h1>
           <p className="text-[13px] text-gray-400 mt-0.5">{warehouses.length} location{warehouses.length !== 1 ? 's' : ''}</p>
         </div>
         <Button size="sm" onClick={() => setShowAdd(true)}>

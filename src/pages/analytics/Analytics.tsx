@@ -193,6 +193,7 @@ function PeriodPicker({ value, onChange }: { value: Period; onChange: (v: Period
 // ── Main component ────────────────────────────────────────────────────────────
 
 export default function Analytics() {
+  useEffect(() => { document.title = 'Analytics · Xmetrics' }, [])
   const [tab, setTab]                     = useState<TabType>('overview')
   const [period, setPeriod]               = useState<Period>('last_30d')
   const [pincodeSearch, setPincodeSearch] = useState('')
@@ -401,7 +402,7 @@ export default function Analytics() {
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-xl font-semibold tracking-tight text-gray-900">Analytics</h1>
+          <h1 className="text-xl font-semibold tracking-tight text-gray-900 dark:text-white">Analytics</h1>
           <p className="text-[13px] text-gray-400 mt-0.5">{tab === 'overview' ? periodMeta.label : tab === 'reorder' ? 'Churn intelligence' : 'Demand forecast'}</p>
         </div>
         {tab !== 'forecast' && tab !== 'reorder' && (

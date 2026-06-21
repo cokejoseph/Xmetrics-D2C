@@ -29,7 +29,7 @@ function KPICard({ label, value, sub }: {
   return (
     <Card className="p-4">
       <p className="text-[11px] font-medium text-gray-400 uppercase tracking-wider mb-1">{label}</p>
-      <p className="text-2xl font-semibold text-gray-900">{value}</p>
+      <p className="text-2xl font-semibold text-gray-900 dark:text-white">{value}</p>
       {sub && <p className="text-xs text-gray-400 mt-0.5">{sub}</p>}
     </Card>
   )
@@ -282,6 +282,7 @@ const STATUS_FILTERS: { value: string; label: string }[] = [
 ]
 
 export default function Returns() {
+  useEffect(() => { document.title = 'Returns · Xmetrics' }, [])
   const { currentBrand, returns, setReturns, addReturn, updateReturn } = useAppStore()
   const confirm = useConfirm()
   const [loading, setLoading] = useState(!DEMO_MODE)
@@ -428,7 +429,7 @@ export default function Returns() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-xl font-semibold tracking-tight text-gray-900">Returns</h1>
+          <h1 className="text-xl font-semibold tracking-tight text-gray-900 dark:text-white">Returns</h1>
           <p className="text-[13px] text-gray-400 mt-0.5">Manage return requests, labels, and refunds</p>
         </div>
         <div className="flex gap-2">

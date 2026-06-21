@@ -3,7 +3,7 @@ import toast from 'react-hot-toast'
 
 export const showToast = {
   success: (message: string) => toast.success(message),
-  error: (message: string) => toast.error(message),
+  error: (message: string) => toast.error(message, { duration: 8000 }),
   loading: (message: string) => toast.loading(message),
 
   // Common actions
