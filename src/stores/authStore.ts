@@ -23,6 +23,15 @@ export const useAuthStore = create<AuthState>((set) => ({
       const raw = sessionStorage.getItem(SESSION_KEY)
       if (raw) {
         set({ user: JSON.parse(raw) as AuthUser, isLoading: false })
+        // Validate the restored session is still live — clear if expired
+        if (!DEMO_MODE) {
+          supabase!.auth.getSession().then(({ data: { session } }) => {
+            if (!session) {
+              try { sessionStorage.removeItem(SESSION_KEY) } catch {}
+              set({ user: null })
+            }
+          })
+        }
         return
       }
     } catch {}
@@ -62,10 +71,17 @@ export const useAuthStore = create<AuthState>((set) => ({
       return { error: 'Sign up is not available in preview mode.' }
     }
     const { data, error } = await supabase!.auth.signUp({ email, password })
-    if (!error && data.user) {
-      set({ user: { id: data.user.id, email: data.user.email! } })
+    if (error) return { error: error.message }
+    if (!data.user) return { error: 'Signup failed. Please try again.' }
+    // If a session is returned, email confirmation is disabled — log user in immediately
+    if (data.session) {
+      const user: AuthUser = { id: data.user.id, email: data.user.email! }
+      try { sessionStorage.setItem(SESSION_KEY, JSON.stringify(user)) } catch {}
+      set({ user })
+      return { error: null }
     }
-    return { error: error?.message ?? null }
+    // No session means Supabase sent a confirmation email — signal the UI to show that state
+    return { error: 'CHECK_EMAIL' }
   },
 
   signOut: async () => {

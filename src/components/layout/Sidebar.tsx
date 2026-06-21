@@ -1,3 +1,4 @@
+import { useMemo } from 'react'
 import { NavLink, useNavigate } from 'react-router-dom'
 import {
   LayoutDashboard, ShoppingBag, Truck, CreditCard,
@@ -24,7 +25,10 @@ export default function Sidebar({ isOpen = false, onClose }: SidebarProps) {
   const ordersBadge = orders.filter(o => o.rto_review_status === 'PENDING').length
   const exceptionsBadge = exceptions.filter(e => e.status === 'UNRESOLVED').length
 
-  const { summary: forecastSummary } = buildSKUForecast(products, orders)
+  const { summary: forecastSummary } = useMemo(
+    () => buildSKUForecast(products, orders),
+    [products, orders]
+  )
   const analyticsBadge = forecastSummary.reorder_now_count + forecastSummary.out_of_stock_count
   const analyticsBadgeTitle = [
     forecastSummary.out_of_stock_count > 0 && `${forecastSummary.out_of_stock_count} out of stock`,

@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
+import { Mail } from 'lucide-react'
 import { useAuthStore } from '../../stores/authStore'
 import { Button, Input } from '../../components/ui'
 import AuthShell from './AuthShell'
@@ -10,6 +11,7 @@ export default function Signup() {
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
+  const [emailSent, setEmailSent] = useState(false)
   const { signUp } = useAuthStore()
   const navigate = useNavigate()
 
@@ -24,11 +26,42 @@ export default function Signup() {
     else sessionStorage.removeItem('xmetrics-founding')
     const { error: err } = await signUp(email, password)
     setLoading(false)
+    if (err === 'CHECK_EMAIL') {
+      setEmailSent(true)
+      return
+    }
     if (err) {
       setError(err)
     } else {
       navigate('/onboarding')
     }
+  }
+
+  if (emailSent) {
+    return (
+      <AuthShell>
+        <div className="text-center">
+          <div className="w-14 h-14 bg-brand-50 rounded-full flex items-center justify-center mx-auto mb-4">
+            <Mail size={24} className="text-brand-600" />
+          </div>
+          <h1 className="text-xl font-semibold text-gray-900 mb-2">Check your email</h1>
+          <p className="text-gray-500 text-sm mb-4">
+            We sent a confirmation link to <span className="font-medium text-gray-700">{email}</span>.
+            Click it to activate your account, then{' '}
+            <Link to="/login" className="text-brand-600 hover:underline">sign in</Link>.
+          </p>
+          <p className="text-xs text-gray-400">
+            Didn't receive it? Check your spam folder or{' '}
+            <button
+              onClick={() => setEmailSent(false)}
+              className="text-brand-600 hover:underline"
+            >
+              try again
+            </button>.
+          </p>
+        </div>
+      </AuthShell>
+    )
   }
 
   return (

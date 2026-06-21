@@ -15,6 +15,8 @@ export default function Onboarding() {
   const [marketType, setMarketType] = useState('D2C')
   const [warehouseName, setWarehouseName] = useState('')
   const [warehouseCity, setWarehouseCity] = useState('')
+  const [warehouseState, setWarehouseState] = useState('')
+  const [warehousePincode, setWarehousePincode] = useState('')
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
   const navigate = useNavigate()
@@ -76,17 +78,21 @@ export default function Onboarding() {
 
     // Optionally create first warehouse
     if (warehouseName && warehouseCity) {
-      await addWarehouseDB({
-        brand_id: brand.id,
-        name: warehouseName,
-        address: '',
-        city: warehouseCity,
-        state: '',
-        pincode: '',
-        contact_name: '',
-        contact_phone: '',
-        is_primary: true,
-      })
+      try {
+        await addWarehouseDB({
+          brand_id: brand.id,
+          name: warehouseName,
+          address: '',
+          city: warehouseCity,
+          state: warehouseState,
+          pincode: warehousePincode,
+          contact_name: '',
+          contact_phone: '',
+          is_primary: true,
+        })
+      } catch {
+        // Non-blocking — warehouse can be added later from Settings
+      }
     }
 
     // Bootstrap the app state from Supabase
@@ -167,12 +173,31 @@ export default function Onboarding() {
                     placeholder="e.g. Delhi Main Warehouse"
                   />
                 </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">City</label>
+                    <Input
+                      value={warehouseCity}
+                      onChange={e => setWarehouseCity(e.target.value)}
+                      placeholder="e.g. New Delhi"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">State</label>
+                    <Input
+                      value={warehouseState}
+                      onChange={e => setWarehouseState(e.target.value)}
+                      placeholder="e.g. Delhi"
+                    />
+                  </div>
+                </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">City</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Pincode</label>
                   <Input
-                    value={warehouseCity}
-                    onChange={e => setWarehouseCity(e.target.value)}
-                    placeholder="e.g. New Delhi"
+                    value={warehousePincode}
+                    onChange={e => setWarehousePincode(e.target.value)}
+                    placeholder="6-digit pincode"
+                    maxLength={6}
                   />
                 </div>
                 <Button className="w-full" onClick={() => setStep(3)}>

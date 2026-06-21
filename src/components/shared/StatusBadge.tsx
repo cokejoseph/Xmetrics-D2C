@@ -18,6 +18,7 @@ export function FulfillmentBadge({ status }: { status: FulfillmentStatus }) {
     OUT_FOR_DELIVERY: { label: 'Out for Delivery', dot: 'bg-violet-400', text: 'text-violet-600' },
     DELIVERED:        { label: 'Delivered',        dot: 'bg-green-400',  text: 'text-green-600' },
     RTO_INITIATED:    { label: 'RTO Initiated',    dot: 'bg-red-400',    text: 'text-red-500' },
+    NDR:              { label: 'NDR',              dot: 'bg-orange-400', text: 'text-orange-600' },
     CANCELLED:        { label: 'Cancelled',        dot: 'bg-gray-300',   text: 'text-gray-400' },
   }
   const { label, dot, text } = map[status] ?? { label: status, dot: 'bg-gray-300', text: 'text-gray-400' }

@@ -13,6 +13,7 @@ const TABS = [
   { key: 'ready',     label: 'Ready for Pickup' },
   { key: 'pickup',    label: 'Pickup Scheduled' },
   { key: 'transit',   label: 'In Transit' },
+  { key: 'ndr',       label: 'NDR' },
   { key: 'delivered', label: 'Delivered' },
   { key: 'rto',       label: 'RTO / Returned' },
 ] as const
@@ -29,6 +30,8 @@ function getTabOrders(orders: Order[], tab: TabKey): Order[] {
       return orders.filter(o => o.shipments?.some(s => s.status === 'PICKUP_SCHEDULED'))
     case 'transit':
       return orders.filter(o => ['SHIPPED', 'IN_TRANSIT', 'OUT_FOR_DELIVERY'].includes(o.fulfillment_status))
+    case 'ndr':
+      return orders.filter(o => o.fulfillment_status === 'NDR')
     case 'delivered':
       return orders.filter(o => o.fulfillment_status === 'DELIVERED')
     case 'rto':

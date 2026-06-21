@@ -1,12 +1,12 @@
 import { NavLink } from 'react-router-dom'
-import { LayoutDashboard, ShoppingBag, Truck, AlertTriangle, BarChart3 } from 'lucide-react'
+import { LayoutDashboard, ShoppingBag, Truck, AlertTriangle, RotateCcw } from 'lucide-react'
 
 const NAV = [
-  { to: '/dashboard',  icon: <LayoutDashboard size={20} />, label: 'Dashboard' },
-  { to: '/orders',     icon: <ShoppingBag size={20} />,     label: 'Orders' },
-  { to: '/fulfillment',icon: <Truck size={20} />,           label: 'Fulfill' },
-  { to: '/exceptions', icon: <AlertTriangle size={20} />,   label: 'Alerts' },
-  { to: '/analytics',  icon: <BarChart3 size={20} />,       label: 'Analytics' },
+  { to: '/dashboard',   icon: <LayoutDashboard size={20} />, label: 'Dashboard', end: true },
+  { to: '/orders',      icon: <ShoppingBag size={20} />,     label: 'Orders',    end: false },
+  { to: '/fulfillment', icon: <Truck size={20} />,           label: 'Fulfill',   end: false },
+  { to: '/exceptions',  icon: <AlertTriangle size={20} />,   label: 'Alerts',    end: false },
+  { to: '/returns',     icon: <RotateCcw size={20} />,       label: 'Returns',   end: false },
 ]
 
 export default function MobileNav() {
@@ -21,6 +21,7 @@ export default function MobileNav() {
         <NavLink
           key={item.to}
           to={item.to}
+          end={item.end}
           className={({ isActive }) =>
             `flex-1 flex flex-col items-center gap-1 py-3 text-[10px] font-medium transition-colors min-h-[44px] justify-center ${
               isActive

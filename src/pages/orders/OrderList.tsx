@@ -79,7 +79,9 @@ export default function OrderList() {
     setSelected(prev => prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id])
 
   const toggleSelectAll = () =>
-    setSelected(prev => prev.length === filtered.length ? [] : filtered.map(o => o.id))
+    setSelected(prev =>
+      prev.length === pagedOrders.length && pagedOrders.length > 0 ? [] : pagedOrders.map(o => o.id)
+    )
 
   const handleStartPacking = () => {
     startPacking(selected)
@@ -155,6 +157,14 @@ export default function OrderList() {
           Review Queue
         </TabBtn>
       </div>
+
+      {/* Bulk action bar — All tab */}
+      {tab === 'all' && selected.length > 0 && (
+        <div className="flex items-center gap-3 px-4 py-3 bg-gray-800 text-white rounded-md">
+          <span className="text-sm font-medium">{selected.length} order{selected.length > 1 ? 's' : ''} selected</span>
+          <button onClick={() => setSelected([])} className="ml-auto text-white/70 hover:text-white text-sm">✕ Clear selection</button>
+        </div>
+      )}
 
       {/* Bulk action bar — Start Packing (ready tab only) */}
       {tab === 'ready' && selected.length > 0 && (
@@ -234,6 +244,7 @@ export default function OrderList() {
             { value: 'IN_TRANSIT', label: 'In Transit' },
             { value: 'DELIVERED', label: 'Delivered' },
             { value: 'RTO_INITIATED', label: 'RTO' },
+            { value: 'NDR',           label: 'NDR' },
           ]}
         />
         <FilterPill
@@ -267,10 +278,10 @@ export default function OrderList() {
                   <th scope="col" className="px-4 py-2.5 text-left">
                     <input
                       type="checkbox"
-                      checked={selected.length === filtered.length && filtered.length > 0}
+                      checked={pagedOrders.length > 0 && pagedOrders.every(o => selected.includes(o.id))}
                       onChange={toggleSelectAll}
                       className="rounded"
-                      aria-label="Select all orders"
+                      aria-label="Select all orders on this page"
                     />
                   </th>
                   <th scope="col" className="px-4 py-2.5 text-left text-[11px] font-semibold text-gray-400 uppercase tracking-wider">Order</th>

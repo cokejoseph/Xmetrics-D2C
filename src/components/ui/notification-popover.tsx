@@ -28,6 +28,12 @@ function timeAgo(dateStr: string): string {
   return `${Math.floor(h / 24)}d ago`
 }
 
+const TWENTY_FOUR_HOURS_MS = 24 * 60 * 60 * 1000
+
+function isStale(dateStr: string): boolean {
+  return Date.now() - new Date(dateStr).getTime() > TWENTY_FOUR_HOURS_MS
+}
+
 function useNotifications(): AppNotification[] {
   const { exceptions, orders, products } = useAppStore()
   const { forecasts } = React.useMemo(() => buildSKUForecast(products, orders), [products, orders])
@@ -35,8 +41,10 @@ function useNotifications(): AppNotification[] {
   return React.useMemo(() => {
     const items: AppNotification[] = []
 
-    // Unresolved exceptions
+    // Unresolved exceptions — dedup: track order IDs that already have an exception notification
+    const exceptionOrderIds = new Set<string>()
     for (const ex of exceptions.filter(e => e.status === 'UNRESOLVED').slice(0, 8)) {
+      if (ex.order_id) exceptionOrderIds.add(ex.order_id)
       items.push({
         id: `ex-${ex.id}`,
         type: 'exception',
@@ -45,12 +53,15 @@ function useNotifications(): AppNotification[] {
         time: timeAgo(ex.created_at),
         severity: ex.severity,
         href: '/exceptions',
-        read: false,
+        read: isStale(ex.created_at),
       })
     }
 
-    // RTO review pending orders
-    for (const o of orders.filter(o => o.rto_review_status === 'PENDING').slice(0, 4)) {
+    // RTO review pending orders — skip orders already surfaced via an exception
+    for (const o of orders
+      .filter(o => o.rto_review_status === 'PENDING' && !exceptionOrderIds.has(o.id))
+      .slice(0, 4)
+    ) {
       items.push({
         id: `ord-${o.id}`,
         type: 'order',
@@ -58,7 +69,7 @@ function useNotifications(): AppNotification[] {
         subtitle: `RTO score ${o.rto_risk_score}/100 · ${o.payment_method}`,
         time: timeAgo(o.created_at),
         href: '/orders',
-        read: false,
+        read: isStale(o.created_at),
       })
     }
 

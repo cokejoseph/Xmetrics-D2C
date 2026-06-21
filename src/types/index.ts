@@ -158,6 +158,7 @@ export type FulfillmentStatus =
   | 'OUT_FOR_DELIVERY'
   | 'DELIVERED'
   | 'RTO_INITIATED'
+  | 'NDR'
   | 'CANCELLED'
 
 export type RTOReviewStatus = 'PENDING' | 'APPROVED' | 'HELD' | 'FLAGGED' | 'NOT_REQUIRED'

@@ -308,6 +308,28 @@ export default function Billing() {
         <p className="text-[13px] text-gray-400 mt-0.5">Manage your subscription and usage</p>
       </div>
 
+      {subscription?.status === 'PAYMENT_FAILED' && (
+        <div className="flex items-start gap-3 px-4 py-3 rounded border bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800/30 text-red-700 dark:text-red-400 text-sm">
+          <AlertTriangle size={16} className="shrink-0 mt-0.5" />
+          <div className="flex-1">
+            <p className="font-medium">Payment failed — your subscription is at risk</p>
+            <p className="text-xs mt-0.5 opacity-80">
+              We couldn't charge your last payment. Click below to retry with the same or a new payment method.
+            </p>
+          </div>
+          <Button
+            size="sm"
+            onClick={() => {
+              const plan = PLANS.find(p => p.type === currentPlanType)
+              if (plan) handleNewSubscription(plan)
+            }}
+            className="shrink-0"
+          >
+            Retry Payment
+          </Button>
+        </div>
+      )}
+
       {statusMsg && (
         <div className={`flex items-center gap-2.5 px-4 py-3 rounded border text-sm ${
           statusMsg.ok

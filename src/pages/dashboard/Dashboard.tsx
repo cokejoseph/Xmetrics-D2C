@@ -50,7 +50,7 @@ export default function Dashboard() {
     const lastMonday = new Date(thisMonday); lastMonday.setDate(thisMonday.getDate() - 7)
     const tm = thisMonday.toISOString().slice(0, 10)
     const lm = lastMonday.toISOString().slice(0, 10)
-    const tw = orders.filter(o => o.created_at >= tm)
+    const tw = orders.filter(o => o.created_at >= tm && o.created_at <= now.toISOString())
     const lw = orders.filter(o => o.created_at >= lm && o.created_at < tm)
     const twRate = (tw.filter(o => o.fulfillment_status === 'DELIVERED').length + tw.filter(o => o.fulfillment_status === 'RTO_INITIATED').length) > 0
       ? tw.filter(o => o.fulfillment_status === 'RTO_INITIATED').length / (tw.filter(o => o.fulfillment_status === 'DELIVERED').length + tw.filter(o => o.fulfillment_status === 'RTO_INITIATED').length) * 100

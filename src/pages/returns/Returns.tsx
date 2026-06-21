@@ -633,7 +633,11 @@ export default function Returns() {
       {initiateModal && (
         <InitiateReturnModal
           onClose={() => setInitiateModal(false)}
-          onDone={addReturn}
+          onDone={(ret) => {
+            addReturn(ret)
+            // Refetch from server after a brief delay to replace the optimistic record
+            setTimeout(load, 1500)
+          }}
         />
       )}
     </div>
