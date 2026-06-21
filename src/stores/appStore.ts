@@ -29,6 +29,9 @@ import {
   getCustomers,
   getOrders,
   updateOrderDB,
+  insertOrder,
+  insertOrderItems,
+  updateShipmentDB,
   addOrderTimelineEvent,
   getPayments,
   getExceptions,
@@ -75,6 +78,7 @@ interface AppState {
   bulkApprove: (ids: string[]) => void
   bulkHold: (ids: string[]) => void
   startPacking: (ids: string[]) => void
+  schedulePickup: (ids: string[], date: string) => void
   generateLabels: (ids: string[]) => { results: ReturnType<typeof mockGenerateLabels>['results']; merged_pdf_url: string }
   addOrder: (order: Omit<Order, 'id' | 'brand_id' | 'created_at' | 'order_number'>) => Promise<Order>
   resolveException: (id: string) => void
@@ -397,6 +401,36 @@ export const useAppStore = create<AppState>((set, get) => ({
     }
   },
 
+  schedulePickup: (ids, date) => {
+    // Update the first shipment of each selected order locally, then persist
+    // the shipment row in live mode (the shipments live in their own table,
+    // so they must NOT be pushed onto the orders table).
+    set(state => ({
+      orders: state.orders.map(o =>
+        ids.includes(o.id)
+          ? {
+              ...o,
+              shipments: (o.shipments ?? []).map((s, i) =>
+                i === 0 ? { ...s, status: 'PICKUP_SCHEDULED' as const, pickup_scheduled_at: date } : s
+              ),
+            }
+          : o
+      ),
+    }))
+    if (!DEMO_MODE) {
+      const { orders } = get()
+      ids.forEach(id => {
+        const shipment = orders.find(o => o.id === id)?.shipments?.[0]
+        if (shipment && !shipment.id.startsWith('ship-generated-')) {
+          updateShipmentDB(shipment.id, {
+            status: 'PICKUP_SCHEDULED',
+            pickup_scheduled_at: date,
+          }).catch(console.error)
+        }
+      })
+    }
+  },
+
   generateLabels: (ids) => {
     // Optimistic update using mock while real API calls run in background
     const result = mockGenerateLabels(ids)
@@ -489,89 +523,151 @@ export const useAppStore = create<AppState>((set, get) => ({
   addOrder: async (orderData) => {
     const brandId = get().currentBrand?.id ?? 'demo'
     const num = String(Math.floor(Math.random() * 9000) + 1000)
-    const newId = `ord-${Date.now()}`
+    const tempId = `ord-${Date.now()}`
 
     // Build order with null customer_id; may be patched below
     const newOrder: Order = {
       ...orderData,
       customer_id: null,
-      id: newId,
+      id: tempId,
       brand_id: brandId,
       order_number: `#XM-${num}`,
       created_at: new Date().toISOString(),
     }
-    newOrder.items = (newOrder.items ?? []).map(item => ({ ...item, order_id: newId }))
+    newOrder.items = (newOrder.items ?? []).map(item => ({ ...item, order_id: tempId }))
 
     // Optimistic add immediately so navigation feels instant
     set(state => ({ orders: [newOrder, ...state.orders] }))
 
-    // In live mode, upsert customer by phone and link the order
-    if (!DEMO_MODE && supabase) {
-      const phone = orderData.shipping_address.phone
-      if (phone) {
-        const orderAmount = orderData.gross_amount
-        const { data: existing } = await supabase
+    // Demo mode: keep the optimistic record only.
+    if (DEMO_MODE || !supabase) return newOrder
+
+    const orderAmount = orderData.gross_amount
+
+    // ── Step 1: upsert customer by phone and resolve customer_id ──────────────
+    let customerId: string | null = null
+    const phone = orderData.shipping_address.phone
+    if (phone) {
+      const { data: existing } = await supabase
+        .from('customers')
+        .select('id, total_orders, total_spent')
+        .eq('brand_id', brandId)
+        .eq('phone', phone)
+        .maybeSingle()
+
+      if (existing) {
+        await supabase
           .from('customers')
-          .select('id, total_orders, total_spent')
-          .eq('brand_id', brandId)
-          .eq('phone', phone)
-          .maybeSingle()
-
-        let customerId: string | null = null
-
-        if (existing) {
-          await supabase
-            .from('customers')
-            .update({
-              total_orders: existing.total_orders + 1,
-              total_spent: existing.total_spent + orderAmount,
-            })
-            .eq('id', existing.id)
-          customerId = existing.id
-          set(state => ({
-            customers: state.customers.map(c =>
-              c.id === existing.id
-                ? { ...c, total_orders: c.total_orders + 1, total_spent: c.total_spent + orderAmount }
-                : c
-            ),
-          }))
-        } else {
-          const { data: newCustomer } = await supabase
-            .from('customers')
-            .insert({
-              brand_id: brandId,
-              name: orderData.shipping_address.name ?? 'Unknown',
-              phone,
-              email: null,
-              address: orderData.shipping_address.address,
-              city: orderData.shipping_address.city,
-              state: orderData.shipping_address.state,
-              pincode: orderData.shipping_address.pincode,
-              total_orders: 1,
-              total_spent: orderAmount,
-              tags: [],
-            })
-            .select('*')
-            .single()
-          if (newCustomer) {
-            customerId = newCustomer.id as string
-            set(state => ({ customers: [...state.customers, newCustomer as unknown as Customer] }))
-          }
-        }
-
-        if (customerId) {
-          set(state => ({
-            orders: state.orders.map(o =>
-              o.id === newId ? { ...o, customer_id: customerId } : o
-            ),
-          }))
-          // Return order with resolved customer_id
-          return { ...newOrder, customer_id: customerId }
+          .update({
+            total_orders: existing.total_orders + 1,
+            total_spent: existing.total_spent + orderAmount,
+          })
+          .eq('id', existing.id)
+        customerId = existing.id
+        set(state => ({
+          customers: state.customers.map(c =>
+            c.id === existing.id
+              ? { ...c, total_orders: c.total_orders + 1, total_spent: c.total_spent + orderAmount }
+              : c
+          ),
+        }))
+      } else {
+        const { data: newCustomer } = await supabase
+          .from('customers')
+          .insert({
+            brand_id: brandId,
+            name: orderData.shipping_address.name ?? 'Unknown',
+            phone,
+            email: null,
+            address: orderData.shipping_address.address,
+            city: orderData.shipping_address.city,
+            state: orderData.shipping_address.state,
+            pincode: orderData.shipping_address.pincode,
+            total_orders: 1,
+            total_spent: orderAmount,
+            tags: [],
+          })
+          .select('*')
+          .single()
+        if (newCustomer) {
+          customerId = newCustomer.id as string
+          set(state => ({ customers: [...state.customers, newCustomer as unknown as Customer] }))
         }
       }
     }
 
-    return newOrder
+    // ── Step 2: persist the order row (so it survives a reload) ───────────────
+    const { data: inserted, error: orderErr } = await insertOrder({
+      brand_id: brandId,
+      customer_id: customerId,
+      order_number: newOrder.order_number,
+      channel: orderData.channel,
+      gross_amount: orderData.gross_amount,
+      discount_amount: orderData.discount_amount,
+      shipping_charge: orderData.shipping_charge,
+      shipping_cost: orderData.shipping_cost,
+      payment_status: orderData.payment_status,
+      payment_method: orderData.payment_method,
+      fulfillment_status: orderData.fulfillment_status,
+      rto_risk_score: orderData.rto_risk_score,
+      rto_review_status: orderData.rto_review_status,
+      shipping_address: orderData.shipping_address,
+      warehouse_id: orderData.warehouse_id,
+      notes: orderData.notes,
+    })
+
+    if (orderErr || !inserted) {
+      // Roll back the optimistic add so the UI doesn't show a phantom order.
+      set(state => ({ orders: state.orders.filter(o => o.id !== tempId) }))
+      throw new Error(orderErr ?? 'Failed to create order')
+    }
+
+    const realId = inserted.id
+
+    // ── Step 3: persist line items, payment ledger row, and timeline ─────────
+    const items = (newOrder.items ?? [])
+    if (items.length > 0) {
+      await insertOrderItems(
+        items.map(i => ({
+          order_id: realId,
+          product_id: i.product_id,
+          product_name: i.product_name ?? null,
+          sku: i.sku,
+          quantity: i.quantity,
+          unit_price: i.unit_price,
+          cost_price: i.cost_price ?? 0,
+        }))
+      ).catch(() => { /* items are non-critical to navigation; surfaced via reload */ })
+    }
+
+    await supabase.from('payments').insert({
+      brand_id: brandId,
+      order_id: realId,
+      order_number: newOrder.order_number,
+      amount: orderAmount,
+      method: orderData.payment_method,
+      status: orderData.payment_status === 'PAID' ? 'PAID' : 'PENDING',
+      gateway_ref: null,
+      gateway_fee: null,
+      settlement_amount: null,
+      settled_at: null,
+    })
+
+    await addOrderTimelineEvent(realId, 'Order created manually', 'system')
+      .catch(() => { /* timeline is non-critical */ })
+
+    // Swap the optimistic temp record for the persisted one (real id + customer).
+    const persisted: Order = {
+      ...newOrder,
+      id: realId,
+      customer_id: customerId,
+      items: items.map(i => ({ ...i, order_id: realId })),
+    }
+    set(state => ({
+      orders: state.orders.map(o => o.id === tempId ? persisted : o),
+    }))
+
+    return persisted
   },
 
   // ─── Exceptions ────────────────────────────────────────────────────────────

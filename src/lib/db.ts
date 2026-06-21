@@ -336,6 +336,17 @@ export async function insertOrderItems(
   return { error: error?.message ?? null }
 }
 
+export async function updateShipmentDB(
+  id: string,
+  changes: Partial<Shipment>
+): Promise<SupabaseError> {
+  const { error } = await supabase!
+    .from('shipments')
+    .update(changes)
+    .eq('id', id)
+  return { error: error?.message ?? null }
+}
+
 // ─── Payments ──────────────────────────────────────────────────────────────
 
 export async function getPayments(brandId: string): Promise<Payment[]> {

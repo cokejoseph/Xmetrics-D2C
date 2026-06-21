@@ -152,7 +152,7 @@ export async function fetchReturns(brandId: string): Promise<Return[]> {
     .eq('brand_id', brandId)
     .order('created_at', { ascending: false })
 
-  if (error) { console.error('fetchReturns:', error); return [] }
+  if (error) { if (import.meta.env.DEV) console.error('fetchReturns:', error); return [] }
   return (data ?? []) as Return[]
 }
 

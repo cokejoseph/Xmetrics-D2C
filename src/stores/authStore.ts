@@ -1,5 +1,6 @@
 import { create } from 'zustand'
 import { DEMO_MODE, supabase } from '../lib/supabase'
+import { useAppStore } from './appStore'
 import type { AuthUser } from '../types'
 
 const SESSION_KEY = 'xmetrics-session'
@@ -86,6 +87,9 @@ export const useAuthStore = create<AuthState>((set) => ({
 
   signOut: async () => {
     try { sessionStorage.removeItem(SESSION_KEY) } catch {}
+    // Tear down realtime channels before dropping the session so we don't leak
+    // Supabase subscriptions across accounts.
+    try { useAppStore.getState().cleanup() } catch {}
     if (!DEMO_MODE) await supabase!.auth.signOut()
     set({ user: null })
   },

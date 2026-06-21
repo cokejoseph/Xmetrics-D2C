@@ -43,7 +43,7 @@ function getTabOrders(orders: Order[], tab: TabKey): Order[] {
 
 export default function Fulfillment() {
   useEffect(() => { document.title = 'Fulfillment · Xmetrics' }, [])
-  const { orders, generateLabels, updateOrder } = useAppStore()
+  const { orders, generateLabels, schedulePickup } = useAppStore()
   const [tab, setTab] = useState<TabKey>('packing')
   const [selected, setSelected] = useState<string[]>([])
   const [pickupDate, setPickupDate] = useState('')
@@ -65,15 +65,7 @@ export default function Fulfillment() {
 
   const handleSchedulePickup = () => {
     if (!pickupDate) return
-    selected.forEach(id => {
-      const order = orders.find(o => o.id === id)
-      if (!order) return
-      updateOrder(id, {
-        shipments: (order.shipments ?? []).map((s, i) =>
-          i === 0 ? { ...s, status: 'PICKUP_SCHEDULED' as const, pickup_scheduled_at: pickupDate } : s
-        ),
-      })
-    })
+    schedulePickup(selected, pickupDate)
     setSelected([])
     setPickupDate('')
     setShowPickupDate(false)
