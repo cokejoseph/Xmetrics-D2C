@@ -39,4 +39,6 @@ export const showToast = {
   saved: () => toast.success('Changes saved'),
   settingsUpdated: () => toast.success('Settings updated'),
   orderGenerated: () => toast.success('Label generated'),
+  mutationError: (action: string) =>
+    toast.error(`Failed to ${action} — changes were not saved`, { duration: 8000 }),
 }

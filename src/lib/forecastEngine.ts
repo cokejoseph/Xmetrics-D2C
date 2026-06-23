@@ -16,17 +16,23 @@ export function buildSKUForecast(products: Product[], orders: Order[]): {
       o.fulfillment_status !== 'CANCELLED'
   )
 
+  // Build units-sold Map in one pass — avoids O(products × orders × items)
+  const unitsSoldByProduct = new Map<string, number>()
+  for (const order of recentOrders) {
+    for (const item of order.items ?? []) {
+      if (item.product_id) {
+        unitsSoldByProduct.set(
+          item.product_id,
+          (unitsSoldByProduct.get(item.product_id) ?? 0) + item.quantity
+        )
+      }
+    }
+  }
+
   const forecasts: SKUForecast[] = products
     .filter(p => p.is_active)
     .map(product => {
-      let totalUnitsSold30d = 0
-      for (const order of recentOrders) {
-        for (const item of order.items ?? []) {
-          if (item.product_id === product.id) {
-            totalUnitsSold30d += item.quantity
-          }
-        }
-      }
+      const totalUnitsSold30d = unitsSoldByProduct.get(product.id) ?? 0
 
       const avgDailyDemand = totalUnitsSold30d / 30
 

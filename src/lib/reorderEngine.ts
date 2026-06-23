@@ -35,10 +35,18 @@ export function buildReorderNudgeList(
 ): ReorderNudge[] {
   const today = new Date()
 
+  // Build a per-customer paid orders Map in one pass — avoids O(customers × orders)
+  const paidOrdersByCustomer = new Map<string, Order[]>()
+  for (const order of orders) {
+    if (order.payment_status !== 'PAID') continue
+    const list = paidOrdersByCustomer.get(order.customer_id) ?? []
+    list.push(order)
+    paidOrdersByCustomer.set(order.customer_id, list)
+  }
+
   return customers
     .map(customer => {
-      const customerOrders = orders
-        .filter(o => o.customer_id === customer.id && o.payment_status === 'PAID')
+      const customerOrders = (paidOrdersByCustomer.get(customer.id) ?? [])
         .sort((a, b) => a.created_at.localeCompare(b.created_at))
 
       if (customerOrders.length === 0) return null

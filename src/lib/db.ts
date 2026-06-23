@@ -4,7 +4,7 @@
  * checks DEMO_MODE before calling any of these.
  */
 
-import { supabase } from './supabase'
+import { supabase, callAuthEdgeFunction } from './supabase'
 import type {
   Brand, BrandMember, Warehouse, Product, Customer,
   Order, OrderItem, Payment, Exception, Integration,
@@ -115,11 +115,23 @@ export async function inviteTeamMemberDB(
   name: string,
   email: string,
   role: BrandMember['role']
-): Promise<SupabaseError> {
-  const { error } = await supabase!
-    .from('brand_members')
-    .insert({ brand_id: brandId, name, email, role, user_id: crypto.randomUUID() })
-  return { error: error?.message ?? null }
+): Promise<{ error: string | null; userId?: string }> {
+  try {
+    // Delegates to the invite-team-member edge function which uses Supabase
+    // Auth Admin API to send a real invitation email and links the invitee's
+    // real UUID into brand_members. Using crypto.randomUUID() here would create
+    // a ghost membership that can never match any authenticated user.
+    const result = await callAuthEdgeFunction('invite-team-member', {
+      brand_id: brandId,
+      name,
+      email,
+      role,
+    }) as { success?: boolean; user_id?: string; error?: string }
+    if (result.error) return { error: result.error }
+    return { error: null, userId: result.user_id }
+  } catch (err) {
+    return { error: err instanceof Error ? err.message : 'Invite failed' }
+  }
 }
 
 export async function updateTeamMemberDB(

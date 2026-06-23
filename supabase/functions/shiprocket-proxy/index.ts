@@ -141,7 +141,7 @@ Deno.serve(async (req: Request) => {
         billing_pincode: shipment.billing_pincode,
         billing_state: shipment.billing_state,
         billing_country: shipment.billing_country ?? 'India',
-        billing_email: 'noreply@sentinal.in',
+        billing_email: 'noreply@xmetrics.in',
         billing_phone: shipment.billing_phone,
         shipping_is_billing: true,
         order_items: shipment.items.map((item: {

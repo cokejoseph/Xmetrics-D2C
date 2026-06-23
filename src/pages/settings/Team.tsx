@@ -25,11 +25,27 @@ export default function Team() {
   const [showInvite, setShowInvite] = useState(false)
   const [showMatrix, setShowMatrix] = useState(false)
   const [inviteForm, setInviteForm] = useState({ name: '', email: '', role: 'EDITOR' as Role })
+  const [inviteLoading, setInviteLoading] = useState(false)
+  const [inviteError, setInviteError] = useState('')
 
-  const handleInvite = () => {
-    inviteTeamMember({ name: inviteForm.name, email: inviteForm.email, role: inviteForm.role })
-    setShowInvite(false)
-    setInviteForm({ name: '', email: '', role: 'EDITOR' })
+  const handleInvite = async () => {
+    setInviteError('')
+    setInviteLoading(true)
+    try {
+      const { error } = await inviteTeamMember({
+        name: inviteForm.name,
+        email: inviteForm.email,
+        role: inviteForm.role,
+      })
+      if (error) {
+        setInviteError(error)
+        return
+      }
+      setShowInvite(false)
+      setInviteForm({ name: '', email: '', role: 'EDITOR' })
+    } finally {
+      setInviteLoading(false)
+    }
   }
 
   return (
@@ -154,14 +170,17 @@ export default function Team() {
               <option value="VIEWER">Viewer — Read-only access</option>
             </Select>
           </div>
+          {inviteError && (
+            <p className="text-sm text-red-600">{inviteError}</p>
+          )}
           <div className="flex gap-3 pt-2">
             <Button
               onClick={handleInvite}
-              disabled={!inviteForm.name || !inviteForm.email}
+              disabled={!inviteForm.name || !inviteForm.email || inviteLoading}
             >
-              Send Invite
+              {inviteLoading ? 'Sending…' : 'Send Invite'}
             </Button>
-            <Button variant="secondary" onClick={() => setShowInvite(false)}>Cancel</Button>
+            <Button variant="secondary" onClick={() => { setShowInvite(false); setInviteError('') }}>Cancel</Button>
           </div>
         </div>
       </Modal>

@@ -3,7 +3,7 @@ import { CheckCircle, XCircle, AlertCircle, Clock, Plus, Loader2, RefreshCw } fr
 import { useAppStore } from '../../stores/appStore'
 import { Card, Button, Modal, Input } from '../../components/ui'
 import { useConfirm } from '../../hooks/useConfirm'
-import { connectShopify, testShopifyConnection, normaliseShopDomain } from '../../lib/shopify'
+import { connectShopify, testShopifyConnection, normaliseShopDomain, deregisterShopifyWebhooks } from '../../lib/shopify'
 import { connectRazorpay, testRazorpayConnection } from '../../lib/razorpay'
 import { connectShiprocket, testShiprocketConnection } from '../../lib/shiprocket'
 import { testWhatsAppConnection } from '../../lib/whatsapp'
@@ -29,7 +29,7 @@ const PLATFORM_META: Record<IntegrationPlatform, {
       { key: 'shop_domain', label: 'Store Domain', placeholder: 'yourstore.myshopify.com' },
       { key: 'api_key', label: 'Admin API Access Token', placeholder: 'shpat_XXXX', type: 'password' },
       { key: 'api_secret', label: 'API Secret Key', placeholder: 'shpss_XXXX', type: 'password' },
-      { key: 'webhook_secret', label: 'Webhook Secret (optional)', placeholder: 'Leave blank to skip HMAC' },
+      { key: 'webhook_secret', label: 'Webhook Secret', placeholder: 'From Shopify → Partners → App → Webhooks' },
     ],
   },
   RAZORPAY: {
@@ -317,6 +317,16 @@ export default function Integrations() {
       isDangerous: true,
     })
     if (!ok) return
+
+    // For Shopify, deregister webhooks on the merchant's store so Shopify
+    // stops sending events to our endpoint after disconnect.
+    if (integration.platform === 'SHOPIFY' && integration.credentials?.shop_domain) {
+      await deregisterShopifyWebhooks(brandId, {
+        shop_domain: integration.credentials.shop_domain as string,
+        api_key: integration.credentials.api_key as string,
+      }).catch(e => console.warn('[Integrations] Shopify webhook deregistration failed:', e))
+    }
+
     updateIntegration(integration.id, {
       status: 'DISCONNECTED',
       credentials: {},

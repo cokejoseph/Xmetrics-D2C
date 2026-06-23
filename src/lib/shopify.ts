@@ -216,6 +216,60 @@ export async function connectShopify(
   return { ok: true, syncResult }
 }
 
+// ─── Deregister webhooks ──────────────────────────────────────────────────
+
+/**
+ * Remove all Xmetrics webhook registrations from the merchant's Shopify store.
+ * Called when the merchant disconnects the Shopify integration so Shopify stops
+ * sending events to our endpoint.
+ */
+export async function deregisterShopifyWebhooks(
+  brandId: string,
+  credentials: Pick<ShopifyCredentials, 'shop_domain' | 'api_key'>
+): Promise<{ removed: number; errors: string[] }> {
+  if (DEMO_MODE) return { removed: SHOPIFY_WEBHOOK_TOPICS.length, errors: [] }
+
+  const errors: string[] = []
+  let removed = 0
+
+  try {
+    // List all webhooks on the store
+    const listData = await callEdgeFunction('shopify-proxy', {
+      action: 'list_webhooks',
+      shop_domain: credentials.shop_domain,
+      api_key: credentials.api_key,
+    }) as { ok: boolean; webhooks?: { id: number; topic: string; address: string }[] }
+
+    if (!listData.ok || !listData.webhooks) {
+      return { removed: 0, errors: ['Failed to list webhooks'] }
+    }
+
+    // Delete webhooks pointing back to this project's shopify-webhooks function
+    const ours = listData.webhooks.filter(w =>
+      w.address.includes('/functions/v1/shopify-webhooks') &&
+      w.address.includes(`brand_id=${brandId}`)
+    )
+
+    for (const webhook of ours) {
+      try {
+        await callEdgeFunction('shopify-proxy', {
+          action: 'delete_webhook',
+          shop_domain: credentials.shop_domain,
+          api_key: credentials.api_key,
+          webhook_id: webhook.id,
+        })
+        removed++
+      } catch (e) {
+        errors.push(`${webhook.topic}: ${e instanceof Error ? e.message : 'Delete failed'}`)
+      }
+    }
+  } catch (e) {
+    errors.push(e instanceof Error ? e.message : 'Deregister failed')
+  }
+
+  return { removed, errors }
+}
+
 // ─── URL helpers ───────────────────────────────────────────────────────────
 
 /** Normalise a shop domain — strip https:// and trailing slashes */

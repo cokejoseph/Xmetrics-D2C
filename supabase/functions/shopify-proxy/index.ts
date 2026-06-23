@@ -126,7 +126,9 @@ Deno.serve(async (req: Request) => {
             headers: {
               'Content-Type': 'application/json',
               'X-Shopify-Topic': 'orders/create',
-              // No HMAC header — webhook_secret check is skipped when it's absent from DB
+              // Service-role bearer allows shopify-webhooks to bypass HMAC for this
+              // internal call. External Shopify requests still require a valid HMAC.
+              'Authorization': `Bearer ${Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')}`,
             },
             body: JSON.stringify(order),
           })
@@ -161,13 +163,37 @@ Deno.serve(async (req: Request) => {
     for (const product of products) {
       const wRes = await fetch(`${SUPABASE_URL}/functions/v1/shopify-webhooks?brand_id=${brand_id}`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'X-Shopify-Topic': 'products/update' },
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Shopify-Topic': 'products/update',
+          'Authorization': `Bearer ${Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')}`,
+        },
         body: JSON.stringify(product),
       })
       if (wRes.ok) productsSynced++
     }
 
     return json({ ok: true, products_synced: productsSynced })
+  }
+
+  // ── list_webhooks ─────────────────────────────────────────────────────────
+  if (action === 'list_webhooks') {
+    const res = await fetch(`${shopifyBase}/webhooks.json`, { headers })
+    if (!res.ok) return json({ ok: false, error: `HTTP ${res.status}` })
+    const { webhooks } = await res.json() as { webhooks: { id: number; topic: string; address: string }[] }
+    return json({ ok: true, webhooks })
+  }
+
+  // ── delete_webhook ────────────────────────────────────────────────────────
+  if (action === 'delete_webhook') {
+    const { webhook_id } = body as unknown as { webhook_id: number }
+    if (!webhook_id) return json({ error: 'webhook_id required' }, 400)
+    const res = await fetch(`${shopifyBase}/webhooks/${webhook_id}.json`, {
+      method: 'DELETE',
+      headers,
+    })
+    if (!res.ok && res.status !== 404) return json({ ok: false, error: `HTTP ${res.status}` })
+    return json({ ok: true })
   }
 
   return json({ error: `Unknown action: ${action}` }, 400)

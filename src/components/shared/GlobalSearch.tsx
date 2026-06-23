@@ -328,6 +328,7 @@ const isMac = typeof navigator !== 'undefined' &&
 
 export default function GlobalSearch() {
   const [query, setQuery] = useState('')
+  const [debouncedQuery, setDebouncedQuery] = useState('')
   const [open, setOpen] = useState(false)
   const [activeIdx, setActiveIdx] = useState(-1)
   const inputRef = useRef<HTMLInputElement>(null)
@@ -336,9 +337,15 @@ export default function GlobalSearch() {
   const navigate = useNavigate()
   const { orders, customers, products, exceptions } = useAppStore()
 
+  // 200ms debounce so runSearch doesn't fire on every keystroke
+  useEffect(() => {
+    const id = setTimeout(() => setDebouncedQuery(query), 200)
+    return () => clearTimeout(id)
+  }, [query])
+
   const allResults = useMemo(
-    () => runSearch(query, orders, customers, products, exceptions),
-    [query, orders, customers, products, exceptions]
+    () => runSearch(debouncedQuery, orders, customers, products, exceptions),
+    [debouncedQuery, orders, customers, products, exceptions]
   )
 
   // Only navigable items (not section headers)

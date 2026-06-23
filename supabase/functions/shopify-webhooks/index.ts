@@ -2,7 +2,7 @@
  * shopify-webhooks — Supabase Edge Function
  *
  * Receives Shopify webhook POSTs, verifies HMAC-SHA256, then upserts
- * orders / customers / products into the Sentinal database.
+ * orders / customers / products into the Xmetrics database.
  *
  * Supported topics:
  *   orders/create  · orders/updated  · orders/paid  · orders/cancelled
@@ -191,14 +191,30 @@ Deno.serve(async (req: Request) => {
     })
   }
 
-  const webhookSecret = integration.credentials?.webhook_secret as string | undefined
-  if (webhookSecret) {
+  // ── HMAC verification ─────────────────────────────────────────────────────
+  // shopify-proxy's sync_orders calls this endpoint server-to-server using the
+  // service role key as an Authorization bearer token — those internal calls
+  // skip HMAC because they originate from within the same Supabase project.
+  // All external requests from Shopify must carry a valid HMAC.
+  const authHeader = req.headers.get('authorization') ?? ''
+  const isInternalCall = SUPABASE_SERVICE_KEY && authHeader === `Bearer ${SUPABASE_SERVICE_KEY}`
+
+  if (!isInternalCall) {
     const shopifyHmac = req.headers.get('x-shopify-hmac-sha256')
     if (!shopifyHmac) {
-      return new Response(JSON.stringify({ error: 'Missing HMAC header' }), {
+      return new Response(JSON.stringify({ error: 'Missing X-Shopify-Hmac-Sha256 header' }), {
         status: 401, headers: { 'Content-Type': 'application/json' },
       })
     }
+
+    const webhookSecret = integration.credentials?.webhook_secret as string | undefined
+    if (!webhookSecret) {
+      console.warn(`[shopify-webhooks] brand ${brandId}: webhook_secret not configured — rejecting external request`)
+      return new Response(JSON.stringify({ error: 'Webhook secret not configured. Add it in Settings → Integrations → Shopify.' }), {
+        status: 401, headers: { 'Content-Type': 'application/json' },
+      })
+    }
+
     const encoder = new TextEncoder()
     const key = await crypto.subtle.importKey(
       'raw', encoder.encode(webhookSecret),
@@ -556,22 +572,48 @@ async function handleOrderCancelled(brandId: string, shopifyOrder: ShopifyOrder)
 async function handleProductUpdate(brandId: string, shopifyProduct: ShopifyProduct) {
   for (const variant of shopifyProduct.variants) {
     const sku = variant.sku || `shopify_${variant.id}`
-    await supabase
+    const name = shopifyProduct.variants.length === 1
+      ? shopifyProduct.title
+      : `${shopifyProduct.title} — ${variant.title}`
+
+    // Check whether this product already exists so we can preserve any
+    // manually-entered cost_price — Shopify webhooks never expose cost prices,
+    // so a blind upsert with cost_price: 0 would destroy a merchant's COGS data.
+    const { data: existing } = await supabase
       .from('products')
-      .upsert({
-        brand_id: brandId,
-        name: shopifyProduct.variants.length === 1
-          ? shopifyProduct.title
-          : `${shopifyProduct.title} — ${variant.title}`,
-        sku,
-        category: mapProductCategory(shopifyProduct.product_type),
-        selling_price: parseFloat(variant.price),
-        cost_price: 0,  // Shopify doesn't expose cost price via webhooks
-        inventory_count: variant.inventory_quantity,
-        reorder_threshold: 5,
-        weight_grams: Math.round(variant.weight * 1000),
-        is_active: true,
-      }, { onConflict: 'brand_id,sku' })
+      .select('id')
+      .eq('brand_id', brandId)
+      .eq('sku', sku)
+      .maybeSingle()
+
+    if (existing) {
+      await supabase
+        .from('products')
+        .update({
+          name,
+          category:        mapProductCategory(shopifyProduct.product_type),
+          selling_price:   parseFloat(variant.price),
+          inventory_count: variant.inventory_quantity,
+          weight_grams:    Math.round(variant.weight * 1000),
+          is_active:       true,
+        })
+        .eq('id', existing.id)
+    } else {
+      await supabase
+        .from('products')
+        .insert({
+          brand_id:          brandId,
+          name,
+          sku,
+          category:          mapProductCategory(shopifyProduct.product_type),
+          selling_price:     parseFloat(variant.price),
+          cost_price:        0,
+          inventory_count:   variant.inventory_quantity,
+          reorder_threshold: 5,
+          weight_grams:      Math.round(variant.weight * 1000),
+          is_active:         true,
+        })
+    }
   }
 }
 

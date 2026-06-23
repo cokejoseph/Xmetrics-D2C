@@ -41,11 +41,14 @@ export function generateDailyBrief(
   const paidOrders = dayOrders.filter(o => o.payment_status === 'PAID')
   const codOrders = dayOrders.filter(o => o.payment_method === 'COD')
 
+  // Build a product lookup Map once — avoids O(orders × items × products)
+  const productMap = new Map(products.map(p => [p.id, p]))
+
   // COGS estimate
   let cogs = 0
   for (const order of dayOrders) {
     for (const item of order.items ?? []) {
-      const product = products.find(p => p.id === item.product_id)
+      const product = productMap.get(item.product_id)
       if (product) {
         cogs += product.cost_price * item.quantity
       }
@@ -97,7 +100,7 @@ export function generateDailyBrief(
   }
   const productPerformance = Array.from(productRevMap.entries())
     .map(([pid, data]) => {
-      const product = products.find(p => p.id === pid)
+      const product = productMap.get(pid)
       return {
         name: product?.name ?? 'Unknown',
         sku: product?.sku ?? '',

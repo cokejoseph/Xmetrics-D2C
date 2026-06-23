@@ -1,5 +1,6 @@
 import { create } from 'zustand'
 import { DEMO_MODE } from '../lib/supabase'
+import { showToast } from '../lib/toast'
 import {
   DEMO_BRAND, DEMO_TEAM, DEMO_WAREHOUSES, DEMO_PRODUCTS,
   DEMO_CUSTOMERS, DEMO_ORDERS, DEMO_PAYMENTS, DEMO_EXCEPTIONS, DEMO_INTEGRATIONS, DEMO_RETURNS,
@@ -94,7 +95,7 @@ interface AppState {
   connectIntegration: (platform: Integration['platform'], credentials: Record<string, string>) => Promise<{ error: string | null }>
   updateTeamMember: (id: string, changes: Partial<BrandMember>) => void
   removeTeamMember: (id: string) => void
-  inviteTeamMember: (data: { name: string; email: string; role: BrandMember['role'] }) => void
+  inviteTeamMember: (data: { name: string; email: string; role: BrandMember['role'] }) => Promise<{ error: string | null }>
   setReturns: (returns: Return[]) => void
   addReturn: (ret: Return) => void
   updateReturn: (id: string, changes: Partial<Return>) => void
@@ -345,25 +346,58 @@ export const useAppStore = create<AppState>((set, get) => ({
   },
 
   approveOrder: (id) => {
+    const prev = get().orders.find(o => o.id === id)?.rto_review_status
     set(state => ({ orders: state.orders.map(o => o.id === id ? { ...o, rto_review_status: 'APPROVED' } : o) }))
     if (!DEMO_MODE) {
-      updateOrderDB(id, { rto_review_status: 'APPROVED' }).catch(console.error)
+      updateOrderDB(id, { rto_review_status: 'APPROVED' })
+        .then(({ error }) => {
+          if (error) {
+            set(state => ({ orders: state.orders.map(o => o.id === id ? { ...o, rto_review_status: prev } : o) }))
+            showToast.mutationError('approve order')
+          }
+        })
+        .catch(() => {
+          set(state => ({ orders: state.orders.map(o => o.id === id ? { ...o, rto_review_status: prev } : o) }))
+          showToast.mutationError('approve order')
+        })
       addOrderTimelineEvent(id, 'Order approved by review', 'system').catch(console.error)
     }
   },
 
   holdOrder: (id) => {
+    const prev = get().orders.find(o => o.id === id)?.rto_review_status
     set(state => ({ orders: state.orders.map(o => o.id === id ? { ...o, rto_review_status: 'HELD' } : o) }))
     if (!DEMO_MODE) {
-      updateOrderDB(id, { rto_review_status: 'HELD' }).catch(console.error)
+      updateOrderDB(id, { rto_review_status: 'HELD' })
+        .then(({ error }) => {
+          if (error) {
+            set(state => ({ orders: state.orders.map(o => o.id === id ? { ...o, rto_review_status: prev } : o) }))
+            showToast.mutationError('hold order')
+          }
+        })
+        .catch(() => {
+          set(state => ({ orders: state.orders.map(o => o.id === id ? { ...o, rto_review_status: prev } : o) }))
+          showToast.mutationError('hold order')
+        })
       addOrderTimelineEvent(id, 'Order placed on hold', 'system').catch(console.error)
     }
   },
 
   flagOrder: (id) => {
+    const prev = get().orders.find(o => o.id === id)?.rto_review_status
     set(state => ({ orders: state.orders.map(o => o.id === id ? { ...o, rto_review_status: 'FLAGGED' } : o) }))
     if (!DEMO_MODE) {
-      updateOrderDB(id, { rto_review_status: 'FLAGGED' }).catch(console.error)
+      updateOrderDB(id, { rto_review_status: 'FLAGGED' })
+        .then(({ error }) => {
+          if (error) {
+            set(state => ({ orders: state.orders.map(o => o.id === id ? { ...o, rto_review_status: prev } : o) }))
+            showToast.mutationError('flag order')
+          }
+        })
+        .catch(() => {
+          set(state => ({ orders: state.orders.map(o => o.id === id ? { ...o, rto_review_status: prev } : o) }))
+          showToast.mutationError('flag order')
+        })
       addOrderTimelineEvent(id, 'Order flagged for review', 'system').catch(console.error)
     }
   },
@@ -673,16 +707,38 @@ export const useAppStore = create<AppState>((set, get) => ({
   // ─── Exceptions ────────────────────────────────────────────────────────────
 
   resolveException: (id) => {
+    const prev = get().exceptions.find(e => e.id === id)?.status
     set(state => ({ exceptions: state.exceptions.map(e => e.id === id ? { ...e, status: 'RESOLVED' } : e) }))
     if (!DEMO_MODE) {
-      updateExceptionDB(id, { status: 'RESOLVED' }).catch(console.error)
+      updateExceptionDB(id, { status: 'RESOLVED' })
+        .then(({ error }) => {
+          if (error) {
+            set(state => ({ exceptions: state.exceptions.map(e => e.id === id ? { ...e, status: prev as ExceptionStatus ?? 'UNRESOLVED' } : e) }))
+            showToast.mutationError('resolve exception')
+          }
+        })
+        .catch(() => {
+          set(state => ({ exceptions: state.exceptions.map(e => e.id === id ? { ...e, status: prev as ExceptionStatus ?? 'UNRESOLVED' } : e) }))
+          showToast.mutationError('resolve exception')
+        })
     }
   },
 
   dismissException: (id) => {
+    const prev = get().exceptions.find(e => e.id === id)?.status
     set(state => ({ exceptions: state.exceptions.map(e => e.id === id ? { ...e, status: 'DISMISSED' } : e) }))
     if (!DEMO_MODE) {
-      updateExceptionDB(id, { status: 'DISMISSED' }).catch(console.error)
+      updateExceptionDB(id, { status: 'DISMISSED' })
+        .then(({ error }) => {
+          if (error) {
+            set(state => ({ exceptions: state.exceptions.map(e => e.id === id ? { ...e, status: prev as ExceptionStatus ?? 'UNRESOLVED' } : e) }))
+            showToast.mutationError('dismiss exception')
+          }
+        })
+        .catch(() => {
+          set(state => ({ exceptions: state.exceptions.map(e => e.id === id ? { ...e, status: prev as ExceptionStatus ?? 'UNRESOLVED' } : e) }))
+          showToast.mutationError('dismiss exception')
+        })
     }
   },
 
@@ -856,16 +912,18 @@ export const useAppStore = create<AppState>((set, get) => ({
     }
   },
 
-  inviteTeamMember: (data) => {
+  inviteTeamMember: async (data) => {
     const brandId = get().currentBrand?.id ?? ''
     const tempId = `member-${Date.now()}`
+
+    // Optimistic: add a placeholder member so the UI updates immediately
     set(state => ({
       teamMembers: [
         ...state.teamMembers,
         {
           id: tempId,
           brand_id: brandId,
-          user_id: `user-${Date.now()}`,
+          user_id: '',
           role: data.role,
           name: data.name,
           email: data.email,
@@ -873,13 +931,27 @@ export const useAppStore = create<AppState>((set, get) => ({
         },
       ],
     }))
-    if (!DEMO_MODE) {
-      inviteTeamMemberDB(brandId, data.name, data.email, data.role)
-        .then(({ error }) => {
-          if (error && import.meta.env.DEV) console.error('inviteTeamMember DB error:', error)
-        })
-        .catch(console.error)
+
+    if (DEMO_MODE) return { error: null }
+
+    const { error, userId } = await inviteTeamMemberDB(brandId, data.name, data.email, data.role)
+    if (error) {
+      // Rollback: remove the optimistic placeholder
+      set(state => ({ teamMembers: state.teamMembers.filter(m => m.id !== tempId) }))
+      showToast.error(`Invite failed — ${error}`)
+      return { error }
     }
+
+    // Replace the empty user_id with the real UUID from Supabase Auth
+    if (userId) {
+      set(state => ({
+        teamMembers: state.teamMembers.map(m =>
+          m.id === tempId ? { ...m, user_id: userId } : m
+        ),
+      }))
+    }
+
+    return { error: null }
   },
 
   // ─── Returns ───────────────────────────────────────────────────────────────
