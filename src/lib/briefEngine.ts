@@ -48,7 +48,7 @@ export function generateDailyBrief(
   let cogs = 0
   for (const order of dayOrders) {
     for (const item of order.items ?? []) {
-      const product = productMap.get(item.product_id)
+      const product = item.product_id ? productMap.get(item.product_id) : undefined
       if (product) {
         cogs += product.cost_price * item.quantity
       }

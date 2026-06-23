@@ -352,12 +352,12 @@ export const useAppStore = create<AppState>((set, get) => ({
       updateOrderDB(id, { rto_review_status: 'APPROVED' })
         .then(({ error }) => {
           if (error) {
-            set(state => ({ orders: state.orders.map(o => o.id === id ? { ...o, rto_review_status: prev } : o) }))
+            set(state => ({ orders: state.orders.map(o => o.id === id ? { ...o, rto_review_status: prev ?? o.rto_review_status } : o) }))
             showToast.mutationError('approve order')
           }
         })
         .catch(() => {
-          set(state => ({ orders: state.orders.map(o => o.id === id ? { ...o, rto_review_status: prev } : o) }))
+          set(state => ({ orders: state.orders.map(o => o.id === id ? { ...o, rto_review_status: prev ?? o.rto_review_status } : o) }))
           showToast.mutationError('approve order')
         })
       addOrderTimelineEvent(id, 'Order approved by review', 'system').catch(console.error)
@@ -371,12 +371,12 @@ export const useAppStore = create<AppState>((set, get) => ({
       updateOrderDB(id, { rto_review_status: 'HELD' })
         .then(({ error }) => {
           if (error) {
-            set(state => ({ orders: state.orders.map(o => o.id === id ? { ...o, rto_review_status: prev } : o) }))
+            set(state => ({ orders: state.orders.map(o => o.id === id ? { ...o, rto_review_status: prev ?? o.rto_review_status } : o) }))
             showToast.mutationError('hold order')
           }
         })
         .catch(() => {
-          set(state => ({ orders: state.orders.map(o => o.id === id ? { ...o, rto_review_status: prev } : o) }))
+          set(state => ({ orders: state.orders.map(o => o.id === id ? { ...o, rto_review_status: prev ?? o.rto_review_status } : o) }))
           showToast.mutationError('hold order')
         })
       addOrderTimelineEvent(id, 'Order placed on hold', 'system').catch(console.error)
@@ -390,12 +390,12 @@ export const useAppStore = create<AppState>((set, get) => ({
       updateOrderDB(id, { rto_review_status: 'FLAGGED' })
         .then(({ error }) => {
           if (error) {
-            set(state => ({ orders: state.orders.map(o => o.id === id ? { ...o, rto_review_status: prev } : o) }))
+            set(state => ({ orders: state.orders.map(o => o.id === id ? { ...o, rto_review_status: prev ?? o.rto_review_status } : o) }))
             showToast.mutationError('flag order')
           }
         })
         .catch(() => {
-          set(state => ({ orders: state.orders.map(o => o.id === id ? { ...o, rto_review_status: prev } : o) }))
+          set(state => ({ orders: state.orders.map(o => o.id === id ? { ...o, rto_review_status: prev ?? o.rto_review_status } : o) }))
           showToast.mutationError('flag order')
         })
       addOrderTimelineEvent(id, 'Order flagged for review', 'system').catch(console.error)

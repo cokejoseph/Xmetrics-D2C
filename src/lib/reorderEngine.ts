@@ -38,7 +38,7 @@ export function buildReorderNudgeList(
   // Build a per-customer paid orders Map in one pass — avoids O(customers × orders)
   const paidOrdersByCustomer = new Map<string, Order[]>()
   for (const order of orders) {
-    if (order.payment_status !== 'PAID') continue
+    if (order.payment_status !== 'PAID' || !order.customer_id) continue
     const list = paidOrdersByCustomer.get(order.customer_id) ?? []
     list.push(order)
     paidOrdersByCustomer.set(order.customer_id, list)
