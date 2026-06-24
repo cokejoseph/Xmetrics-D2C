@@ -3,7 +3,7 @@ import { NavLink, useNavigate } from 'react-router-dom'
 import {
   LayoutDashboard, ShoppingBag, Truck, CreditCard,
   AlertTriangle, Package, Users, BarChart3, Settings,
-  History, LogOut, RotateCcw, X,
+  History, LogOut, RotateCcw, X, Scale,
 } from 'lucide-react'
 import { useAppStore } from '../../stores/appStore'
 import { useAuthStore } from '../../stores/authStore'
@@ -100,6 +100,7 @@ export default function Sidebar({ isOpen = false, onClose }: SidebarProps) {
           <SidebarItem to="/exceptions"      icon={<AlertTriangle size={15} />} label="Exceptions"  badge={exceptionsBadge} badgeDanger badgeTitle={`${exceptionsBadge} unresolved exceptions`} onClick={handleNavClick} />
           <SidebarItem to="/returns"         icon={<RotateCcw size={15} />}     label="Returns"     onClick={handleNavClick} />
           <SidebarItem to="/payments"        icon={<CreditCard size={15} />}    label="Payments"    onClick={handleNavClick} />
+          <SidebarItem to="/reconciliation" icon={<Scale size={15} />}          label="Reconcile"   onClick={handleNavClick} />
           <SidebarItem to="/analytics"       icon={<BarChart3 size={15} />}     label="Analytics"   badge={analyticsBadge} badgeTitle={analyticsBadgeTitle || `${analyticsBadge} items need attention`} onClick={handleNavClick} />
         </div>
 

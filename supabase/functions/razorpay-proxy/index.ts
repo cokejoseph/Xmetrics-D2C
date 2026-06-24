@@ -7,6 +7,7 @@
  * Actions:
  *   test_connection   — GET /accounts to verify credentials
  *   sync_payments     — Fetch last N days of payments and write to DB
+ *   sync_range        — Fetch payments for a specific date range (reconciliation)
  *   create_refund     — POST /payments/:id/refund
  *   fetch_settlements — GET /settlements with item details
  *
@@ -141,6 +142,69 @@ Deno.serve(async (req: Request) => {
     }
 
     return json({ ok: true, payments_synced: paymentsSynced, settlements_matched: settlementsMatched, errors })
+  }
+
+  // ── sync_range ────────────────────────────────────────────────────────────
+  // Fetch all captured payments in a date range for reconciliation.
+  // Returns raw payment data with fee/tax — does NOT write to DB.
+  if (action === 'sync_range') {
+    const { from_date, to_date } = body
+    if (!from_date || !to_date) return json({ error: 'from_date and to_date required (YYYY-MM-DD)' }, 400)
+
+    const fromTs = Math.floor(new Date(from_date).getTime() / 1000)
+    const toTs   = Math.floor(new Date(to_date + 'T23:59:59').getTime() / 1000)
+
+    const payments: Array<{
+      id: string; order_id: string | null; amount: number; method: string;
+      status: string; fee: number; tax: number; settlement_amount: number;
+      created_at: string; notes: Record<string, string>;
+    }> = []
+    let skip = 0
+    const count = 100
+
+    while (true) {
+      const res = await fetch(
+        `${RZP_BASE}/payments?from=${fromTs}&to=${toTs}&count=${count}&skip=${skip}`,
+        { headers: rzpHeaders }
+      )
+      if (!res.ok) return json({ ok: false, error: `Razorpay API error: ${res.status}` })
+      const d = await res.json() as { items: Array<{
+        id: string; order_id: string | null; amount: number; method: string;
+        status: string; fee: number; tax: number; created_at: number;
+        notes: Record<string, string>;
+      }> }
+
+      const items = d.items ?? []
+      for (const p of items) {
+        if (p.status !== 'captured') continue
+        const fee = (p.fee ?? 0) / 100
+        const tax = (p.tax ?? 0) / 100
+        const amount = p.amount / 100
+        payments.push({
+          id: p.id,
+          order_id: p.order_id,
+          amount,
+          method: p.method,
+          status: p.status,
+          fee,
+          tax,
+          settlement_amount: amount - fee - tax,
+          created_at: new Date(p.created_at * 1000).toISOString(),
+          notes: p.notes ?? {},
+        })
+      }
+
+      if (items.length < count) break
+      skip += count
+    }
+
+    return json({
+      ok: true,
+      payments,
+      total: payments.length,
+      from_date,
+      to_date,
+    })
   }
 
   // ── create_refund ─────────────────────────────────────────────────────────

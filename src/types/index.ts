@@ -480,6 +480,100 @@ export interface Return {
   customer?: Customer
 }
 
+// ─── Reconciliation ────────────────────────────────────────────────────────
+
+export type CodRemittanceStatus =
+  | 'REMITTED'
+  | 'PENDING'
+  | 'SHORT_PAID'
+  | 'DEDUCTED'
+  | 'CANCELLED'
+
+export interface CodRemittanceRow {
+  id: string
+  upload_id: string
+  brand_id: string
+  order_number: string
+  awb_number: string | null
+  delivery_date: string | null
+  collected_amount: number
+  remitted_amount: number
+  remittance_date: string | null
+  deductions: number
+  status: CodRemittanceStatus
+  shiprocket_ref: string | null
+  created_at: string
+}
+
+export interface CodRemittanceUpload {
+  id: string
+  brand_id: string
+  filename: string
+  period_start: string
+  period_end: string
+  uploaded_by: string
+  row_count: number
+  status: 'DONE' | 'ERROR'
+  error_message: string | null
+  created_at: string
+}
+
+export interface ReconciliationReport {
+  id: string
+  brand_id: string
+  period_start: string
+  period_end: string
+  report_type: 'COD' | 'PREPAID' | 'COMBINED'
+  cod_orders: number
+  cod_order_value: number
+  cod_collected: number
+  cod_remitted: number
+  cod_pending_count: number
+  cod_short_paid_count: number
+  cod_unremitted_count: number
+  cod_discrepancy: number
+  prepaid_orders: number
+  prepaid_collected: number
+  prepaid_fees: number
+  prepaid_settled: number
+  cod_upload_id: string | null
+  generated_by: string | null
+  created_at: string
+}
+
+export type ReconRowStatus = 'MATCHED' | 'PENDING' | 'SHORT_PAID' | 'UNREMITTED' | 'CANCELLED'
+
+export interface ReconciliationRow {
+  order_number: string
+  order_id: string | null
+  awb_number: string | null
+  customer_name: string | null
+  order_date: string | null
+  delivery_date: string | null
+  payment_method: 'COD' | 'PREPAID'
+  order_amount: number
+  collected_amount: number
+  remitted_amount: number
+  discrepancy: number
+  gateway_fee: number
+  status: ReconRowStatus
+  razorpay_payment_id: string | null
+  shiprocket_ref: string | null
+}
+
+export interface RazorpayPaymentSynced {
+  id: string
+  order_id: string | null
+  amount: number
+  method: string
+  status: string
+  fee: number
+  tax: number
+  settlement_amount: number
+  created_at: string
+  notes: Record<string, string>
+}
+
 // ─── Subscription & Billing ─────────────────────────────────────────────────
 
 export type SubscriptionStatus =
