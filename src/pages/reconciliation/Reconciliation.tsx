@@ -1,13 +1,14 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import {
   Scale, Upload, RefreshCw, Printer, CheckCircle2,
-  AlertCircle, Clock, XCircle, ChevronDown, ChevronLeft,
-  ChevronRight, Loader2, FileText, CreditCard,
+  AlertCircle, ChevronLeft, ChevronRight, Loader2,
+  FileText, CreditCard, Download, X,
 } from 'lucide-react'
 import { useAppStore } from '../../stores/appStore'
 import { DEMO_MODE, callAuthEdgeFunction } from '../../lib/supabase'
 import { parseCodCsv } from '../../lib/codCsvParser'
 import { printReconciliationReport } from '../../lib/reconciliationPdf'
+import { exportCSV } from '../../lib/exportCSV'
 import type {
   ReconciliationRow, ReconRowStatus, RazorpayPaymentSynced,
 } from '../../types'
@@ -25,10 +26,16 @@ function getPeriodLabel(month: string) {
 
 function monthToRange(month: string): { start: string; end: string } {
   const [y, m] = month.split('-').map(Number)
-  const start = new Date(y, m - 1, 1)
-  const end = new Date(y, m, 0)  // last day of month
-  const fmt = (d: Date) => d.toISOString().slice(0, 10)
-  return { start: fmt(start), end: fmt(end) }
+  // Use local getters — toISOString() gives UTC which drifts by timezone offset
+  const fmt = (d: Date) => [
+    d.getFullYear(),
+    String(d.getMonth() + 1).padStart(2, '0'),
+    String(d.getDate()).padStart(2, '0'),
+  ].join('-')
+  return {
+    start: fmt(new Date(y, m - 1, 1)),
+    end:   fmt(new Date(y, m, 0)),    // day 0 of next month = last day of this month
+  }
 }
 
 function currentMonthStr() {
@@ -58,18 +65,23 @@ function StatusBadge({ status }: { status: ReconRowStatus }) {
 
 // ── Demo seed data ─────────────────────────────────────────────────────────────
 
-function buildDemoRows(): { cod: ReconciliationRow[]; prepaid: ReconciliationRow[] } {
+function buildDemoRows(month: string): { cod: ReconciliationRow[]; prepaid: ReconciliationRow[] } {
+  // Generate dates within the given month so they always pass the date filter
+  const { start } = monthToRange(month)
+  const [y, m] = start.split('-').map(Number)
+  const d = (day: number) => `${y}-${String(m).padStart(2, '0')}-${String(day).padStart(2, '0')}`
+
   const cod: ReconciliationRow[] = [
-    { order_number: '#1001', order_id: null, awb_number: 'AWB123456', customer_name: 'Priya Sharma', order_date: '2026-05-03', delivery_date: '2026-05-06', payment_method: 'COD', order_amount: 1499, collected_amount: 1499, remitted_amount: 1499, discrepancy: 0, gateway_fee: 0, status: 'MATCHED', razorpay_payment_id: null, shiprocket_ref: 'UTR123' },
-    { order_number: '#1004', order_id: null, awb_number: 'AWB123457', customer_name: 'Rahul Verma', order_date: '2026-05-05', delivery_date: '2026-05-08', payment_method: 'COD', order_amount: 2199, collected_amount: 2199, remitted_amount: 2000, discrepancy: 199, gateway_fee: 0, status: 'SHORT_PAID', razorpay_payment_id: null, shiprocket_ref: 'UTR124' },
-    { order_number: '#1007', order_id: null, awb_number: 'AWB123458', customer_name: 'Anjali Gupta', order_date: '2026-05-07', delivery_date: '2026-05-11', payment_method: 'COD', order_amount: 899, collected_amount: 899, remitted_amount: 0, discrepancy: 899, gateway_fee: 0, status: 'PENDING', razorpay_payment_id: null, shiprocket_ref: null },
-    { order_number: '#1012', order_id: null, awb_number: 'AWB123461', customer_name: 'Karthik Iyer', order_date: '2026-05-10', delivery_date: '2026-05-14', payment_method: 'COD', order_amount: 3499, collected_amount: 3499, remitted_amount: 0, discrepancy: 3499, gateway_fee: 0, status: 'UNREMITTED', razorpay_payment_id: null, shiprocket_ref: null },
-    { order_number: '#1015', order_id: null, awb_number: null, customer_name: 'Meera Pillai', order_date: '2026-05-12', delivery_date: null, payment_method: 'COD', order_amount: 1249, collected_amount: 0, remitted_amount: 0, discrepancy: 0, gateway_fee: 0, status: 'CANCELLED', razorpay_payment_id: null, shiprocket_ref: null },
+    { order_number: '#1001', order_id: null, awb_number: 'AWB123456', customer_name: 'Priya Sharma',  order_date: d(3),  delivery_date: d(6),  payment_method: 'COD', order_amount: 1499, collected_amount: 1499, remitted_amount: 1499, discrepancy: 0,    gateway_fee: 0, status: 'MATCHED',    razorpay_payment_id: null, shiprocket_ref: 'UTR123' },
+    { order_number: '#1004', order_id: null, awb_number: 'AWB123457', customer_name: 'Rahul Verma',   order_date: d(5),  delivery_date: d(8),  payment_method: 'COD', order_amount: 2199, collected_amount: 2199, remitted_amount: 2000, discrepancy: 199,  gateway_fee: 0, status: 'SHORT_PAID', razorpay_payment_id: null, shiprocket_ref: 'UTR124' },
+    { order_number: '#1007', order_id: null, awb_number: 'AWB123458', customer_name: 'Anjali Gupta',  order_date: d(7),  delivery_date: d(11), payment_method: 'COD', order_amount: 899,  collected_amount: 899,  remitted_amount: 0,    discrepancy: 899,  gateway_fee: 0, status: 'PENDING',    razorpay_payment_id: null, shiprocket_ref: null },
+    { order_number: '#1012', order_id: null, awb_number: 'AWB123461', customer_name: 'Karthik Iyer',  order_date: d(10), delivery_date: d(14), payment_method: 'COD', order_amount: 3499, collected_amount: 3499, remitted_amount: 0,    discrepancy: 3499, gateway_fee: 0, status: 'UNREMITTED', razorpay_payment_id: null, shiprocket_ref: null },
+    { order_number: '#1015', order_id: null, awb_number: null,         customer_name: 'Meera Pillai',  order_date: d(12), delivery_date: null,  payment_method: 'COD', order_amount: 1249, collected_amount: 0,    remitted_amount: 0,    discrepancy: 0,    gateway_fee: 0, status: 'CANCELLED',  razorpay_payment_id: null, shiprocket_ref: null },
   ]
   const prepaid: ReconciliationRow[] = [
-    { order_number: '#1002', order_id: null, awb_number: null, customer_name: 'Vikram Nair', order_date: '2026-05-04', delivery_date: '2026-05-07', payment_method: 'PREPAID', order_amount: 4999, collected_amount: 4999, remitted_amount: 4852.03, discrepancy: 0, gateway_fee: 146.97, status: 'MATCHED', razorpay_payment_id: 'pay_NXyZ1234', shiprocket_ref: null },
-    { order_number: '#1005', order_id: null, awb_number: null, customer_name: 'Sunita Reddy', order_date: '2026-05-06', delivery_date: '2026-05-09', payment_method: 'PREPAID', order_amount: 2799, collected_amount: 2799, remitted_amount: 2717.07, discrepancy: 0, gateway_fee: 81.93, status: 'MATCHED', razorpay_payment_id: 'pay_NXyZ5678', shiprocket_ref: null },
-    { order_number: '#1009', order_id: null, awb_number: null, customer_name: 'Arjun Mehta', order_date: '2026-05-09', delivery_date: '2026-05-12', payment_method: 'PREPAID', order_amount: 1999, collected_amount: 1999, remitted_amount: 0, discrepancy: 1999, gateway_fee: 58.47, status: 'UNREMITTED', razorpay_payment_id: 'pay_NXyZ9012', shiprocket_ref: null },
+    { order_number: '#1002', order_id: null, awb_number: null, customer_name: 'Vikram Nair',  order_date: d(4),  delivery_date: d(7),  payment_method: 'PREPAID', order_amount: 4999, collected_amount: 4999, remitted_amount: 4852.03, discrepancy: 0,    gateway_fee: 146.97, status: 'MATCHED',    razorpay_payment_id: 'pay_NXyZ1234', shiprocket_ref: null },
+    { order_number: '#1005', order_id: null, awb_number: null, customer_name: 'Sunita Reddy', order_date: d(6),  delivery_date: d(9),  payment_method: 'PREPAID', order_amount: 2799, collected_amount: 2799, remitted_amount: 2717.07, discrepancy: 0,    gateway_fee: 81.93,  status: 'MATCHED',    razorpay_payment_id: 'pay_NXyZ5678', shiprocket_ref: null },
+    { order_number: '#1009', order_id: null, awb_number: null, customer_name: 'Arjun Mehta',  order_date: d(9),  delivery_date: d(12), payment_method: 'PREPAID', order_amount: 1999, collected_amount: 1999, remitted_amount: 0,       discrepancy: 1999, gateway_fee: 58.47,  status: 'UNREMITTED', razorpay_payment_id: 'pay_NXyZ9012', shiprocket_ref: null },
   ]
   return { cod, prepaid }
 }
@@ -102,6 +114,10 @@ export default function Reconciliation() {
   const [running, setRunning]         = useState(false)
   const [codRows, setCodRows]         = useState<ReconciliationRow[] | null>(null)
   const [prepaidRows, setPrepaidRows] = useState<ReconciliationRow[] | null>(null)
+
+  // Date range filter — defaults to the full selected month
+  const [dateFrom, setDateFrom] = useState(() => monthToRange(currentMonthStr()).start)
+  const [dateTo,   setDateTo]   = useState(() => monthToRange(currentMonthStr()).end)
 
   const fileInputRef = useRef<HTMLInputElement>(null)
 
@@ -161,7 +177,7 @@ export default function Reconciliation() {
   // ── Run reconciliation ─────────────────────────────────────────────────────
   const runReconciliation = useCallback(async () => {
     if (DEMO_MODE) {
-      const demo = buildDemoRows()
+      const demo = buildDemoRows(month)
       setCodRows(demo.cod)
       setPrepaidRows(demo.prepaid)
       return
@@ -335,9 +351,16 @@ export default function Reconciliation() {
   // ── Derived state ──────────────────────────────────────────────────────────
   const allRows = [...(codRows ?? []), ...(prepaidRows ?? [])]
   const displayRows = (activeTab === 'cod' ? codRows : prepaidRows) ?? []
+
+  // Apply date range filter to the current tab's rows
+  const dateFilteredRows = displayRows.filter(r => {
+    const d = r.order_date ?? ''
+    return (!dateFrom || d >= dateFrom) && (!dateTo || d <= dateTo)
+  })
+
   const filteredRows = statusFilter === 'ALL'
-    ? displayRows
-    : displayRows.filter(r => r.status === statusFilter)
+    ? dateFilteredRows
+    : dateFilteredRows.filter(r => r.status === statusFilter)
 
   const summary = {
     totalOrders:     allRows.length,
@@ -350,16 +373,51 @@ export default function Reconciliation() {
 
   const hasReport = codRows !== null || prepaidRows !== null
 
+  // Status counts reflect the date-filtered rows
   const statusCounts: Record<ReconRowStatus, number> = {
     MATCHED: 0, PENDING: 0, SHORT_PAID: 0, UNREMITTED: 0, CANCELLED: 0,
   }
-  for (const r of displayRows) statusCounts[r.status]++
+  for (const r of dateFilteredRows) statusCounts[r.status]++
+
+  const isDateFiltered =
+    dateFrom !== monthToRange(month).start || dateTo !== monthToRange(month).end
+
+  // ── CSV export ─────────────────────────────────────────────────────────────
+  const handleExportCsv = () => {
+    const rows = filteredRows
+    const tab = activeTab === 'cod' ? 'COD' : 'Prepaid'
+    const filename = `reconciliation-${tab}-${dateFrom}-to-${dateTo}.csv`
+    exportCSV(
+      filename,
+      ['Order #', 'Customer', 'Order Date', 'Payment Method', 'GMV (₹)', 'Collected (₹)',
+       'Remitted / Settled (₹)', 'Gateway Fees (₹)', 'Discrepancy (₹)', 'Status',
+       'AWB / Payment ID', 'Shiprocket Ref'],
+      rows.map(r => [
+        r.order_number,
+        r.customer_name ?? '',
+        r.order_date ?? '',
+        r.payment_method,
+        r.order_amount,
+        r.collected_amount,
+        r.remitted_amount,
+        r.gateway_fee || '',
+        r.discrepancy || '',
+        r.status,
+        r.awb_number ?? r.razorpay_payment_id ?? '',
+        r.shiprocket_ref ?? '',
+      ])
+    )
+  }
 
   // ── Month navigation ───────────────────────────────────────────────────────
   const changeMonth = (delta: number) => {
     const [y, m] = month.split('-').map(Number)
     const d = new Date(y, m - 1 + delta, 1)
-    setMonth(`${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`)
+    const newMonth = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`
+    setMonth(newMonth)
+    const { start, end } = monthToRange(newMonth)
+    setDateFrom(start)
+    setDateTo(end)
     // Reset data on period change
     setRzpPayments(null); setCsvParsed(null); setCsvFile(null)
     setCodRows(null); setPrepaidRows(null); setUploadId(null)
@@ -419,13 +477,23 @@ export default function Reconciliation() {
           </div>
 
           {hasReport && (
-            <button
-              onClick={handlePrint}
-              className="flex items-center gap-1.5 px-3 py-2 text-[13px] font-medium border border-gray-200 dark:border-white/10 rounded-lg hover:bg-gray-50 dark:hover:bg-white/5 transition-colors text-gray-700 dark:text-gray-200"
-            >
-              <Printer size={14} />
-              Export PDF
-            </button>
+            <>
+              <button
+                onClick={handleExportCsv}
+                className="flex items-center gap-1.5 px-3 py-2 text-[13px] font-medium border border-gray-200 dark:border-white/10 rounded-lg hover:bg-gray-50 dark:hover:bg-white/5 transition-colors text-gray-700 dark:text-gray-200"
+                title={`Export ${filteredRows.length} rows as CSV`}
+              >
+                <Download size={14} />
+                Export CSV
+              </button>
+              <button
+                onClick={handlePrint}
+                className="flex items-center gap-1.5 px-3 py-2 text-[13px] font-medium border border-gray-200 dark:border-white/10 rounded-lg hover:bg-gray-50 dark:hover:bg-white/5 transition-colors text-gray-700 dark:text-gray-200"
+              >
+                <Printer size={14} />
+                Export PDF
+              </button>
+            </>
           )}
 
           <button
@@ -614,6 +682,42 @@ export default function Reconciliation() {
             ))}
           </div>
 
+          {/* Date range filter */}
+          <div className="px-4 py-2.5 flex items-center gap-3 flex-wrap border-b border-gray-100 dark:border-white/[0.07] bg-gray-50/50 dark:bg-white/[0.01]">
+            <span className="text-[11px] font-medium text-gray-500 dark:text-gray-400 shrink-0">Order date</span>
+            <div className="flex items-center gap-2">
+              <input
+                type="date"
+                value={dateFrom}
+                min={monthToRange(month).start}
+                max={dateTo || monthToRange(month).end}
+                onChange={e => { setDateFrom(e.target.value); setStatusFilter('ALL') }}
+                className="text-[12px] px-2.5 py-1.5 rounded-lg border border-gray-200 dark:border-white/10 bg-white dark:bg-white/5 text-gray-700 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-brand-500/30"
+              />
+              <span className="text-[11px] text-gray-400">to</span>
+              <input
+                type="date"
+                value={dateTo}
+                min={dateFrom || monthToRange(month).start}
+                max={monthToRange(month).end}
+                onChange={e => { setDateTo(e.target.value); setStatusFilter('ALL') }}
+                className="text-[12px] px-2.5 py-1.5 rounded-lg border border-gray-200 dark:border-white/10 bg-white dark:bg-white/5 text-gray-700 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-brand-500/30"
+              />
+            </div>
+            {isDateFiltered && (
+              <button
+                onClick={() => { const r = monthToRange(month); setDateFrom(r.start); setDateTo(r.end); setStatusFilter('ALL') }}
+                className="flex items-center gap-1 text-[11px] text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition-colors"
+                aria-label="Reset date filter"
+              >
+                <X size={12} /> Reset
+              </button>
+            )}
+            <span className="ml-auto text-[11px] text-gray-400">
+              {dateFilteredRows.length} order{dateFilteredRows.length !== 1 ? 's' : ''} in range
+            </span>
+          </div>
+
           {/* Status filter chips */}
           <div className="px-4 py-3 flex items-center gap-2 flex-wrap border-b border-gray-50 dark:border-white/[0.04]">
             <button
@@ -625,7 +729,7 @@ export default function Reconciliation() {
                   : 'bg-gray-100 dark:bg-white/10 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-white/15',
               ].join(' ')}
             >
-              All ({displayRows.length})
+              All ({dateFilteredRows.length})
             </button>
             {(Object.entries(statusCounts) as [ReconRowStatus, number][])
               .filter(([, count]) => count > 0)
