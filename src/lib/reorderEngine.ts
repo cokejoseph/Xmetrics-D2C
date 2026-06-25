@@ -121,6 +121,60 @@ export function buildReorderNudgeList(
     })
 }
 
+// ─── Reorder revenue forecast ─────────────────────────────────────────────────
+// Predictable revenue: each non-lost customer's next order is expected at
+// last_order + avg_cycle. Sum the expected order value (their AOV) of everyone
+// due within the window. "At-risk" = customers already past due (recoverable).
+
+export interface ReorderForecast {
+  expectedRevenue: number   // due upcoming within the window
+  dueCount: number
+  atRiskRevenue: number      // overdue but not yet lost — recoverable
+  overdueCount: number
+  dueList: {
+    customer_id: string
+    customer_name: string
+    top_category: string
+    expected: number
+    days_until: number       // negative = overdue
+    churn_level: ChurnLevel
+  }[]
+}
+
+export function buildReorderForecast(nudges: ReorderNudge[], windowDays = 30): ReorderForecast {
+  let expectedRevenue = 0
+  let atRiskRevenue = 0
+  let overdueCount = 0
+  const dueList: ReorderForecast['dueList'] = []
+
+  for (const n of nudges) {
+    if (n.churn_level === 'LOST') continue
+    const aov = n.total_orders > 0 ? n.total_spent / n.total_orders : 0
+    const daysUntil = n.avg_order_cycle_days - n.days_since_last_order // <0 = overdue
+    if (daysUntil > windowDays) continue // not due yet
+
+    dueList.push({
+      customer_id: n.customer_id,
+      customer_name: n.customer_name,
+      top_category: n.top_category,
+      expected: Math.round(aov),
+      days_until: daysUntil,
+      churn_level: n.churn_level,
+    })
+    if (daysUntil >= 0) expectedRevenue += aov
+    else { atRiskRevenue += aov; overdueCount += 1 }
+  }
+
+  dueList.sort((a, b) => a.days_until - b.days_until)
+  return {
+    expectedRevenue: Math.round(expectedRevenue),
+    dueCount: dueList.filter(d => d.days_until >= 0).length,
+    atRiskRevenue: Math.round(atRiskRevenue),
+    overdueCount,
+    dueList,
+  }
+}
+
 function getTopCategory(orders: Order[]): string {
   const catCount = new Map<string, number>()
   for (const o of orders) {

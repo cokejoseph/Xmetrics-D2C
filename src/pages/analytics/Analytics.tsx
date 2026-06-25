@@ -2,10 +2,11 @@ import { useState, useMemo, useRef, useEffect } from 'react'
 import { ChevronUp, ChevronDown, Search, Check, MessageCircle, Copy } from 'lucide-react'
 import { useAppStore } from '../../stores/appStore'
 import { buildSKUForecast } from '../../lib/forecastEngine'
-import { buildReorderNudgeList } from '../../lib/reorderEngine'
+import { buildReorderNudgeList, buildReorderForecast } from '../../lib/reorderEngine'
 import type { ChurnLevel } from '../../lib/reorderEngine'
 import { buildProfitAnalysis } from '../../lib/profitEngine'
 import { buildCampaignAnalysis, campaignTotals } from '../../lib/campaignEngine'
+import { buildDiscountAnalysis } from '../../lib/discountEngine'
 import { useCampaignStore } from '../../stores/campaignStore'
 import { Card, Input } from '../../components/ui'
 import { RevenueAreaChart, OrdersBarChart, StatusDonut, ChannelBarChart } from '../../components/charts'
@@ -143,7 +144,7 @@ const FORECAST_STATUS_STYLE: Record<ForecastStatus, { label: string; dot: string
   UNPREDICTABLE:     { label: 'Unpredictable',      dot: 'bg-gray-300',   text: 'text-gray-400' },
 }
 
-type TabType = 'overview' | 'profit' | 'campaigns' | 'cohort' | 'products' | 'rto' | 'operations' | 'clv' | 'reorder' | 'forecast' | 'pincode'
+type TabType = 'overview' | 'profit' | 'campaigns' | 'discount' | 'cohort' | 'products' | 'rto' | 'operations' | 'clv' | 'reorder' | 'forecast' | 'pincode'
 type PincodeSortKey = 'orders' | 'revenue' | 'aov' | 'rto_rate'
 type ProductSortKey = 'revenue' | 'units' | 'return_rate' | 'margin' | 'dioh'
 
@@ -268,6 +269,7 @@ export default function Analytics() {
     at_risk:  allNudges.filter(n => n.churn_level === 'AT_RISK').length,
     active:   allNudges.filter(n => n.churn_level === 'ACTIVE').length,
   }), [allNudges])
+  const reorderForecast = useMemo(() => buildReorderForecast(allNudges), [allNudges])
 
   const periodMeta = PERIOD_OPTIONS.find(o => o.value === period)!
   const { from, to } = useMemo(() => getDateRange(period), [period])
@@ -293,6 +295,9 @@ export default function Analytics() {
   // the analytics period filter), so it reads from `orders`, not filteredOrders.
   const campaignResults = useMemo(() => buildCampaignAnalysis(campaigns, orders, products), [campaigns, orders, products])
   const campaignSum = useMemo(() => campaignTotals(campaignResults), [campaignResults])
+
+  // ── Discount Leakage — dependency + coupon cannibalization ──────────────────
+  const discount = useMemo(() => buildDiscountAnalysis(orders, customers), [orders, customers])
   const submitCampaign = () => {
     const spend = Math.round(Number(cSpend))
     if (!cName.trim() || !cCoupon.trim() || !Number.isFinite(spend) || spend <= 0) return
@@ -792,6 +797,7 @@ export default function Analytics() {
     { key: 'overview',   label: 'Overview' },
     { key: 'profit',     label: 'Profit Intelligence' },
     { key: 'campaigns',  label: 'Campaign ROI' },
+    { key: 'discount',   label: 'Discount Leakage' },
     { key: 'cohort',     label: 'Cohort Analysis' },
     { key: 'products',   label: 'Product Analysis' },
     { key: 'rto',        label: 'RTO Intelligence' },
@@ -818,6 +824,7 @@ export default function Analytics() {
             {tab === 'overview'    ? periodMeta.label
              : tab === 'profit'   ? 'True contribution margin after COD, RTO & all costs — ' + periodMeta.shortLabel
              : tab === 'campaigns'? 'Marketing ROI on true profit, not revenue — manual spend by coupon'
+             : tab === 'discount' ? 'Discount dependency & coupon cannibalization — the margin you give away'
              : tab === 'reorder'  ? 'Churn intelligence'
              : tab === 'cohort'   ? 'Customer retention by monthly cohort'
              : tab === 'products' ? 'Product-level performance, returns & inventory'
@@ -1389,6 +1396,134 @@ export default function Analytics() {
         )
       })()}
 
+      {/* ── Discount Leakage Tab ────────────────────────────────────────────── */}
+      {tab === 'discount' && (() => {
+        const money = (n: number) => `₹${Math.round(n).toLocaleString('en-IN')}`
+        const sevStyle = {
+          critical: { dot: 'bg-red-500',     box: 'bg-red-50/60 dark:bg-red-900/10 border-red-100 dark:border-red-900/20',     val: 'text-red-600 dark:text-red-400' },
+          warning:  { dot: 'bg-amber-500',   box: 'bg-amber-50/60 dark:bg-amber-900/10 border-amber-100 dark:border-amber-900/20', val: 'text-amber-600 dark:text-amber-400' },
+          good:     { dot: 'bg-emerald-500', box: 'bg-emerald-50/60 dark:bg-emerald-900/10 border-emerald-100 dark:border-emerald-900/20', val: 'text-emerald-600 dark:text-emerald-400' },
+        } as const
+        const d = discount
+        return (
+        <div className="space-y-4">
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+            <Card className="p-4">
+              <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-widest mb-2">Discount Given</p>
+              <p className="text-[24px] font-semibold text-gray-900 dark:text-white leading-none tabular-nums">{money(d.summary.totalDiscount)}</p>
+              <p className="text-[10px] text-gray-400 mt-1.5">{d.summary.discountedOrders} of {d.summary.totalOrders} orders</p>
+            </Card>
+            <Card className="p-4">
+              <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-widest mb-2">% of GMV Given Away</p>
+              <p className={`text-[24px] font-semibold leading-none tabular-nums ${d.summary.discountAsPctOfGmv >= 15 ? 'text-red-600 dark:text-red-400' : d.summary.discountAsPctOfGmv >= 8 ? 'text-amber-600 dark:text-amber-400' : 'text-gray-900 dark:text-white'}`}>{d.summary.discountAsPctOfGmv.toFixed(1)}%</p>
+              <p className="text-[10px] text-gray-400 mt-1.5">of gross order value</p>
+            </Card>
+            <Card className="p-4">
+              <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-widest mb-2">Discount-Dependent</p>
+              <p className={`text-[24px] font-semibold leading-none tabular-nums ${d.summary.dependentCustomers > 0 ? 'text-amber-600 dark:text-amber-400' : 'text-emerald-600 dark:text-emerald-400'}`}>{d.summary.dependentCustomers}</p>
+              <p className="text-[10px] text-gray-400 mt-1.5">customers who rarely pay full price</p>
+            </Card>
+            <Card className="p-4">
+              <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-widest mb-2">Cannibalized Margin</p>
+              <p className={`text-[24px] font-semibold leading-none tabular-nums ${d.summary.cannibalizedTotal > 0 ? 'text-red-600 dark:text-red-400' : 'text-emerald-600 dark:text-emerald-400'}`}>{money(d.summary.cannibalizedTotal)}</p>
+              <p className="text-[10px] text-gray-400 mt-1.5">to existing repeat customers</p>
+            </Card>
+          </div>
+
+          {d.insights.length > 0 && (
+            <Card className="p-5">
+              <h3 className="text-sm font-semibold text-gray-900 dark:text-white mb-1">Where your discounts leak</h3>
+              <p className="text-xs text-gray-400 mb-4">Margin you give away that you may not need to.</p>
+              <div className="space-y-2.5">
+                {d.insights.map((ins, i) => {
+                  const st = sevStyle[ins.severity]
+                  return (
+                    <div key={i} className={`flex items-start gap-3 p-3 rounded-lg border ${st.box}`}>
+                      <span className={`w-1.5 h-1.5 rounded-full mt-1.5 shrink-0 ${st.dot}`} />
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-baseline justify-between gap-3">
+                          <span className="text-[13px] font-semibold text-gray-900 dark:text-white">{ins.title}</span>
+                          {ins.value && <span className={`text-sm font-bold tabular-nums shrink-0 ${st.val}`}>{ins.value}</span>}
+                        </div>
+                        <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5 leading-relaxed">{ins.detail}</p>
+                      </div>
+                    </div>
+                  )
+                })}
+              </div>
+            </Card>
+          )}
+
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            {/* Coupon cannibalization */}
+            <Card>
+              <div className="px-4 py-3 border-b border-gray-100 dark:border-white/[0.05]">
+                <h3 className="text-[11px] font-medium text-gray-400 uppercase tracking-wider">Coupon Cannibalization</h3>
+                <p className="text-[10px] text-gray-400 mt-0.5">Codes redeemed by existing customers = margin given to people who'd buy anyway</p>
+              </div>
+              {d.coupons.length === 0
+                ? <p className="px-4 py-8 text-center text-sm text-gray-400">No coupon redemptions yet</p>
+                : <div className="divide-y divide-gray-50 dark:divide-white/[0.03]">
+                    {d.coupons.map(c => (
+                      <div key={c.code} className="px-4 py-3">
+                        <div className="flex items-center justify-between mb-1">
+                          <span className="text-sm font-medium text-gray-900 dark:text-white">{c.code}</span>
+                          <span className={`text-sm font-semibold tabular-nums ${c.cannibalizationPct >= 40 ? 'text-red-600 dark:text-red-400' : 'text-gray-700 dark:text-gray-300'}`}>{money(c.cannibalizedDiscount)} lost</span>
+                        </div>
+                        <div className="flex items-center justify-between text-[11px] text-gray-400">
+                          <span>{c.redemptions} redemptions · {c.toNew} new / {c.toExisting} existing</span>
+                          <span className={c.cannibalizationPct >= 40 ? 'text-red-500 font-medium' : ''}>{c.cannibalizationPct.toFixed(0)}% to existing</span>
+                        </div>
+                        <div className="mt-1.5 h-1.5 bg-gray-100 dark:bg-white/10 rounded-full overflow-hidden">
+                          <div className={`h-full rounded-full ${c.cannibalizationPct >= 40 ? 'bg-red-400' : 'bg-emerald-400'}`} style={{ width: `${c.cannibalizationPct}%` }} />
+                        </div>
+                      </div>
+                    ))}
+                  </div>}
+            </Card>
+
+            {/* Discount-dependent customers */}
+            <Card>
+              <div className="px-4 py-3 border-b border-gray-100 dark:border-white/[0.05]">
+                <h3 className="text-[11px] font-medium text-gray-400 uppercase tracking-wider">Most Discount-Dependent Customers</h3>
+                <p className="text-[10px] text-gray-400 mt-0.5">High % = they may only buy when there's a code</p>
+              </div>
+              {d.dependentCustomers.length === 0
+                ? <p className="px-4 py-8 text-center text-sm text-gray-400">No discounted orders yet</p>
+                : <div className="overflow-x-auto">
+                    <table className="w-full">
+                      <thead>
+                        <tr className="border-b border-gray-100 dark:border-white/[0.05]">
+                          <th className="px-4 py-2.5 text-left text-[11px] font-medium text-gray-400 uppercase tracking-wider">Customer</th>
+                          <th className="px-4 py-2.5 text-right text-[11px] font-medium text-gray-400 uppercase tracking-wider">Discounted</th>
+                          <th className="px-4 py-2.5 text-right text-[11px] font-medium text-gray-400 uppercase tracking-wider">Taken</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {d.dependentCustomers.slice(0, 12).map(c => (
+                          <tr key={c.id} className="border-b border-gray-50 dark:border-white/[0.03]">
+                            <td className="px-4 py-2.5">
+                              <div className="flex items-center gap-2">
+                                <span className="text-sm text-gray-900 dark:text-white">{c.name}</span>
+                                {c.neverFullPrice && <span className="text-[9px] font-semibold px-1.5 py-0.5 rounded-full bg-amber-50 dark:bg-amber-900/20 text-amber-600 dark:text-amber-400">NEVER FULL PRICE</span>}
+                              </div>
+                              <p className="text-[10px] text-gray-400">{c.totalOrders} orders</p>
+                            </td>
+                            <td className="px-4 py-2.5 text-right">
+                              <span className={`text-sm font-semibold tabular-nums ${c.dependencyPct === 100 ? 'text-amber-600 dark:text-amber-400' : 'text-gray-700 dark:text-gray-300'}`}>{c.dependencyPct.toFixed(0)}%</span>
+                            </td>
+                            <td className="px-4 py-2.5 text-right text-sm text-gray-600 dark:text-gray-400 tabular-nums">{money(c.totalDiscount)}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>}
+            </Card>
+          </div>
+        </div>
+        )
+      })()}
+
       {/* ── RTO Intelligence Tab ────────────────────────────────────────────── */}
       {tab === 'rto' && (
         <div className="space-y-4">
@@ -1809,6 +1944,31 @@ export default function Analytics() {
       {/* ── Reorder Engine Tab ───────────────────────────────────────────────── */}
       {tab === 'reorder' && (
         <div className="space-y-4">
+          {/* Predicted reorder revenue */}
+          <Card className="p-5">
+            <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4">
+              <div>
+                <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-widest mb-1.5">Predicted reorder revenue · next 30 days</p>
+                <p className="text-[28px] font-semibold text-gray-900 dark:text-white leading-none tabular-nums">₹{reorderForecast.expectedRevenue.toLocaleString('en-IN')}</p>
+                <p className="text-[11px] text-gray-400 mt-1.5">{reorderForecast.dueCount} customers due to reorder, based on their order cycles</p>
+              </div>
+              <div className="sm:text-right">
+                <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-widest mb-1.5">At-risk revenue</p>
+                <p className="text-lg font-semibold text-amber-600 dark:text-amber-400 tabular-nums leading-none">₹{reorderForecast.atRiskRevenue.toLocaleString('en-IN')}</p>
+                <p className="text-[11px] text-gray-400 mt-1.5">{reorderForecast.overdueCount} overdue — nudge now to recover</p>
+              </div>
+            </div>
+            {reorderForecast.dueList.length > 0 && (
+              <div className="mt-4 pt-4 border-t border-gray-100 dark:border-white/[0.05] flex flex-wrap gap-2">
+                {reorderForecast.dueList.slice(0, 8).map(c => (
+                  <span key={c.customer_id} className="inline-flex items-center gap-1 text-[11px] px-2.5 py-1 rounded-full bg-gray-50 dark:bg-white/[0.04] text-gray-600 dark:text-gray-300">
+                    {c.customer_name} · ₹{c.expected.toLocaleString('en-IN')} · <span className={c.days_until < 0 ? 'text-amber-600 dark:text-amber-400' : 'text-gray-400'}>{c.days_until >= 0 ? `in ${c.days_until}d` : `${Math.abs(c.days_until)}d overdue`}</span>
+                  </span>
+                ))}
+              </div>
+            )}
+          </Card>
+
           {/* Summary cards */}
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
             <Card className="p-4 text-center">

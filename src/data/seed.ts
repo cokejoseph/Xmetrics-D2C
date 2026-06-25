@@ -984,14 +984,16 @@ const BASE_DEMO_ORDERS: Order[] = [
 
 // ─── Payments (auto-generated from orders) ────────────────────────────────
 
-// Attach demo coupon codes to ~1/3 of orders so Campaign ROI has attributable
-// data. Real orders carry the coupon used at checkout; this only seeds the demo.
+// Attach demo coupon codes (with their discount) to ~1/3 of orders so Campaign
+// ROI and Discount Leakage have attributable data. Real orders carry the coupon
+// + discount applied at checkout; this only seeds the demo.
 const DEMO_CAMPAIGN_COUPONS = ['DIWALI25', 'FIRST10', 'WHATSAPP15']
-export const DEMO_ORDERS: Order[] = BASE_DEMO_ORDERS.map((o, i) =>
-  i % 3 === 0
-    ? { ...o, coupon_code: DEMO_CAMPAIGN_COUPONS[Math.floor(i / 3) % DEMO_CAMPAIGN_COUPONS.length] }
-    : { ...o, coupon_code: null },
-)
+const DEMO_COUPON_PCT: Record<string, number> = { DIWALI25: 0.20, FIRST10: 0.10, WHATSAPP15: 0.15 }
+export const DEMO_ORDERS: Order[] = BASE_DEMO_ORDERS.map((o, i) => {
+  if (i % 3 !== 0) return { ...o, coupon_code: null }
+  const code = DEMO_CAMPAIGN_COUPONS[Math.floor(i / 3) % DEMO_CAMPAIGN_COUPONS.length]
+  return { ...o, coupon_code: code, discount_amount: Math.round(o.gross_amount * DEMO_COUPON_PCT[code]) }
+})
 
 export const DEMO_PAYMENTS: Payment[] = DEMO_ORDERS.map(order => ({
   id: `pay-${order.id}`,

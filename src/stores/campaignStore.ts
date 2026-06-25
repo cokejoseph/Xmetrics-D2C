@@ -12,7 +12,7 @@ const KEY = 'xmetrics-campaigns'
 // tells the real story: one genuine winner, one "vanity trap" (great revenue
 // ROAS that loses money after RTO), and one clear loss.
 const DEMO_CAMPAIGNS: Campaign[] = [
-  { id: 'cmp-1', name: 'Diwali Sale',        coupon_code: 'DIWALI25',   spend: 1200, channel: 'Meta Ads',   started_at: '2026-06-10' },
+  { id: 'cmp-1', name: 'Diwali Sale',        coupon_code: 'DIWALI25',   spend: 600,  channel: 'Meta Ads',   started_at: '2026-06-10' },
   { id: 'cmp-2', name: 'First Order Offer',  coupon_code: 'FIRST10',    spend: 900,  channel: 'Google Ads', started_at: '2026-06-01' },
   { id: 'cmp-3', name: 'WhatsApp Broadcast', coupon_code: 'WHATSAPP15', spend: 1500, channel: 'WhatsApp',   started_at: '2026-06-15' },
 ]
