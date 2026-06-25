@@ -94,22 +94,22 @@ export default function Sidebar({ isOpen = false, onClose }: SidebarProps) {
 
         {/* Daily workflow */}
         <div className="space-y-0.5">
-          <SidebarItem to="/briefs/history"  icon={<History size={15} />}       label="Brief"       onClick={handleNavClick} />
-          <SidebarItem to="/orders"          icon={<ShoppingBag size={15} />}   label="Orders"      badge={ordersBadge} badgeTitle={`${ordersBadge} orders pending review`} onClick={handleNavClick} />
-          <SidebarItem to="/fulfillment"     icon={<Truck size={15} />}         label="Fulfillment" onClick={handleNavClick} />
-          <SidebarItem to="/exceptions"      icon={<AlertTriangle size={15} />} label="Exceptions"  badge={exceptionsBadge} badgeDanger badgeTitle={`${exceptionsBadge} unresolved exceptions`} onClick={handleNavClick} />
-          <SidebarItem to="/returns"         icon={<RotateCcw size={15} />}     label="Returns"     onClick={handleNavClick} />
-          <SidebarItem to="/payments"        icon={<CreditCard size={15} />}    label="Payments"    onClick={handleNavClick} />
-          <SidebarItem to="/reconciliation" icon={<Scale size={15} />}          label="Reconcile"   onClick={handleNavClick} />
-          <SidebarItem to="/analytics"       icon={<BarChart3 size={15} />}     label="Analytics"   badge={analyticsBadge} badgeTitle={analyticsBadgeTitle || `${analyticsBadge} items need attention`} onClick={handleNavClick} />
+          <SidebarItem to="/dashboard"       icon={<LayoutDashboard size={15} />} label="Dashboard"  onClick={handleNavClick} />
+          <SidebarItem to="/orders"          icon={<ShoppingBag size={15} />}     label="Orders"     badge={ordersBadge} badgeTitle={`${ordersBadge} orders pending review`} onClick={handleNavClick} />
+          <SidebarItem to="/fulfillment"     icon={<Truck size={15} />}           label="Fulfillment" onClick={handleNavClick} />
+          <SidebarItem to="/exceptions"      icon={<AlertTriangle size={15} />}   label="Exceptions" badge={exceptionsBadge} badgeDanger badgeTitle={`${exceptionsBadge} unresolved exceptions`} onClick={handleNavClick} />
+          <SidebarItem to="/returns"         icon={<RotateCcw size={15} />}       label="Returns"    onClick={handleNavClick} />
+          <SidebarItem to="/payments"        icon={<CreditCard size={15} />}      label="Payments"   onClick={handleNavClick} />
+          <SidebarItem to="/reconciliation"  icon={<Scale size={15} />}           label="Reconcile"  onClick={handleNavClick} />
+          <SidebarItem to="/analytics"       icon={<BarChart3 size={15} />}       label="Analytics"  badge={analyticsBadge} badgeTitle={analyticsBadgeTitle || `${analyticsBadge} items need attention`} onClick={handleNavClick} />
         </div>
 
         {/* Reference */}
         <div className="mt-3 pt-3 border-t border-gray-100 dark:border-white/[0.05] space-y-0.5">
-          <SidebarItem to="/dashboard"   icon={<LayoutDashboard size={15} />} label="Dashboard" onClick={handleNavClick} />
-          <SidebarItem to="/customers"   icon={<Users size={15} />}           label="Customers" onClick={handleNavClick} />
-          <SidebarItem to="/products"    icon={<Package size={15} />}         label="Products"  onClick={handleNavClick} />
-          <SidebarItem to="/audit-log"   icon={<ClipboardList size={15} />}   label="Audit Log" onClick={handleNavClick} />
+          <SidebarItem to="/briefs/history" icon={<History size={15} />}       label="Brief"     onClick={handleNavClick} />
+          <SidebarItem to="/customers"      icon={<Users size={15} />}         label="Customers" onClick={handleNavClick} />
+          <SidebarItem to="/products"       icon={<Package size={15} />}       label="Products"  onClick={handleNavClick} />
+          <SidebarItem to="/audit-log"      icon={<ClipboardList size={15} />} label="Audit Log" onClick={handleNavClick} />
         </div>
 
         {/* Settings */}

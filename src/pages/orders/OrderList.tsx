@@ -1,6 +1,6 @@
 import { useState, useMemo, useEffect } from 'react'
 import { Link } from 'react-router-dom'
-import { Plus, Search, PackageOpen, Download, Send, Loader2, Zap } from 'lucide-react'
+import { Plus, Search, Download, Send, Loader2, Zap } from 'lucide-react'
 import { useAppStore } from '../../stores/appStore'
 import { Button, Input, Card, Pagination } from '../../components/ui'
 import {
@@ -12,13 +12,13 @@ import { exportCSV } from '../../lib/exportCSV'
 import { showToast } from '../../lib/toast'
 import type { Order, OmsPushStatus } from '../../types'
 
-type TabType = 'all' | 'needs-decision' | 'ready-to-push' | 'ready'
+type TabType = 'all' | 'needs-decision' | 'ready-to-push'
 
 export default function OrderList() {
   useEffect(() => { document.title = 'Orders · Xmetrics' }, [])
   const {
     orders, approveOrder, holdOrder, bulkApprove, bulkHold,
-    startPacking, pushToOms, bulkPushToOms,
+    pushToOms, bulkPushToOms,
   } = useAppStore()
 
   const [tab, setTab] = useState<TabType>('all')
@@ -47,19 +47,11 @@ export default function OrderList() {
     [orders]
   )
 
-  const readyOrders = useMemo(() =>
-    orders.filter(o =>
-      o.payment_status === 'PAID' &&
-      (o.rto_review_status === 'APPROVED' || o.rto_review_status === 'NOT_REQUIRED') &&
-      (o.fulfillment_status === 'CONFIRMED' || o.fulfillment_status === 'PROCESSING')
-    ), [orders])
-
   const filtered = useMemo(() => {
     let list = orders
 
     if (tab === 'needs-decision') list = needsDecisionOrders
     if (tab === 'ready-to-push') list = readyToPushOrders
-    if (tab === 'ready') list = readyOrders
 
     if (search) {
       const q = search.toLowerCase()
@@ -82,7 +74,7 @@ export default function OrderList() {
     }
 
     return list.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
-  }, [orders, needsDecisionOrders, readyToPushOrders, readyOrders, tab, search, filterChannel, filterPayment, filterFulfillment, filterRTO])
+  }, [orders, needsDecisionOrders, readyToPushOrders, tab, search, filterChannel, filterPayment, filterFulfillment, filterRTO])
 
   const pagedOrders = useMemo(
     () => filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE),
@@ -102,11 +94,6 @@ export default function OrderList() {
     setSelected(prev =>
       prev.length === pagedOrders.length && pagedOrders.length > 0 ? [] : pagedOrders.map(o => o.id)
     )
-
-  const handleStartPacking = () => {
-    startPacking(selected)
-    setSelected([])
-  }
 
   const handlePushSingle = async (orderId: string) => {
     setPushingOrders(prev => new Set(prev).add(orderId))
@@ -229,9 +216,6 @@ export default function OrderList() {
         <TabBtn active={tab === 'ready-to-push'} onClick={() => { setTab('ready-to-push'); setSelected([]); setPage(1) }} badge={readyToPushOrders.length} badgeBrand>
           Ready to Push
         </TabBtn>
-        <TabBtn active={tab === 'ready'} onClick={() => { setTab('ready'); setSelected([]); setPage(1) }} badge={readyOrders.length}>
-          Ready to Pack
-        </TabBtn>
       </div>
 
       {/* Bulk bar — All tab */}
@@ -275,20 +259,6 @@ export default function OrderList() {
           >
             {isBulkPushing ? <Loader2 size={13} className="animate-spin" /> : <Send size={13} />}
             {isBulkPushing ? 'Pushing…' : 'Push to OMS'}
-          </button>
-          <button onClick={() => setSelected([])} className="text-white/70 hover:text-white text-sm">✕ Clear</button>
-        </div>
-      )}
-
-      {/* Bulk bar — Ready to Pack tab */}
-      {tab === 'ready' && selected.length > 0 && (
-        <div className="flex items-center gap-3 px-4 py-3 bg-brand-600 text-white rounded-md">
-          <span className="text-sm font-medium">{selected.length} order{selected.length > 1 ? 's' : ''} selected</span>
-          <button
-            onClick={handleStartPacking}
-            className="flex items-center gap-1.5 ml-auto px-3 py-1.5 bg-white text-brand-700 text-sm font-medium rounded-md hover:bg-brand-50 transition-colors"
-          >
-            <PackageOpen size={14} /> Start Packing
           </button>
           <button onClick={() => setSelected([])} className="text-white/70 hover:text-white text-sm">✕ Clear</button>
         </div>
@@ -359,16 +329,8 @@ export default function OrderList() {
           <p className="text-gray-400 text-xs mt-1">Approved orders with oms_push_status PENDING appear here</p>
         </Card>
       )}
-      {tab === 'ready' && filtered.length === 0 && (
-        <Card className="p-12 text-center">
-          <PackageOpen size={32} className="mx-auto text-gray-300 mb-3" />
-          <p className="text-gray-500 text-sm font-medium">No orders ready to pack</p>
-          <p className="text-gray-400 text-xs mt-1">Orders appear here once they're paid and cleared RTO review</p>
-        </Card>
-      )}
-
       {/* Table */}
-      {!((tab === 'ready' || tab === 'ready-to-push') && filtered.length === 0) && (
+      {!(tab === 'ready-to-push' && filtered.length === 0) && (
         <Card>
           <div className="overflow-x-auto">
             <table className="w-full" aria-label={`${filtered.length} orders`} role="table">
@@ -414,7 +376,7 @@ export default function OrderList() {
                     showOmsColumn={showOmsColumn}
                   />
                 ))}
-                {pagedOrders.length === 0 && tab !== 'ready' && tab !== 'ready-to-push' && (
+                {pagedOrders.length === 0 && tab !== 'ready-to-push' && (
                   <tr>
                     <td colSpan={11} className="px-4 py-12 text-center text-gray-500 text-sm">
                       No orders match your filters
@@ -536,28 +498,8 @@ function OrderRow({
 }
 
 function RoutingBadge({ score }: { score: number }) {
-  if (score < 50) {
-    return (
-      <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-green-700 dark:text-green-400">
-        <span className="w-1.5 h-1.5 rounded-full bg-green-500 shrink-0" />
-        GREEN
-      </span>
-    )
-  }
-  if (score < 60) {
-    return (
-      <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-amber-700 dark:text-amber-400">
-        <span className="w-1.5 h-1.5 rounded-full bg-amber-500 shrink-0" />
-        YELLOW
-      </span>
-    )
-  }
-  return (
-    <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-red-700 dark:text-red-400">
-      <span className="w-1.5 h-1.5 rounded-full bg-red-500 shrink-0" />
-      RED
-    </span>
-  )
+  const color = score < 50 ? 'bg-green-500' : score < 60 ? 'bg-amber-500' : 'bg-red-500'
+  return <span className={`w-2 h-2 rounded-full ${color} shrink-0`} />
 }
 
 function OmsPushStatusBadge({ status, pushedAt }: { status?: OmsPushStatus | null; pushedAt?: string | null }) {
