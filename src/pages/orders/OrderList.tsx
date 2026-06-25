@@ -41,7 +41,7 @@ export default function OrderList() {
   const readyToPushOrders = useMemo(() =>
     orders.filter(o =>
       (o.rto_review_status === 'APPROVED' || o.rto_review_status === 'NOT_REQUIRED') &&
-      (o.oms_push_status === 'PENDING' || o.oms_push_status === 'FAILED') &&
+      (o.oms_push_status == null || o.oms_push_status === 'PENDING' || o.oms_push_status === 'FAILED') &&
       (o.fulfillment_status === 'CONFIRMED' || o.fulfillment_status === 'PROCESSING')
     ),
     [orders]
@@ -444,10 +444,7 @@ function OrderRow({
         <FulfillmentBadge status={order.fulfillment_status} />
       </td>
       <td className="px-4 py-2.5">
-        <div className="flex flex-col gap-1">
-          <RTOScoreBar score={order.rto_risk_score} />
-          <RoutingBadge score={order.rto_risk_score} />
-        </div>
+        <RTOScoreBar score={order.rto_risk_score} />
       </td>
       {showOmsColumn && (
         <td className="px-4 py-2.5">
@@ -497,10 +494,6 @@ function OrderRow({
   )
 }
 
-function RoutingBadge({ score }: { score: number }) {
-  const color = score < 50 ? 'bg-green-500' : score < 60 ? 'bg-amber-500' : 'bg-red-500'
-  return <span className={`w-2 h-2 rounded-full ${color} shrink-0`} />
-}
 
 function OmsPushStatusBadge({ status, pushedAt }: { status?: OmsPushStatus | null; pushedAt?: string | null }) {
   if (!status || status === 'NOT_APPLICABLE') return <span className="text-[11px] text-gray-400">—</span>

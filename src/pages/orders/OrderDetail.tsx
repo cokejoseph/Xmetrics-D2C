@@ -76,7 +76,7 @@ export default function OrderDetail() {
   const rtoScore = order.rto_risk_score
   const routingTier = rtoScore < 50 ? 'GREEN' : rtoScore < 60 ? 'YELLOW' : 'RED'
   const omsPushStatus = order.oms_push_status
-  const canPushToOms = (omsPushStatus === 'PENDING' || omsPushStatus === 'FAILED')
+  const canPushToOms = (omsPushStatus == null || omsPushStatus === 'PENDING' || omsPushStatus === 'FAILED')
     && (order.rto_review_status === 'APPROVED' || order.rto_review_status === 'NOT_REQUIRED')
 
   const handlePushToOms = async () => {
