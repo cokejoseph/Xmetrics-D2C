@@ -1,5 +1,6 @@
 import { useState, useMemo, useEffect } from 'react'
-import { Search, MessageCircle, Copy, Check, X, History } from 'lucide-react'
+import { Link } from 'react-router-dom'
+import { Search, MessageCircle, Copy, Check, X, History, ArrowRight } from 'lucide-react'
 import { useAppStore } from '../../stores/appStore'
 import { generateDailyBrief, getOrderDates, dayLabel, buildWhatsAppText } from '../../lib/briefEngine'
 import { Card, Input } from '../../components/ui'
@@ -151,9 +152,17 @@ export default function BriefHistory() {
                   {selectedBrief.actions.map((a, i) => {
                     const dot = a.priority === 'HIGH' ? 'bg-red-500' : a.priority === 'MEDIUM' ? 'bg-amber-500' : 'bg-green-500'
                     return (
-                      <div key={i} className="flex items-start gap-2 text-sm text-gray-700 dark:text-gray-300">
-                        <span className={`mt-1.5 w-2 h-2 rounded-full shrink-0 ${dot}`} />
-                        <span>{a.text}</span>
+                      <div key={i} className="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300">
+                        <span className={`w-2 h-2 rounded-full shrink-0 ${dot}`} />
+                        <span className="flex-1">{a.text}</span>
+                        {a.link && (
+                          <Link
+                            to={a.link}
+                            className="shrink-0 flex items-center gap-1 text-[11px] font-semibold text-amber-700 dark:text-amber-400 opacity-70 hover:opacity-100 transition-opacity whitespace-nowrap"
+                          >
+                            Go <ArrowRight size={10} />
+                          </Link>
+                        )}
                       </div>
                     )
                   })}

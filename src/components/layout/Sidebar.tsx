@@ -3,7 +3,7 @@ import { NavLink, useNavigate } from 'react-router-dom'
 import {
   LayoutDashboard, ShoppingBag, Truck, CreditCard,
   AlertTriangle, Package, Users, BarChart3, Settings,
-  History, LogOut, RotateCcw, X, Scale,
+  History, LogOut, RotateCcw, X, Scale, ClipboardList,
 } from 'lucide-react'
 import { useAppStore } from '../../stores/appStore'
 import { useAuthStore } from '../../stores/authStore'
@@ -109,6 +109,7 @@ export default function Sidebar({ isOpen = false, onClose }: SidebarProps) {
           <SidebarItem to="/dashboard"   icon={<LayoutDashboard size={15} />} label="Dashboard" onClick={handleNavClick} />
           <SidebarItem to="/customers"   icon={<Users size={15} />}           label="Customers" onClick={handleNavClick} />
           <SidebarItem to="/products"    icon={<Package size={15} />}         label="Products"  onClick={handleNavClick} />
+          <SidebarItem to="/audit-log"   icon={<ClipboardList size={15} />}   label="Audit Log" onClick={handleNavClick} />
         </div>
 
         {/* Settings */}

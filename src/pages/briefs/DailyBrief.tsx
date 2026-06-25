@@ -1,5 +1,6 @@
 import { useState, useMemo, useEffect } from 'react'
-import { Copy, CheckCheck, TrendingUp, TrendingDown, Package, Users, Zap, AlertTriangle } from 'lucide-react'
+import { Link } from 'react-router-dom'
+import { Copy, CheckCheck, TrendingUp, TrendingDown, Package, Users, Zap, AlertTriangle, ArrowRight } from 'lucide-react'
 import { useAppStore } from '../../stores/appStore'
 import { generateDailyBrief, buildWhatsAppText, getOrderDates, dayLabel } from '../../lib/briefEngine'
 import { Card, Button, Modal } from '../../components/ui'
@@ -199,9 +200,17 @@ export default function DailyBrief() {
           ) : (
             <div className="space-y-2">
               {actions.map((action, i) => (
-                <div key={i} className={`flex items-start gap-3 px-3 py-2.5 rounded-lg text-sm ${PRIORITY_STYLE[action.priority]}`}>
-                  <span className={`mt-1.5 w-2 h-2 rounded-full shrink-0 ${PRIORITY_DOT[action.priority]}`} />
-                  <span>{action.text}</span>
+                <div key={i} className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm ${PRIORITY_STYLE[action.priority]}`}>
+                  <span className={`w-2 h-2 rounded-full shrink-0 ${PRIORITY_DOT[action.priority]}`} />
+                  <span className="flex-1">{action.text}</span>
+                  {action.link && (
+                    <Link
+                      to={action.link}
+                      className="shrink-0 flex items-center gap-1 text-[11px] font-semibold opacity-70 hover:opacity-100 transition-opacity whitespace-nowrap"
+                    >
+                      Go <ArrowRight size={10} />
+                    </Link>
+                  )}
                 </div>
               ))}
             </div>

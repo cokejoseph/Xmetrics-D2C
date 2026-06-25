@@ -134,6 +134,7 @@ export function generateDailyBrief(
     actions.push({
       priority: 'HIGH',
       text: `${failedPaymentsToday} payment failure${failedPaymentsToday > 1 ? 's' : ''} today — review and retry collection`,
+      link: '/payments',
     })
   }
 
@@ -141,6 +142,7 @@ export function generateDailyBrief(
     actions.push({
       priority: 'HIGH',
       text: `RTO rate spiked to ${Math.round(rtoRate * 100)}% (threshold: 15%) — review high-risk orders`,
+      link: '/orders',
     })
   }
 
@@ -151,6 +153,7 @@ export function generateDailyBrief(
     actions.push({
       priority: 'MEDIUM',
       text: `${pendingHighRisk} high-RTO order${pendingHighRisk > 1 ? 's' : ''} pending review in the Review Queue`,
+      link: '/orders',
     })
   }
 
@@ -161,6 +164,7 @@ export function generateDailyBrief(
     actions.push({
       priority: 'MEDIUM',
       text: `${lowStockProducts.length} SKU${lowStockProducts.length > 1 ? 's' : ''} below reorder threshold — ${lowStockProducts[0].name}${lowStockProducts.length > 1 ? ` and ${lowStockProducts.length - 1} more` : ''}`,
+      link: '/products',
     })
   }
 
@@ -169,6 +173,7 @@ export function generateDailyBrief(
     actions.push({
       priority: 'LOW',
       text: `${deliveredToday} order${deliveredToday > 1 ? 's' : ''} delivered today — ${Math.round((1 - rtoRate) * 100)}% delivery success rate`,
+      link: '/fulfillment',
     })
   }
 
@@ -176,6 +181,7 @@ export function generateDailyBrief(
     actions.push({
       priority: 'LOW',
       text: `Today's revenue ₹${Math.round(totalRevenue).toLocaleString('en-IN')} across ${dayOrders.length} orders — margin ${Math.round(trueMargin)}%`,
+      link: '/dashboard',
     })
   }
 

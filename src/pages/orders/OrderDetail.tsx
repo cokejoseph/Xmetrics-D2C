@@ -1,6 +1,6 @@
 import { useParams, Link } from 'react-router-dom'
 import { useState, useEffect } from 'react'
-import { ChevronRight, MapPin, Package, Clock, User, Truck, CreditCard, ShieldAlert, Lock } from 'lucide-react'
+import { ChevronRight, MapPin, Package, Clock, User, Truck, CreditCard, ShieldAlert, Lock, Send, Loader2, CheckCircle2, XCircle } from 'lucide-react'
 import { useAppStore } from '../../stores/appStore'
 import { Card, Badge } from '../../components/ui'
 import {
@@ -10,12 +10,14 @@ import {
 import { calculateRTOScore } from '../../lib/services'
 import { lookupPincode } from '../../lib/pincodeService'
 import { useCanViewFinancials } from '../../hooks/useCurrentRole'
+import { showToast } from '../../lib/toast'
 import type { PincodeResult } from '../../lib/pincodeService'
 
 export default function OrderDetail() {
   const { id } = useParams<{ id: string }>()
-  const { orders, products, customers, currentBrand, updateOrder } = useAppStore()
+  const { orders, products, customers, currentBrand, updateOrder, pushToOms } = useAppStore()
   const [pincodeData, setPincodeData] = useState<PincodeResult | null>(null)
+  const [isPushing, setIsPushing] = useState(false)
 
   // All hooks must be called unconditionally before any early returns
   const canViewFinancials = useCanViewFinancials()
@@ -70,6 +72,20 @@ export default function OrderDetail() {
   const canMarkPaid = order.payment_status === 'AWAITING_PAYMENT'
     && order.payment_method !== 'COD'
     && order.channel === 'MANUAL'
+
+  const rtoScore = order.rto_risk_score
+  const routingTier = rtoScore < 50 ? 'GREEN' : rtoScore < 60 ? 'YELLOW' : 'RED'
+  const omsPushStatus = order.oms_push_status
+  const canPushToOms = (omsPushStatus === 'PENDING' || omsPushStatus === 'FAILED')
+    && (order.rto_review_status === 'APPROVED' || order.rto_review_status === 'NOT_REQUIRED')
+
+  const handlePushToOms = async () => {
+    setIsPushing(true)
+    const { ok, error } = await pushToOms(order.id, 'MANUAL')
+    setIsPushing(false)
+    if (ok) showToast.success('Order pushed to OMS')
+    else showToast.error(error ?? 'Push failed — check OMS webhook settings')
+  }
 
   return (
     <div className="space-y-4">
@@ -250,6 +266,73 @@ export default function OrderDetail() {
               {order.shipping_address.city}, {order.shipping_address.state}
             </p>
             <p className="text-sm text-gray-500">{order.shipping_address.pincode}</p>
+          </Card>
+
+          {/* Routing Decision */}
+          <Card className="p-4">
+            <div className="flex items-center gap-2 mb-3">
+              <Send size={15} className="text-gray-400" />
+              <h2 className="text-sm font-medium text-gray-900 dark:text-white">Routing Decision</h2>
+            </div>
+            <div className="flex items-center justify-between mb-3">
+              <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold ${
+                routingTier === 'GREEN'
+                  ? 'bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-400'
+                  : routingTier === 'YELLOW'
+                    ? 'bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-400'
+                    : 'bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-400'
+              }`}>
+                <span className={`w-1.5 h-1.5 rounded-full ${
+                  routingTier === 'GREEN' ? 'bg-green-500' : routingTier === 'YELLOW' ? 'bg-amber-500' : 'bg-red-500'
+                }`} />
+                {routingTier}
+              </span>
+              <span className="text-xs text-gray-400 dark:text-gray-500">
+                {routingTier === 'GREEN' && 'Auto-push eligible'}
+                {routingTier === 'YELLOW' && 'Configurable'}
+                {routingTier === 'RED' && 'Manual review'}
+              </span>
+            </div>
+
+            {/* OMS push status */}
+            <div className="flex items-center justify-between text-sm mb-3">
+              <span className="text-gray-500 dark:text-gray-400">OMS Push</span>
+              {(!omsPushStatus || omsPushStatus === 'NOT_APPLICABLE') && (
+                <span className="text-xs text-gray-400">—</span>
+              )}
+              {omsPushStatus === 'PUSHED' && (
+                <span className="flex items-center gap-1 text-xs font-medium text-green-700 dark:text-green-400">
+                  <CheckCircle2 size={12} /> Pushed
+                  {order.oms_pushed_at && (
+                    <span className="text-gray-400 font-normal ml-1">
+                      {new Date(order.oms_pushed_at).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })}
+                    </span>
+                  )}
+                </span>
+              )}
+              {omsPushStatus === 'FAILED' && (
+                <span className="flex items-center gap-1 text-xs font-medium text-red-600 dark:text-red-400">
+                  <XCircle size={12} /> Failed
+                </span>
+              )}
+              {omsPushStatus === 'PENDING' && (
+                <span className="text-xs text-gray-500 dark:text-gray-400">Queued</span>
+              )}
+            </div>
+
+            {canPushToOms && (
+              <button
+                onClick={handlePushToOms}
+                disabled={isPushing}
+                className="w-full flex items-center justify-center gap-2 py-2 rounded-lg bg-brand-600 hover:bg-brand-500 text-white text-sm font-medium transition-colors disabled:opacity-60"
+              >
+                {isPushing ? <><Loader2 size={13} className="animate-spin" /> Pushing…</> : <><Send size={13} /> Push to OMS</>}
+              </button>
+            )}
+
+            {omsPushStatus === 'FAILED' && !canPushToOms && (
+              <p className="text-xs text-red-600 dark:text-red-400 mt-1">Push failed — approve order first or check webhook settings</p>
+            )}
           </Card>
 
           {/* RTO Intelligence */}

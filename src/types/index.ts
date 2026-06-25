@@ -345,6 +345,7 @@ export interface BriefDeliveryHealth {
 export interface BriefAction {
   priority: 'HIGH' | 'MEDIUM' | 'LOW'
   text: string
+  link?: string
 }
 
 export interface BriefData {
