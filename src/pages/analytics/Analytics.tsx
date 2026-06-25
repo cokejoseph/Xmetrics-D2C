@@ -793,20 +793,29 @@ export default function Analytics() {
     hour: 'Hourly', day: 'Daily', week: 'Weekly', month: 'Monthly',
   }
 
-  const TABS: { key: TabType; label: string }[] = [
-    { key: 'overview',   label: 'Overview' },
-    { key: 'profit',     label: 'Profit Intelligence' },
-    { key: 'campaigns',  label: 'Campaign ROI' },
-    { key: 'discount',   label: 'Discount Leakage' },
-    { key: 'cohort',     label: 'Cohort Analysis' },
-    { key: 'products',   label: 'Product Analysis' },
-    { key: 'rto',        label: 'RTO Intelligence' },
-    { key: 'operations', label: 'Operations' },
-    { key: 'clv',        label: 'Customer LTV' },
-    { key: 'reorder',    label: 'Reorder Engine' },
-    { key: 'forecast',   label: 'Demand Forecast' },
-    { key: 'pincode',    label: 'Pincode Intelligence' },
+  // Reports grouped into categories — a clean two-level nav instead of a flat
+  // wall of tabs. Top row = category; second row = the reports within it.
+  const CATEGORIES: { key: string; label: string; tabs: { key: TabType; label: string }[] }[] = [
+    { key: 'overview',  label: 'Overview',     tabs: [{ key: 'overview', label: 'Overview' }] },
+    { key: 'financial', label: 'Financial',    tabs: [{ key: 'profit', label: 'Profit Intelligence' }] },
+    { key: 'orders',    label: 'Orders & Ops', tabs: [
+      { key: 'products',   label: 'Product Analysis' },
+      { key: 'rto',        label: 'RTO Intelligence' },
+      { key: 'operations', label: 'Operations' },
+      { key: 'forecast',   label: 'Demand Forecast' },
+      { key: 'pincode',    label: 'Pincode Intelligence' },
+    ] },
+    { key: 'customer',  label: 'Customers',    tabs: [
+      { key: 'clv',     label: 'Customer LTV' },
+      { key: 'cohort',  label: 'Cohort Analysis' },
+      { key: 'reorder', label: 'Reorder Engine' },
+    ] },
+    { key: 'marketing', label: 'Marketing',    tabs: [
+      { key: 'campaigns', label: 'Campaign ROI' },
+      { key: 'discount',  label: 'Discount Leakage' },
+    ] },
   ]
+  const activeCategory = CATEGORIES.find(c => c.tabs.some(t => t.key === tab)) ?? CATEGORIES[0]
 
   const onPincodeSort = (k: PincodeSortKey) => {
     if (pincodeSort === k) setPincodeSortAsc(p => !p)
@@ -839,13 +848,37 @@ export default function Analytics() {
         )}
       </div>
 
-      <div className="flex gap-6 border-b border-gray-100 overflow-x-auto">
-        {TABS.map(t => (
-          <button key={t.key} onClick={() => setTab(t.key)} className={`tab-line ${tab === t.key ? 'active' : ''}`}>
-            {t.label}
+      {/* Category nav (top) */}
+      <div className="flex gap-6 border-b border-gray-100 dark:border-white/[0.05] overflow-x-auto">
+        {CATEGORIES.map(c => (
+          <button
+            key={c.key}
+            onClick={() => setTab(c.tabs[0].key)}
+            className={`tab-line ${activeCategory.key === c.key ? 'active' : ''}`}
+          >
+            {c.label}
           </button>
         ))}
       </div>
+
+      {/* Report nav (within category) — only when the category has >1 report */}
+      {activeCategory.tabs.length > 1 && (
+        <div className="flex gap-2 flex-wrap -mt-1">
+          {activeCategory.tabs.map(t => (
+            <button
+              key={t.key}
+              onClick={() => setTab(t.key)}
+              className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${
+                tab === t.key
+                  ? 'bg-brand-600 text-white'
+                  : 'bg-gray-100 dark:bg-white/[0.06] text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-white/[0.1]'
+              }`}
+            >
+              {t.label}
+            </button>
+          ))}
+        </div>
+      )}
 
       {/* ── Overview Tab ─────────────────────────────────────────────────────── */}
       {tab === 'overview' && (
