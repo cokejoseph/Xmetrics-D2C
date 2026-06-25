@@ -51,27 +51,34 @@ Deno.serve(async (req: Request) => {
   if (req.method === 'OPTIONS') return new Response(null, { headers: CORS })
   if (req.method !== 'POST') return json({ error: 'Method Not Allowed' }, 405)
 
-  // Verify JWT
   const authHeader = req.headers.get('authorization') ?? ''
-  const { data: { user }, error: authErr } = await supabase.auth.getUser(
-    authHeader.replace('Bearer ', '')
-  )
-  if (authErr || !user) return json({ error: 'Unauthorized' }, 401)
+  // Internal calls (the auto-retry cron) present the service-role key and skip
+  // user auth — service-role is already fully trusted.
+  const isInternal = !!SUPABASE_SERVICE_KEY && authHeader === `Bearer ${SUPABASE_SERVICE_KEY}`
 
   const body = await req.json()
   const { action, brand_id, order_id } = body
-
   if (!brand_id) return json({ error: 'brand_id required' }, 400)
 
-  // Confirm caller is a brand member
-  const { data: membership } = await supabase
-    .from('brand_members')
-    .select('role')
-    .eq('brand_id', brand_id)
-    .eq('user_id', user.id)
-    .single()
+  let actorId: string | null = null
+  let actorName = 'system'
+  if (!isInternal) {
+    const { data: { user }, error: authErr } = await supabase.auth.getUser(
+      authHeader.replace('Bearer ', '')
+    )
+    if (authErr || !user) return json({ error: 'Unauthorized' }, 401)
 
-  if (!membership) return json({ error: 'Forbidden' }, 403)
+    const { data: membership } = await supabase
+      .from('brand_members')
+      .select('role')
+      .eq('brand_id', brand_id)
+      .eq('user_id', user.id)
+      .single()
+    if (!membership) return json({ error: 'Forbidden' }, 403)
+
+    actorId = user.id
+    actorName = membership.role
+  }
 
   // ── get_push_log ─────────────────────────────────────────────────────────
   if (action === 'get_push_log') {
@@ -235,8 +242,8 @@ Deno.serve(async (req: Request) => {
       order_id,
       order_number: order.order_number,
       action_type: pushType === 'AUTO' ? 'AUTO_PUSHED_TO_OMS' : 'PUSHED_TO_OMS',
-      actor_id: user.id,
-      actor_name: membership.role,
+      actor_id: actorId,
+      actor_name: actorName,
       action_timestamp: new Date().toISOString(),
       original_rto_score: order.rto_risk_score,
       original_status: order.oms_push_status,

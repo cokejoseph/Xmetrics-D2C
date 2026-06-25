@@ -230,7 +230,34 @@ Deno.serve(async (req: Request) => {
   }
 
   const topic = req.headers.get('x-shopify-topic') ?? ''
-  const payload = JSON.parse(bodyText)
+  const webhookId = req.headers.get('x-shopify-webhook-id') ?? ''
+
+  // Guard the parse — a malformed body must 400, not throw an unhandled 500.
+  // deno-lint-ignore no-explicit-any
+  let payload: any
+  try {
+    payload = JSON.parse(bodyText)
+  } catch {
+    return new Response(JSON.stringify({ error: 'Invalid JSON body' }), {
+      status: 400, headers: { 'Content-Type': 'application/json' },
+    })
+  }
+
+  // ── Idempotency ────────────────────────────────────────────────────────────
+  // Shopify retries on non-200 and occasionally double-sends. Record each
+  // delivery's unique id; a UNIQUE violation means we've already processed it,
+  // so we ack and skip — otherwise the side-effects (customer counters, payment
+  // rows, exceptions) would run twice.
+  if (webhookId) {
+    const { error: dupErr } = await supabase
+      .from('webhook_events')
+      .insert({ provider: 'shopify', event_id: webhookId, brand_id: brandId, topic })
+    if (dupErr) {
+      return new Response(JSON.stringify({ ok: true, deduped: true }), {
+        status: 200, headers: { 'Content-Type': 'application/json' },
+      })
+    }
+  }
 
   try {
     if (topic === 'orders/create' || topic === 'orders/updated' || topic === 'orders/paid') {
@@ -245,7 +272,15 @@ Deno.serve(async (req: Request) => {
     // Acknowledge all other topics silently (Shopify requires 200 fast)
   } catch (e) {
     console.error(`[shopify-webhooks] Error processing ${topic}:`, e)
-    // Still return 200 so Shopify doesn't retry — log the error instead
+    // Dead-letter: capture the raw event so it can be replayed, not silently lost.
+    await supabase.from('failed_webhooks').insert({
+      provider: 'shopify',
+      event_id: webhookId || null,
+      brand_id: brandId,
+      topic,
+      payload,
+      error: e instanceof Error ? e.message : String(e),
+    }).catch(() => { /* dead-letter is best-effort */ })
   }
 
   // Update last_sync_at
@@ -269,7 +304,8 @@ async function upsertCustomer(
   brandId: string,
   sc: ShopifyCustomer,
   addr: ShopifyAddress | null,
-  orderAmount: number
+  orderAmount: number,
+  isCreate: boolean
 ): Promise<string | null> {
   const name = [sc.first_name, sc.last_name].filter(Boolean).join(' ').trim() || 'Unknown'
   const phone = sc.phone ?? `shopify_${sc.id}`
@@ -282,15 +318,14 @@ async function upsertCustomer(
     .maybeSingle()
 
   if (existing) {
-    await supabase
-      .from('customers')
-      .update({
-        name,
-        email: sc.email,
-        total_orders: existing.total_orders + 1,
-        total_spent: existing.total_spent + orderAmount,
-      })
-      .eq('id', existing.id)
+    // Lifetime counters bump ONLY on orders/create — never on the updated/paid
+    // webhooks for an order we've already counted (those would inflate stats).
+    const update: Record<string, unknown> = { name, email: sc.email }
+    if (isCreate) {
+      update.total_orders = existing.total_orders + 1
+      update.total_spent = existing.total_spent + orderAmount
+    }
+    await supabase.from('customers').update(update).eq('id', existing.id)
     return existing.id as string
   }
 
@@ -305,8 +340,8 @@ async function upsertCustomer(
       state: addr?.province ?? '',
       pincode: addr?.zip ?? '',
       address: addr ? `${addr.address1}, ${addr.city}` : null,
-      total_orders: 1,
-      total_spent: orderAmount,
+      total_orders: isCreate ? 1 : 0,
+      total_spent: isCreate ? orderAmount : 0,
       tags: [],
     })
     .select('id')
@@ -436,7 +471,7 @@ async function handleOrder(brandId: string, shopifyOrder: ShopifyOrder, topic: s
   let customerId: string | null = null
   if (shopifyOrder.customer) {
     const addr = shopifyOrder.shipping_address ?? shopifyOrder.billing_address
-    customerId = await upsertCustomer(brandId, shopifyOrder.customer, addr, orderAmount)
+    customerId = await upsertCustomer(brandId, shopifyOrder.customer, addr, orderAmount, isCreate)
   }
 
   const shippingAddr = shopifyOrder.shipping_address
@@ -461,7 +496,6 @@ async function handleOrder(brandId: string, shopifyOrder: ShopifyOrder, topic: s
     discount_amount: parseFloat(shopifyOrder.total_discounts || '0'),
     payment_status: mapPaymentStatus(shopifyOrder.financial_status),
     payment_method: mapPaymentMethod(shopifyOrder.gateway),
-    fulfillment_status: mapFulfillmentStatus(shopifyOrder.fulfillment_status),
     shipping_address: shippingAddressObj,
     warehouse_id: null,
     notes: `Shopify Order ID: ${shopifyOrder.id}`,
@@ -487,6 +521,14 @@ async function handleOrder(brandId: string, shopifyOrder: ShopifyOrder, topic: s
   }
 
   const orderId = order.id as string
+
+  // Fulfillment status is courier-owned after creation. Advance it forward-only
+  // (the column defaults to CONFIRMED on insert), so a Shopify update can never
+  // regress a Shiprocket DELIVERED/RTO back to SHIPPED.
+  await supabase.rpc('set_fulfillment_status_forward', {
+    p_order_id: orderId,
+    p_status: mapFulfillmentStatus(shopifyOrder.fulfillment_status),
+  })
 
   // Upsert order items
   if (shopifyOrder.line_items?.length) {
@@ -665,10 +707,8 @@ async function handleFulfillment(brandId: string, payload: {
       created_at: payload.created_at,
     }, { onConflict: 'order_id,awb_number' })
 
-  // FIX 1.18: Shopify "success" = merchant fulfilled = SHIPPED, not DELIVERED
+  // FIX 1.18: Shopify "success" = merchant fulfilled = SHIPPED, not DELIVERED.
+  // Forward-only so a courier "DELIVERED" can't be regressed.
   const orderStatus = payload.status === 'success' ? 'SHIPPED' : 'IN_TRANSIT'
-  await supabase
-    .from('orders')
-    .update({ fulfillment_status: orderStatus })
-    .eq('id', order.id)
+  await supabase.rpc('set_fulfillment_status_forward', { p_order_id: order.id, p_status: orderStatus })
 }

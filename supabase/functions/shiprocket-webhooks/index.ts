@@ -29,6 +29,26 @@ const SUPABASE_SERVICE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY)
 
+// Shiprocket has no reliable per-event id, so we can't dedup at the top.
+// Instead make the side-effect idempotent: don't create a second UNRESOLVED
+// exception of the same type for an order that already has one (a re-sent
+// SHIPMENT_RETURNED / NDR_RAISED otherwise piles up duplicates).
+async function ensureException(row: {
+  brand_id: string; order_id: string; type: string
+  severity: string; status: string; title: string; description: string
+}) {
+  const { data: existing } = await supabase
+    .from('exceptions')
+    .select('id')
+    .eq('brand_id', row.brand_id)
+    .eq('order_id', row.order_id)
+    .eq('type', row.type)
+    .eq('status', 'UNRESOLVED')
+    .maybeSingle()
+  if (existing) return
+  await supabase.from('exceptions').insert(row)
+}
+
 // Shiprocket → Sentinal status map
 const SHIPMENT_STATUS_MAP: Record<string, string> = {
   SHIPMENT_PICKUP_GENERATED: 'LABEL_CREATED',
@@ -77,7 +97,12 @@ Deno.serve(async (req: Request) => {
   const url = new URL(req.url)
   const brandIdFromQuery = url.searchParams.get('brand_id')
 
-  const body = await req.json() as ShiprocketPayload
+  let body: ShiprocketPayload
+  try {
+    body = await req.json() as ShiprocketPayload
+  } catch {
+    return json({ error: 'Invalid JSON body' }, 400)
+  }
   const brandId = brandIdFromQuery ?? body.brand_id
 
   if (!brandId) {
@@ -92,12 +117,16 @@ Deno.serve(async (req: Request) => {
     .eq('platform', 'SHIPROCKET')
     .single()
 
+  // Token is MANDATORY. If it isn't configured we reject — never trust an
+  // unauthenticated POST, which could otherwise spoof DELIVERED / RTO events and
+  // corrupt order state. (Mirrors the Shopify HMAC requirement.)
   const webhookToken = integration?.credentials?.webhook_token as string | undefined
-  if (webhookToken) {
-    const incomingToken = req.headers.get('x-shiprocket-token')
-    if (incomingToken !== webhookToken) {
-      return json({ error: 'Invalid webhook token' }, 401)
-    }
+  if (!webhookToken) {
+    return json({ error: 'Shiprocket webhook token not configured. Add it in Settings → Integrations → Shiprocket.' }, 401)
+  }
+  const incomingToken = req.headers.get('x-shiprocket-token')
+  if (incomingToken !== webhookToken) {
+    return json({ error: 'Invalid webhook token' }, 401)
   }
 
   const { event, awb, channel_order_id, courier } = body
@@ -155,10 +184,9 @@ Deno.serve(async (req: Request) => {
 
   // ── Update order fulfillment status ──────────────────────────────────────
   if (orderId) {
-    await supabase
-      .from('orders')
-      .update({ fulfillment_status: fulfillmentStatus })
-      .eq('id', orderId)
+    // Forward-only — never regress a terminal DELIVERED/RTO via an out-of-order
+    // or duplicate webhook.
+    await supabase.rpc('set_fulfillment_status_forward', { p_order_id: orderId, p_status: fulfillmentStatus })
 
     // ── Timeline event ──────────────────────────────────────────────────────
     const eventLabels: Record<string, string> = {
@@ -179,7 +207,7 @@ Deno.serve(async (req: Request) => {
 
     // ── Create exceptions for critical events ────────────────────────────────
     if (event === 'SHIPMENT_RETURNED' || event === 'SHIPMENT_UNDELIVERED') {
-      await supabase.from('exceptions').insert({
+      await ensureException({
         brand_id: brandId,
         order_id: orderId,
         type: 'RTO_INITIATED',
@@ -191,7 +219,7 @@ Deno.serve(async (req: Request) => {
     }
 
     if (event === 'NDR_RAISED') {
-      await supabase.from('exceptions').insert({
+      await ensureException({
         brand_id: brandId,
         order_id: orderId,
         type: 'ADDRESS_ISSUE',
@@ -203,7 +231,7 @@ Deno.serve(async (req: Request) => {
     }
 
     if (event === 'SHIPMENT_LOST') {
-      await supabase.from('exceptions').insert({
+      await ensureException({
         brand_id: brandId,
         order_id: orderId,
         type: 'STUCK_SHIPMENT',

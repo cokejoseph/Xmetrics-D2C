@@ -143,6 +143,13 @@ export function parseCodCsv(csvText: string): CodCsvParseResult {
     return { rows: [], skipped: 0, errors, detected_columns }
   }
 
+  // Without an amount column every row parses as ₹0 — that's silent-wrong-numbers,
+  // worse than failing. Require at least one of collected / remitted.
+  if (colIndex.collected_amount === undefined && colIndex.remitted_amount === undefined) {
+    errors.push('Could not detect any COD amount column (collected or remitted). This file does not look like a Shiprocket COD remittance export — check the format.')
+    return { rows: [], skipped: 0, errors, detected_columns }
+  }
+
   // Parse data rows
   for (let i = headerIdx + 1; i < lines.length; i++) {
     const line = lines[i].trim()

@@ -110,6 +110,20 @@ Deno.serve(async (req: Request) => {
     }, 400)
   }
 
+  // Atomically claim the return BEFORE any money moves. Only the caller that
+  // flips RECEIVED → REFUND_INITIATED proceeds; concurrent calls, double-clicks
+  // and crash-then-retry all get 409 here, so a refund can never fire twice.
+  const { data: claimed } = await supabase
+    .from('returns')
+    .update({ status: 'REFUND_INITIATED' })
+    .eq('id', return_id)
+    .eq('status', 'RECEIVED')
+    .select('id')
+    .maybeSingle()
+  if (!claimed) {
+    return json({ error: 'Return is already being processed or has been refunded.' }, 409)
+  }
+
   const order    = ret.orders   as AnyRecord
   const customer = ret.customers as AnyRecord
   const isGood   = return_condition === 'GOOD'
@@ -140,6 +154,8 @@ Deno.serve(async (req: Request) => {
     )
 
     if ('error' in result) {
+      // The refund did not go through — release the claim so ops can retry.
+      await supabase.from('returns').update({ status: 'RECEIVED' }).eq('id', return_id)
       await supabase.from('exceptions').insert({
         brand_id: ret.brand_id,
         order_id: ret.order_id,
