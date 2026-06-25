@@ -1,11 +1,12 @@
 import { useState } from 'react'
-import { AlertTriangle, CheckCircle, X } from 'lucide-react'
+import { AlertTriangle, CheckCircle, X, Shield } from 'lucide-react'
 import { useAppStore } from '../../stores/appStore'
 import { useAuthStore } from '../../stores/authStore'
 import { DEMO_MODE, callAuthEdgeFunction } from '../../lib/supabase'
 import { loadRazorpayScript } from '../../lib/razorpay'
 import type { RazorpayCheckoutResponse } from '../../lib/razorpay'
 import { Card, Button } from '../../components/ui'
+import { useIsOwner } from '../../hooks/useCurrentRole'
 import type { PlanType, SubscriptionData } from '../../types'
 
 // ─── Plan definitions ───────────────────────────────────────────────────────
@@ -121,6 +122,7 @@ function UsageBar({ used, limit, label }: { used: number; limit: number | null; 
 export default function Billing() {
   const { subscription, setSubscription, currentBrand } = useAppStore()
   const { user } = useAuthStore()
+  const canManageBilling = useIsOwner()
 
   const [upgradeLoading, setUpgradeLoading] = useState<PlanType | null>(null)
   const [cancelOpen, setCancelOpen] = useState(false)
@@ -313,6 +315,13 @@ export default function Billing() {
         <p className="text-[13px] text-gray-400 mt-0.5">Manage your subscription and usage</p>
       </div>
 
+      {!canManageBilling && (
+        <div className="flex items-center gap-2.5 px-4 py-3 rounded border bg-gray-50 dark:bg-white/[0.04] border-gray-200 dark:border-white/[0.08] text-sm text-gray-600 dark:text-gray-400">
+          <Shield size={14} className="shrink-0" />
+          <span>Only the account owner can change the plan or payment method. You have view-only access to billing.</span>
+        </div>
+      )}
+
       {subscription?.status === 'PAYMENT_FAILED' && (
         <div className="flex items-start gap-3 px-4 py-3 rounded border bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800/30 text-red-700 dark:text-red-400 text-sm">
           <AlertTriangle size={16} className="shrink-0 mt-0.5" />
@@ -324,6 +333,7 @@ export default function Billing() {
           </div>
           <Button
             size="sm"
+            disabled={!canManageBilling}
             onClick={() => {
               const plan = PLANS.find(p => p.type === currentPlanType)
               if (plan) handleNewSubscription(plan)
@@ -414,7 +424,7 @@ export default function Billing() {
           )}
 
           {/* Cancel link */}
-          {isActive && (
+          {isActive && canManageBilling && (
             <div className="mt-5 pt-4 border-t border-gray-100 dark:border-gray-800">
               <button
                 onClick={() => setCancelOpen(true)}
@@ -497,7 +507,7 @@ export default function Billing() {
                 ) : isUpgrade && isActive ? (
                   <Button
                     onClick={() => handleUpgrade(plan)}
-                    disabled={isLoading}
+                    disabled={isLoading || !canManageBilling}
                     className="w-full text-[12px] py-1.5"
                   >
                     {isLoading ? 'Upgrading…' : `Upgrade to ${plan.name}`}
@@ -505,7 +515,7 @@ export default function Billing() {
                 ) : (
                   <Button
                     onClick={() => handleNewSubscription(plan)}
-                    disabled={isLoading}
+                    disabled={isLoading || !canManageBilling}
                     className="w-full text-[12px] py-1.5"
                   >
                     {isLoading ? 'Opening checkout…' : `Get ${plan.name}`}

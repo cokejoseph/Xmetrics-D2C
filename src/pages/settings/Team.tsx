@@ -4,6 +4,7 @@ import { useAppStore } from '../../stores/appStore'
 import { useAuthStore } from '../../stores/authStore'
 import { Card, Button, Modal, Input, Select, Badge } from '../../components/ui'
 import { useConfirm } from '../../hooks/useConfirm'
+import { useCanManage } from '../../hooks/useCurrentRole'
 import type { BrandMember } from '../../types'
 
 type Role = BrandMember['role']
@@ -21,6 +22,7 @@ export default function Team() {
   useEffect(() => { document.title = 'Team · Settings · Xmetrics' }, [])
   const { teamMembers, inviteTeamMember, removeTeamMember, updateTeamMember } = useAppStore()
   const { user } = useAuthStore()
+  const canManage = useCanManage()
   const confirm = useConfirm()
   const [showInvite, setShowInvite] = useState(false)
   const [showMatrix, setShowMatrix] = useState(false)
@@ -59,9 +61,11 @@ export default function Team() {
           <Button variant="secondary" size="sm" onClick={() => setShowMatrix(true)}>
             <Shield size={14} /> RBAC Matrix
           </Button>
-          <Button size="sm" onClick={() => setShowInvite(true)}>
-            <UserPlus size={14} /> Invite Member
-          </Button>
+          {canManage && (
+            <Button size="sm" onClick={() => setShowInvite(true)}>
+              <UserPlus size={14} /> Invite Member
+            </Button>
+          )}
         </div>
       </div>
 
@@ -91,7 +95,7 @@ export default function Team() {
                       <p className="text-xs text-gray-500">{member.email}</p>
                     </td>
                     <td className="px-4 py-3">
-                      {isOwner || isCurrentUser ? (
+                      {isOwner || isCurrentUser || !canManage ? (
                         <Badge variant={ROLE_COLOR[member.role] as BadgeVariant}>{member.role}</Badge>
                       ) : (
                         <Select
@@ -109,7 +113,7 @@ export default function Team() {
                       {new Date(member.created_at).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: '2-digit' })}
                     </td>
                     <td className="px-4 py-3 text-right">
-                      {!isOwner && !isCurrentUser && (
+                      {!isOwner && !isCurrentUser && canManage && (
                         <button
                           onClick={async () => {
                             const ok = await confirm({
