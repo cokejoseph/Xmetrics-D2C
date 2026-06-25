@@ -90,6 +90,19 @@ const PLATFORM_META: Record<IntegrationPlatform, {
       { key: 'api_key', label: 'API Key (optional)', placeholder: 'Leave blank if using username/password' },
     ],
   },
+  ZOHO_BOOKS: {
+    name: 'Zoho Books',
+    description: 'Auto-sync invoices, payments, credit notes, and bank feeds to your Zoho Books account.',
+    logo: 'ZB',
+    color: 'bg-[#E42527] text-white',
+    badge: 'Accounting',
+    fields: [
+      { key: 'client_id', label: 'Client ID', placeholder: 'From Zoho Developer Console' },
+      { key: 'client_secret', label: 'Client Secret', placeholder: '••••••••', type: 'password' },
+      { key: 'organisation_id', label: 'Organisation ID', placeholder: 'Your Zoho Books Org ID' },
+      { key: 'region', label: 'Region', placeholder: 'IN (India), US, EU, AU, JP' },
+    ],
+  },
 }
 
 const STATUS_CONFIG: Record<string, { icon: React.ReactNode; label: string; color: string }> = {
@@ -115,7 +128,7 @@ const STATUS_CONFIG: Record<string, { icon: React.ReactNode; label: string; colo
   },
 }
 
-const ALL_PLATFORMS: IntegrationPlatform[] = ['SHOPIFY', 'RAZORPAY', 'SHIPROCKET', 'WHATSAPP', 'ECOMEXPRESS', 'UNICOMMERCE']
+const ALL_PLATFORMS: IntegrationPlatform[] = ['SHOPIFY', 'RAZORPAY', 'SHIPROCKET', 'WHATSAPP', 'ECOMEXPRESS', 'UNICOMMERCE', 'ZOHO_BOOKS']
 
 // ─── Connect modal ──────────────────────────────────────────────────────────
 

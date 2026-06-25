@@ -53,6 +53,7 @@ const Checkout = lazy(() => import('./pages/landing/Checkout'))
 const ResetPassword = lazy(() => import('./pages/auth/ResetPassword'))
 const Reconciliation = lazy(() => import('./pages/reconciliation/Reconciliation'))
 const AuditLog = lazy(() => import('./pages/audit/AuditLog'))
+const ReturnPortal = lazy(() => import('./pages/portal/ReturnPortal'))
 
 // ── Shared loading spinner ───────────────────────────────────────────────────
 function PageSpinner() {
@@ -147,6 +148,7 @@ export default function App() {
               <Route path="/founding" element={<FoundingAccess />} />
               <Route path="/checkout" element={<Checkout />} />
               <Route path="/reset-password" element={<ResetPassword />} />
+              <Route path="/portal/returns" element={<ReturnPortal />} />
 
               {/* Protected app routes — layout wrapper (no path, just wraps) */}
               <Route

@@ -45,6 +45,7 @@ export type IntegrationPlatform =
   | 'RAZORPAY'
   | 'ECOMEXPRESS'
   | 'UNICOMMERCE'
+  | 'ZOHO_BOOKS'
 
 export type IntegrationStatus =
   | 'CONNECTED'
