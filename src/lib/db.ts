@@ -9,12 +9,26 @@ import type {
   Brand, BrandMember, Warehouse, Product, Customer,
   Order, OrderItem, Payment, Exception, Integration,
   Shipment, OrderTimeline, ApprovalAuditLog, NdrEvent, OmsPushLog,
-  AuditActionType,
 } from '../types'
 
 // ─── Type helpers ──────────────────────────────────────────────────────────
 
 type SupabaseError = { error: string | null }
+
+// Shape returned by our JWT-protected edge functions: a `{ data, error }`
+// envelope. Typed loosely on `data` because each function returns a different
+// payload; the optional fields below cover everything the callers below read.
+type EdgeFnResult = {
+  error?: { message: string } | null
+  data?: {
+    ok?: boolean
+    error?: string | null
+    log?: OmsPushLog[]
+    retried?: number
+    succeeded?: number
+    still_failed?: number
+  } | null
+}
 
 // ─── Brand ─────────────────────────────────────────────────────────────────
 
@@ -534,7 +548,7 @@ export async function pushOrderToOms(
   orderId: string,
   pushType: 'AUTO' | 'MANUAL' = 'MANUAL'
 ): Promise<{ ok: boolean; error: string | null }> {
-  const result = await callAuthEdgeFunction('oms-push', {
+  const result = await callAuthEdgeFunction<EdgeFnResult>('oms-push', {
     action: 'push_order',
     brand_id: brandId,
     order_id: orderId,
@@ -548,7 +562,7 @@ export async function getOmsPushLog(
   brandId: string,
   orderId: string
 ): Promise<OmsPushLog[]> {
-  const result = await callAuthEdgeFunction('oms-push', {
+  const result = await callAuthEdgeFunction<EdgeFnResult>('oms-push', {
     action: 'get_push_log',
     brand_id: brandId,
     order_id: orderId,
@@ -559,7 +573,7 @@ export async function getOmsPushLog(
 export async function retryFailedOmsPushes(
   brandId: string
 ): Promise<{ retried: number; succeeded: number; still_failed: number; error: string | null }> {
-  const result = await callAuthEdgeFunction('oms-push', {
+  const result = await callAuthEdgeFunction<EdgeFnResult>('oms-push', {
     action: 'retry_failed',
     brand_id: brandId,
   })
@@ -617,7 +631,7 @@ export async function updateNdrEvent(
 export async function ndrReschedule(
   email: string, password: string, awb: string, comment?: string
 ): Promise<{ ok: boolean; error: string | null }> {
-  const result = await callAuthEdgeFunction('shiprocket-proxy', {
+  const result = await callAuthEdgeFunction<EdgeFnResult>('shiprocket-proxy', {
     action: 'reschedule_delivery',
     email, password, awb,
     ndr_comment: comment,
@@ -631,7 +645,7 @@ export async function ndrUpdateAddress(
   awb: string,
   address: { address: string; city: string; state: string; pincode: string; name?: string; phone?: string }
 ): Promise<{ ok: boolean; error: string | null }> {
-  const result = await callAuthEdgeFunction('shiprocket-proxy', {
+  const result = await callAuthEdgeFunction<EdgeFnResult>('shiprocket-proxy', {
     action: 'update_ndr_address',
     email, password, awb,
     ...address,
@@ -643,7 +657,7 @@ export async function ndrUpdateAddress(
 export async function ndrAcceptRto(
   email: string, password: string, awb: string, comment?: string
 ): Promise<{ ok: boolean; error: string | null }> {
-  const result = await callAuthEdgeFunction('shiprocket-proxy', {
+  const result = await callAuthEdgeFunction<EdgeFnResult>('shiprocket-proxy', {
     action: 'accept_rto',
     email, password, awb,
     comment,

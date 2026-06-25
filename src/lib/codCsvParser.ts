@@ -52,7 +52,7 @@ function parseDate(v: string): string | null {
   const s = v.trim()
 
   // DD-MM-YYYY or DD/MM/YYYY
-  const dmy = s.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{2,4})$/)
+  const dmy = s.match(/^(\d{1,2})[/-](\d{1,2})[/-](\d{2,4})$/)
   if (dmy) {
     const [, d, m, y] = dmy
     const year = y.length === 2 ? `20${y}` : y

@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect, useCallback } from 'react'
 import { ChevronDown, Check } from 'lucide-react'
-import { cn } from '../ui'
+import { cn } from '../../lib/utils'
 
 export interface FilterOption<T extends string> {
   value: T

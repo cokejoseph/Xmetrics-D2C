@@ -5,6 +5,30 @@ const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY as string | und
 
 export const DEMO_MODE = !SUPABASE_URL || SUPABASE_URL === ''
 
+// Production safety: a demo-mode build serves client-side SEED data, never the
+// customer's real records. That is correct for the public showcase deploy, but
+// catastrophic if it happens because env vars failed to load on a build that was
+// meant to be live. Surface it loudly (non-fatal) so a misconfigured production
+// deploy is obvious in the console/monitoring instead of silently showing fake
+// data to real users.
+if (DEMO_MODE && import.meta.env.PROD) {
+  console.warn(
+    '[Xmetrics] Running in DEMO_MODE in a production build — VITE_SUPABASE_URL is not set. ' +
+    'All data shown is client-side seed data. If this build was meant to connect to live ' +
+    'Supabase, the environment variables did not load. Verify VITE_SUPABASE_URL / VITE_SUPABASE_ANON_KEY.'
+  )
+}
+
+// A configured build missing only the anon key is always a misconfiguration —
+// the client cannot authenticate. Fail fast rather than throwing opaque errors
+// on every query.
+if (!DEMO_MODE && !SUPABASE_ANON_KEY) {
+  throw new Error(
+    '[Xmetrics] VITE_SUPABASE_URL is set but VITE_SUPABASE_ANON_KEY is missing. ' +
+    'Both are required to connect to Supabase.'
+  )
+}
+
 export const supabase = DEMO_MODE
   ? null
   : createClient(SUPABASE_URL!, SUPABASE_ANON_KEY!)
@@ -34,7 +58,7 @@ export async function callEdgeFunction(name: string, body: object) {
  * Call a JWT-protected Supabase edge function using the user's active session token.
  * Use this for subscription-* functions that verify the caller's identity server-side.
  */
-export async function callAuthEdgeFunction(name: string, body: object): Promise<unknown> {
+export async function callAuthEdgeFunction<T = unknown>(name: string, body: object): Promise<T> {
   if (!supabase) throw new Error('Supabase not configured')
   const { data: { session } } = await supabase.auth.getSession()
   if (!session) throw new Error('No active session')

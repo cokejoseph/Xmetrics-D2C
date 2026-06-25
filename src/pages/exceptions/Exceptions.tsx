@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { AlertOctagon, ExternalLink, CheckCircle, Lock } from 'lucide-react'
 import { useAppStore } from '../../stores/appStore'
-import { Card, Button, Modal, Input } from '../../components/ui'
+import { Card, Button, Modal } from '../../components/ui'
 import { SeverityBadge } from '../../components/shared/StatusBadge'
 import { showToast } from '../../lib/toast'
 import type { Exception, ExceptionStatus } from '../../types'
@@ -222,7 +222,7 @@ function ExceptionCard({
       )
     }
 
-    if (exception.type === 'PAYMENT_MISMATCH') {
+    if (exception.type === 'FAILED_PAYMENT') {
       return (
         <div className="flex gap-2 shrink-0 flex-wrap">
           {hasOrder && onApproveAndPush && (
@@ -332,7 +332,7 @@ export default function Exceptions() {
   const criticalCount = unresolved.filter(e => e.severity === 'CRITICAL').length
   const omsBlockedCount = unresolved.filter(e =>
     e.type === 'HIGH_RTO_RISK' || e.type === 'ADDRESS_ISSUE' ||
-    e.type === 'LOW_INVENTORY' || e.type === 'PAYMENT_MISMATCH'
+    e.type === 'LOW_INVENTORY' || e.type === 'FAILED_PAYMENT'
   ).length
 
   const handleApproveAndPush = async (exc: Exception, reason: string, notes?: string) => {

@@ -349,7 +349,7 @@ function KPIMetric({
               : 'bg-red-50 text-red-500 dark:bg-red-400/10 dark:text-red-400'
           }`}>
             {isGood ? <ArrowUpRight size={9} /> : <ArrowDownRight size={9} />}
-            {Math.abs(trend.value) > 999 ? '999+' : Math.abs(trend.value)}%
+            {Math.abs(trend.value) > 300 ? '300%+' : `${Math.abs(trend.value)}%`}
           </span>
         )}
       </div>

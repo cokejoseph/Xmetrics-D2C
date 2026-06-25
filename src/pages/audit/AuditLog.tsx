@@ -1,11 +1,12 @@
 import { useState, useEffect, useMemo } from 'react'
 import { Link } from 'react-router-dom'
-import { ClipboardList, ExternalLink, ArrowRight } from 'lucide-react'
+import { ClipboardList, ExternalLink, ArrowRight, Download } from 'lucide-react'
 import { useAppStore } from '../../stores/appStore'
 import { Card } from '../../components/ui'
 import { DEMO_MODE } from '../../lib/supabase'
 import { getAuditLog } from '../../lib/db'
-import type { ApprovalAuditLog, AuditActionType, Order } from '../../types'
+import { exportCSV } from '../../lib/exportCSV'
+import type { ApprovalAuditLog, AuditActionType, Order, Return, Integration } from '../../types'
 
 // ─── Action metadata ─────────────────────────────────────────────────────────
 
@@ -22,19 +23,33 @@ const ACTION_LABEL: Record<AuditActionType, string> = {
   ORDER_CANCELLED: 'Order Cancelled',
   PUSHED_TO_OMS: 'Pushed to OMS',
   AUTO_PUSHED_TO_OMS: 'Auto-pushed to OMS',
+  RETURN_APPROVED: 'Return Approved',
+  RETURN_REFUNDED: 'Refund Issued',
+  INTEGRATION_CONNECTED: 'Integration Connected',
+  INTEGRATION_DISCONNECTED: 'Integration Disconnected',
+  SETTINGS_UPDATED: 'Settings Updated',
+  DATA_EXPORTED: 'Data Exported',
 }
 
-type BadgeVariant = 'green' | 'amber' | 'red' | 'blue' | 'gray'
+type BadgeVariant = 'green' | 'amber' | 'red' | 'blue' | 'gray' | 'purple'
 
 function actionBadgeVariant(type: AuditActionType): BadgeVariant {
   if (type === 'HELD') return 'amber'
   if (type === 'ORDER_CANCELLED') return 'red'
   if (type === 'RELEASED_FROM_HOLD') return 'gray'
   if (type === 'PUSHED_TO_OMS' || type === 'AUTO_PUSHED_TO_OMS') return 'blue'
+  if (type === 'RETURN_APPROVED' || type === 'RETURN_REFUNDED') return 'purple'
+  if (type === 'INTEGRATION_CONNECTED') return 'blue'
+  if (type === 'INTEGRATION_DISCONNECTED') return 'amber'
+  if (type === 'SETTINGS_UPDATED' || type === 'DATA_EXPORTED') return 'gray'
   return 'green'
 }
 
-type FilterGroup = 'all' | 'approvals' | 'holds' | 'pushes'
+type FilterGroup = 'all' | 'approvals' | 'holds' | 'pushes' | 'returns' | 'system'
+
+const SYSTEM_ACTIONS: AuditActionType[] = [
+  'INTEGRATION_CONNECTED', 'INTEGRATION_DISCONNECTED', 'SETTINGS_UPDATED', 'DATA_EXPORTED',
+]
 
 function matchesFilter(action: AuditActionType, filter: FilterGroup): boolean {
   if (filter === 'all') return true
@@ -44,6 +59,8 @@ function matchesFilter(action: AuditActionType, filter: FilterGroup): boolean {
   }
   if (filter === 'holds') return action === 'HELD' || action === 'RELEASED_FROM_HOLD'
   if (filter === 'pushes') return action === 'PUSHED_TO_OMS' || action === 'AUTO_PUSHED_TO_OMS'
+  if (filter === 'returns') return action === 'RETURN_APPROVED' || action === 'RETURN_REFUNDED'
+  if (filter === 'system') return SYSTEM_ACTIONS.includes(action)
   return true
 }
 
@@ -62,8 +79,14 @@ const DEMO_REASONS_HOLD = [
   'Payment mismatch under investigation',
 ]
 
-function generateDemoAuditLog(orders: Order[], brandId: string): ApprovalAuditLog[] {
+function generateDemoAuditLog(
+  orders: Order[],
+  returns: Return[],
+  integrations: Integration[],
+  brandId: string,
+): ApprovalAuditLog[] {
   const entries: ApprovalAuditLog[] = []
+  const orderById = new Map(orders.map(o => [o.id, o]))
 
   for (const order of orders) {
     const actor = DEMO_ACTORS[order.id.charCodeAt(order.id.length - 1) % DEMO_ACTORS.length]
@@ -141,6 +164,106 @@ function generateDemoAuditLog(orders: Order[], brandId: string): ApprovalAuditLo
         metadata: {},
       })
     }
+
+    if (order.fulfillment_status === 'CANCELLED') {
+      entries.push({
+        id: `demo-${order.id}-cancelled`,
+        brand_id: brandId,
+        order_id: order.id,
+        order_number: order.order_number,
+        exception_id: null,
+        action_type: 'ORDER_CANCELLED',
+        actor_id: 'demo-user',
+        actor_name: actor,
+        actor_role: 'EDITOR',
+        action_timestamp: new Date(base + 4 * 3600 * 1000).toISOString(),
+        original_rto_score: order.rto_risk_score,
+        new_rto_score: order.rto_risk_score,
+        original_status: 'CONFIRMED',
+        new_status: 'CANCELLED',
+        reason: 'Cancelled — customer unreachable for COD confirmation',
+        notes: null,
+        metadata: {},
+      })
+    }
+  }
+
+  // ── Returns: approval + refund trail ────────────────────────────────────────
+  for (const ret of returns) {
+    const order = orderById.get(ret.order_id)
+    const orderNumber = order?.order_number ?? ret.order_id
+    const actor = DEMO_ACTORS[ret.id.charCodeAt(ret.id.length - 1) % DEMO_ACTORS.length]
+    const initiated = new Date(ret.return_initiation_date).getTime()
+
+    const PAST_APPROVAL: Return['status'][] = ['APPROVED', 'LABEL_GENERATED', 'IN_TRANSIT', 'RECEIVED', 'REFUND_INITIATED', 'COMPLETED']
+    if (ret.return_approved_date || PAST_APPROVAL.includes(ret.status)) {
+      entries.push({
+        id: `demo-${ret.id}-return-approved`,
+        brand_id: brandId,
+        order_id: ret.order_id,
+        order_number: orderNumber,
+        exception_id: null,
+        action_type: 'RETURN_APPROVED',
+        actor_id: 'demo-user',
+        actor_name: ret.return_approved_by ?? actor,
+        actor_role: 'EDITOR',
+        action_timestamp: new Date(ret.return_approved_date ?? new Date(initiated + 6 * 3600 * 1000).toISOString()).toISOString(),
+        original_rto_score: null,
+        new_rto_score: null,
+        original_status: 'RETURN_REQUESTED',
+        new_status: 'RETURN_APPROVED',
+        reason: ret.return_approval_notes ?? `Return approved — ${ret.return_reason.replace(/_/g, ' ').toLowerCase()}`,
+        notes: ret.customer_comment,
+        metadata: { return_id: ret.id },
+      })
+    }
+
+    if ((ret.status === 'REFUND_INITIATED' || ret.status === 'COMPLETED') && ret.refund_amount) {
+      entries.push({
+        id: `demo-${ret.id}-refunded`,
+        brand_id: brandId,
+        order_id: ret.order_id,
+        order_number: orderNumber,
+        exception_id: null,
+        action_type: 'RETURN_REFUNDED',
+        actor_id: 'demo-user',
+        actor_name: ret.return_approved_by ?? actor,
+        actor_role: 'EDITOR',
+        action_timestamp: new Date(initiated + 48 * 3600 * 1000).toISOString(),
+        original_rto_score: null,
+        new_rto_score: null,
+        original_status: 'RETURN_APPROVED',
+        new_status: 'REFUNDED',
+        reason: `Refund of ₹${Math.round(ret.refund_amount).toLocaleString('en-IN')} issued to customer`,
+        notes: null,
+        metadata: { return_id: ret.id, refund_amount: ret.refund_amount },
+      })
+    }
+  }
+
+  // ── Integrations: connection events ─────────────────────────────────────────
+  for (const integration of integrations) {
+    if (integration.status !== 'CONNECTED') continue
+    const ts = integration.last_sync_at ?? integration.created_at ?? new Date().toISOString()
+    entries.push({
+      id: `demo-int-${integration.id}-connected`,
+      brand_id: brandId,
+      order_id: '',
+      order_number: '—',
+      exception_id: null,
+      action_type: 'INTEGRATION_CONNECTED',
+      actor_id: 'demo-user',
+      actor_name: 'Rohit (Founder)',
+      actor_role: 'OWNER',
+      action_timestamp: ts,
+      original_rto_score: null,
+      new_rto_score: null,
+      original_status: 'DISCONNECTED',
+      new_status: 'CONNECTED',
+      reason: `${integration.platform} integration connected`,
+      notes: null,
+      metadata: { platform: integration.platform },
+    })
   }
 
   return entries.sort((a, b) => b.action_timestamp.localeCompare(a.action_timestamp))
@@ -156,6 +279,7 @@ function ActionBadge({ type }: { type: AuditActionType }) {
     red:   'bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-400',
     blue:  'bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-400',
     gray:  'bg-gray-100 dark:bg-white/[0.06] text-gray-600 dark:text-gray-400',
+    purple:'bg-purple-50 dark:bg-purple-900/20 text-purple-700 dark:text-purple-400',
   }
   return (
     <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold ${cls[variant]}`}>
@@ -168,14 +292,14 @@ function ActionBadge({ type }: { type: AuditActionType }) {
 
 export default function AuditLog() {
   useEffect(() => { document.title = 'Audit Log · Xmetrics' }, [])
-  const { orders, currentBrand } = useAppStore()
+  const { orders, returns, integrations, currentBrand } = useAppStore()
   const [entries, setEntries] = useState<ApprovalAuditLog[]>([])
   const [loading, setLoading] = useState(!DEMO_MODE)
   const [filter, setFilter] = useState<FilterGroup>('all')
 
   useEffect(() => {
     if (DEMO_MODE) {
-      setEntries(generateDemoAuditLog(orders, currentBrand?.id ?? 'demo'))
+      setEntries(generateDemoAuditLog(orders, returns, integrations, currentBrand?.id ?? 'demo'))
       return
     }
     if (!currentBrand?.id) return
@@ -184,7 +308,7 @@ export default function AuditLog() {
       .then(setEntries)
       .catch(() => setEntries([]))
       .finally(() => setLoading(false))
-  }, [orders, currentBrand?.id])
+  }, [orders, returns, integrations, currentBrand?.id])
 
   const filtered = useMemo(
     () => entries.filter(e => matchesFilter(e.action_type, filter)),
@@ -196,6 +320,8 @@ export default function AuditLog() {
     approvals: entries.filter(e => matchesFilter(e.action_type, 'approvals')).length,
     holds: entries.filter(e => matchesFilter(e.action_type, 'holds')).length,
     pushes: entries.filter(e => matchesFilter(e.action_type, 'pushes')).length,
+    returns: entries.filter(e => matchesFilter(e.action_type, 'returns')).length,
+    system: entries.filter(e => matchesFilter(e.action_type, 'system')).length,
   }), [entries])
 
   const FILTERS: { key: FilterGroup; label: string }[] = [
@@ -203,15 +329,46 @@ export default function AuditLog() {
     { key: 'approvals', label: `Approvals (${counts.approvals})` },
     { key: 'holds',     label: `Holds (${counts.holds})` },
     { key: 'pushes',    label: `OMS Pushes (${counts.pushes})` },
+    ...(counts.returns > 0 ? [{ key: 'returns' as const, label: `Returns (${counts.returns})` }] : []),
+    ...(counts.system > 0 ? [{ key: 'system' as const, label: `System (${counts.system})` }] : []),
   ]
+
+  // Export the current (filtered) view as CSV. The export itself is an auditable
+  // action — recorded in the trail in live mode via insertAuditLog.
+  const handleExport = () => {
+    exportCSV(
+      `xmetrics-audit-log-${new Date().toISOString().slice(0, 10)}.csv`,
+      ['Timestamp', 'Order', 'Action', 'Actor', 'Role', 'RTO Score', 'From', 'To', 'Reason', 'Notes'],
+      filtered.map(e => [
+        new Date(e.action_timestamp).toLocaleString('en-IN'),
+        e.order_number,
+        ACTION_LABEL[e.action_type],
+        e.actor_name ?? '',
+        e.actor_role ?? '',
+        e.original_rto_score ?? '',
+        e.original_status ?? '',
+        e.new_status ?? '',
+        e.reason ?? '',
+        e.notes ?? '',
+      ])
+    )
+  }
 
   return (
     <div className="space-y-4">
       <div className="flex items-start justify-between flex-wrap gap-2">
         <div>
-          <h1 className="text-xl font-semibold tracking-tight text-gray-900 dark:text-white">Approval Audit Log</h1>
-          <p className="text-[13px] text-gray-400 mt-0.5">Complete record of order approvals, holds, and OMS pushes</p>
+          <h1 className="text-xl font-semibold tracking-tight text-gray-900 dark:text-white">Audit Log</h1>
+          <p className="text-[13px] text-gray-400 mt-0.5">Immutable record of approvals, holds, OMS pushes, returns, refunds, and system changes</p>
         </div>
+        {filtered.length > 0 && (
+          <button
+            onClick={handleExport}
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border border-gray-200 dark:border-white/[0.1] text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-white/[0.04] transition-colors"
+          >
+            <Download size={13} /> Export CSV
+          </button>
+        )}
       </div>
 
       {/* Filter chips */}
@@ -274,12 +431,16 @@ export default function AuditLog() {
                     </td>
 
                     <td className="px-4 py-3">
-                      <Link
-                        to={`/orders/${entry.order_id}`}
-                        className="text-sm font-medium text-brand-600 hover:underline"
-                      >
-                        {entry.order_number}
-                      </Link>
+                      {entry.order_id ? (
+                        <Link
+                          to={`/orders/${entry.order_id}`}
+                          className="text-sm font-medium text-brand-600 hover:underline"
+                        >
+                          {entry.order_number}
+                        </Link>
+                      ) : (
+                        <span className="text-sm text-gray-400">{entry.order_number}</span>
+                      )}
                     </td>
 
                     <td className="px-4 py-3">
@@ -335,13 +496,15 @@ export default function AuditLog() {
                     </td>
 
                     <td className="px-4 py-3 text-right">
-                      <Link
-                        to={`/orders/${entry.order_id}`}
-                        className="opacity-0 group-hover:opacity-100 transition-opacity text-gray-400 hover:text-brand-600"
-                        title="View order"
-                      >
-                        <ExternalLink size={13} />
-                      </Link>
+                      {entry.order_id && (
+                        <Link
+                          to={`/orders/${entry.order_id}`}
+                          className="opacity-0 group-hover:opacity-100 transition-opacity text-gray-400 hover:text-brand-600"
+                          title="View order"
+                        >
+                          <ExternalLink size={13} />
+                        </Link>
+                      )}
                     </td>
                   </tr>
                 ))}

@@ -90,7 +90,7 @@ function readCache(pincode: string): PincodeResult | null {
 function writeCache(pincode: string, data: PincodeResult) {
   try {
     localStorage.setItem(CACHE_KEY(pincode), JSON.stringify({ data, ts: Date.now() }))
-  } catch {}
+  } catch { /* cache write is best-effort — quota/private-mode failures are non-fatal */ }
 }
 
 export async function lookupPincode(pincode: string): Promise<PincodeResult | null> {

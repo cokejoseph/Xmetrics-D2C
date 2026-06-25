@@ -140,8 +140,9 @@ const FORECAST_STATUS_STYLE: Record<ForecastStatus, { label: string; dot: string
   UNPREDICTABLE:     { label: 'Unpredictable',      dot: 'bg-gray-300',   text: 'text-gray-400' },
 }
 
-type TabType = 'overview' | 'reorder' | 'forecast' | 'pincode'
+type TabType = 'overview' | 'cohort' | 'products' | 'rto' | 'operations' | 'clv' | 'reorder' | 'forecast' | 'pincode'
 type PincodeSortKey = 'orders' | 'revenue' | 'aov' | 'rto_rate'
+type ProductSortKey = 'revenue' | 'units' | 'return_rate' | 'margin' | 'dioh'
 
 // ── Period picker dropdown ────────────────────────────────────────────────────
 
@@ -190,6 +191,45 @@ function PeriodPicker({ value, onChange }: { value: Period; onChange: (v: Period
   )
 }
 
+// ── Helpers ───────────────────────────────────────────────────────────────────
+
+function getMonthKey(date: Date): string {
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`
+}
+
+function getMonthLabel(key: string): string {
+  const [y, m] = key.split('-').map(Number)
+  return new Date(y, m - 1, 1).toLocaleDateString('en-IN', { month: 'short', year: '2-digit' })
+}
+
+function DeltaChip({ curr, prev, invertGood }: { curr: number; prev: number; invertGood?: boolean }) {
+  if (prev === 0) return null
+  const pct = ((curr - prev) / prev) * 100
+  const up = pct >= 0
+  const good = invertGood ? !up : up
+  return (
+    <span className={`inline-flex items-center gap-0.5 text-[10px] font-semibold ${good ? 'text-green-600 dark:text-green-400' : 'text-red-500 dark:text-red-400'}`}>
+      {up ? '↑' : '↓'}{Math.abs(pct).toFixed(1)}%
+    </span>
+  )
+}
+
+function ClvSegmentBadge({ segment }: { segment: 'VIP' | 'LOYAL' | 'RETURNING' | 'ONE_TIME' }) {
+  const STYLES = {
+    VIP:       { dot: 'bg-purple-400', text: 'text-purple-600 dark:text-purple-400', label: 'VIP' },
+    LOYAL:     { dot: 'bg-blue-400',   text: 'text-blue-600 dark:text-blue-400',     label: 'Loyal' },
+    RETURNING: { dot: 'bg-green-400',  text: 'text-green-600 dark:text-green-400',   label: 'Returning' },
+    ONE_TIME:  { dot: 'bg-gray-300 dark:bg-gray-600', text: 'text-gray-500 dark:text-gray-400', label: 'One-time' },
+  }
+  const s = STYLES[segment]
+  return (
+    <span className="inline-flex items-center gap-1.5">
+      <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${s.dot}`} />
+      <span className={`text-[11px] font-medium ${s.text}`}>{s.label}</span>
+    </span>
+  )
+}
+
 // ── Main component ────────────────────────────────────────────────────────────
 
 export default function Analytics() {
@@ -201,7 +241,10 @@ export default function Analytics() {
   const [pincodeSortAsc, setPincodeSortAsc] = useState(false)
   const [reorderSearch, setReorderSearch] = useState('')
   const [copiedPhone, setCopiedPhone]     = useState<string | null>(null)
-  const { orders, products, customers } = useAppStore()
+  const [productSort, setProductSort]     = useState<ProductSortKey>('revenue')
+  const [productSortAsc, setProductSortAsc] = useState(false)
+  const [productCategory, setProductCategory] = useState('all')
+  const { orders, products, customers, returns, exceptions } = useAppStore()
 
   const { forecasts, summary } = useMemo(() => buildSKUForecast(products, orders), [products, orders])
 
@@ -230,6 +273,25 @@ export default function Analytics() {
     () => orders.filter(o => { const t = new Date(o.created_at); return t >= from && t < to }),
     [orders, from, to],
   )
+
+  // ── Previous period (MoM delta) ──────────────────────────────────────────────
+  const prevFrom = useMemo(() => new Date(from.getTime() - (to.getTime() - from.getTime())), [from, to])
+  const prevPeriodOrders = useMemo(
+    () => orders.filter(o => { const t = new Date(o.created_at); return t >= prevFrom && t < from }),
+    [orders, prevFrom, from]
+  )
+  const prevKpis = useMemo(() => {
+    const paid = prevPeriodOrders.filter(o => o.payment_status === 'PAID')
+    const rev  = paid.reduce((s, o) => s + o.gross_amount - o.discount_amount, 0)
+    const rto  = prevPeriodOrders.filter(o => o.fulfillment_status === 'RTO_INITIATED')
+    const del  = prevPeriodOrders.filter(o => o.fulfillment_status === 'DELIVERED')
+    return {
+      revenue: rev,
+      orders: prevPeriodOrders.length,
+      aov: paid.length > 0 ? rev / paid.length : 0,
+      rtoRate: (del.length + rto.length) > 0 ? rto.length / (del.length + rto.length) * 100 : 0,
+    }
+  }, [prevPeriodOrders])
 
   // ── KPIs ─────────────────────────────────────────────────────────────────────
   const paidOrders  = filteredOrders.filter(o => o.payment_status === 'PAID')
@@ -380,15 +442,336 @@ export default function Analytics() {
     top_revenue: pincodeData.reduce((max, p) => p.revenue > max.revenue ? p : max, pincodeData[0] ?? { pincode: '—', revenue: 0, city: '' }),
   }), [pincodeData])
 
+  // ── Cohort Analysis ──────────────────────────────────────────────────────────
+  const cohortAnalysis = useMemo(() => {
+    const firstOrderMonth = new Map<string, string>()       // customerId → first month key
+    const customerOrderMonths = new Map<string, Set<string>>() // customerId → Set<monthKey>
+
+    for (const order of [...orders].sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime())) {
+      if (!order.customer_id) continue
+      const mk = getMonthKey(new Date(order.created_at))
+      if (!firstOrderMonth.has(order.customer_id)) firstOrderMonth.set(order.customer_id, mk)
+      if (!customerOrderMonths.has(order.customer_id)) customerOrderMonths.set(order.customer_id, new Set())
+      customerOrderMonths.get(order.customer_id)!.add(mk)
+    }
+
+    const cohortMap = new Map<string, string[]>()
+    for (const [cid, mk] of firstOrderMonth) {
+      if (!cohortMap.has(mk)) cohortMap.set(mk, [])
+      cohortMap.get(mk)!.push(cid)
+    }
+
+    const allMonths = [...cohortMap.keys()].sort()
+    const currentKey = getMonthKey(new Date())
+    const MAX_PERIODS = 5
+
+    const rows = allMonths.map(cohortMonth => {
+      const customers = cohortMap.get(cohortMonth) ?? []
+      const size = customers.length
+      const [y, m] = cohortMonth.split('-').map(Number)
+      const retention: (number | null)[] = []
+
+      for (let i = 0; i <= MAX_PERIODS; i++) {
+        const total = (m - 1) + i
+        const tYear = y + Math.floor(total / 12)
+        const tMonth = total % 12
+        const tKey = `${tYear}-${String(tMonth + 1).padStart(2, '0')}`
+        if (tKey > currentKey) { retention.push(null); continue }
+        const count = customers.filter(cid => customerOrderMonths.get(cid)?.has(tKey)).length
+        retention.push(size > 0 ? Math.round(count / size * 100) : 0)
+      }
+
+      return { cohortMonth, label: getMonthLabel(cohortMonth), size, retention }
+    })
+
+    return { rows, maxPeriods: MAX_PERIODS }
+  }, [orders])
+
+  const cohortSummary = useMemo(() => {
+    const withM1 = cohortAnalysis.rows.filter(r => r.retention[1] !== null)
+    const avgM1 = withM1.length > 0
+      ? withM1.reduce((s, r) => s + (r.retention[1] ?? 0), 0) / withM1.length
+      : 0
+    const best = [...cohortAnalysis.rows]
+      .filter(r => r.retention[1] !== null)
+      .sort((a, b) => (b.retention[1] ?? 0) - (a.retention[1] ?? 0))[0] ?? null
+    return {
+      avgM1Retention: avgM1,
+      bestCohort: best,
+      totalCustomers: cohortAnalysis.rows.reduce((s, r) => s + r.size, 0),
+    }
+  }, [cohortAnalysis])
+
+  // ── Enhanced Product Performance ─────────────────────────────────────────────
+  const enhancedProductPerf = useMemo(() => {
+    const returnedOrderIds = new Set(returns.map(r => r.order_id))
+
+    const map = new Map<string, {
+      name: string; sku: string; category: string
+      units_sold: number; revenue: number; cost_total: number; returned_units: number
+    }>()
+
+    for (const o of orders.filter(o => o.payment_status === 'PAID')) {
+      const hasReturn = returnedOrderIds.has(o.id)
+      for (const item of o.items ?? []) {
+        const key = item.product_id ?? item.sku
+        const product = products.find(p => p.id === item.product_id)
+        const e = map.get(key) ?? {
+          name: item.product?.name ?? item.product_name ?? item.sku,
+          sku: item.sku,
+          category: product?.category ?? 'Other',
+          units_sold: 0, revenue: 0, cost_total: 0, returned_units: 0,
+        }
+        e.units_sold += item.quantity
+        e.revenue += item.unit_price * item.quantity
+        e.cost_total += (item.cost_price ?? product?.cost_price ?? 0) * item.quantity
+        if (hasReturn) e.returned_units += item.quantity
+        map.set(key, e)
+      }
+    }
+
+    return Array.from(map.values()).map(p => {
+      const forecast = forecasts.find(f => f.sku === p.sku)
+      return {
+        ...p,
+        return_rate: p.units_sold > 0 ? (p.returned_units / p.units_sold) * 100 : 0,
+        gross_margin: p.cost_total > 0 && p.revenue > 0
+          ? ((p.revenue - p.cost_total) / p.revenue) * 100
+          : null as number | null,
+        dioh: forecast && forecast.avg_daily_demand > 0
+          ? Math.round(forecast.inventory_count / forecast.avg_daily_demand)
+          : null as number | null,
+        inventory: forecast?.inventory_count ?? 0,
+      }
+    })
+  }, [orders, products, returns, forecasts])
+
+  const productPerfSummary = useMemo(() => {
+    const withMargin = enhancedProductPerf.filter(p => p.gross_margin !== null)
+    return {
+      avgReturnRate: enhancedProductPerf.length > 0
+        ? enhancedProductPerf.reduce((s, p) => s + p.return_rate, 0) / enhancedProductPerf.length
+        : 0,
+      avgMargin: withMargin.length > 0
+        ? withMargin.reduce((s, p) => s + (p.gross_margin ?? 0), 0) / withMargin.length
+        : 0,
+      highReturnCount: enhancedProductPerf.filter(p => p.return_rate >= 20).length,
+    }
+  }, [enhancedProductPerf])
+
+  const productCategories = useMemo(
+    () => ['all', ...Array.from(new Set(enhancedProductPerf.map(p => p.category))).sort()],
+    [enhancedProductPerf]
+  )
+
+  const sortedProductPerf = useMemo(() => {
+    const list = productCategory === 'all'
+      ? enhancedProductPerf
+      : enhancedProductPerf.filter(p => p.category === productCategory)
+    return [...list].sort((a, b) => {
+      let va: number, vb: number
+      switch (productSort) {
+        case 'units':       va = a.units_sold;          vb = b.units_sold; break
+        case 'return_rate': va = a.return_rate;          vb = b.return_rate; break
+        case 'margin':      va = a.gross_margin ?? -1;   vb = b.gross_margin ?? -1; break
+        case 'dioh':        va = a.dioh ?? 9999;         vb = b.dioh ?? 9999; break
+        default:            va = a.revenue;              vb = b.revenue
+      }
+      return productSortAsc ? va - vb : vb - va
+    })
+  }, [enhancedProductPerf, productCategory, productSort, productSortAsc])
+
+  const toggleProductSort = (key: ProductSortKey) => {
+    if (productSort === key) setProductSortAsc(a => !a)
+    else { setProductSort(key); setProductSortAsc(false) }
+  }
+
+  // ── RTO Intelligence ──────────────────────────────────────────────────────────
+  const rtoKpis = useMemo(() => {
+    const rtoO    = filteredOrders.filter(o => o.fulfillment_status === 'RTO_INITIATED')
+    const settled = filteredOrders.filter(o => ['DELIVERED', 'RTO_INITIATED'].includes(o.fulfillment_status))
+    return {
+      total:         rtoO.length,
+      rate:          settled.length > 0 ? rtoO.length / settled.length * 100 : 0,
+      estimatedLoss: rtoO.reduce((s, o) => s + (o.gross_amount - o.discount_amount) * 0.15, 0),
+      avgScore:      filteredOrders.length > 0 ? filteredOrders.reduce((s, o) => s + o.rto_risk_score, 0) / filteredOrders.length : 0,
+      highRisk:      filteredOrders.filter(o => o.rto_risk_score >= 60).length,
+      pendingReview: filteredOrders.filter(o => o.rto_review_status === 'PENDING').length,
+    }
+  }, [filteredOrders])
+
+  const rtoByChannel = useMemo(() => {
+    const map = new Map<string, { total: number; rto: number }>()
+    for (const o of filteredOrders) {
+      const e = map.get(o.channel) ?? { total: 0, rto: 0 }
+      map.set(o.channel, { total: e.total + 1, rto: e.rto + (o.fulfillment_status === 'RTO_INITIATED' ? 1 : 0) })
+    }
+    return Array.from(map.entries())
+      .map(([ch, d]) => ({ channel: CHANNEL_LABELS[ch] ?? ch, total: d.total, rto: d.rto, rate: d.total > 0 ? d.rto / d.total * 100 : 0 }))
+      .sort((a, b) => b.rate - a.rate)
+  }, [filteredOrders])
+
+  const rtoByPayment = useMemo(() => {
+    const map = new Map<string, { total: number; rto: number }>()
+    for (const o of filteredOrders) {
+      const e = map.get(o.payment_method) ?? { total: 0, rto: 0 }
+      map.set(o.payment_method, { total: e.total + 1, rto: e.rto + (o.fulfillment_status === 'RTO_INITIATED' ? 1 : 0) })
+    }
+    return Array.from(map.entries())
+      .map(([m, d]) => ({ method: METHOD_LABELS[m] ?? m, total: d.total, rto: d.rto, rate: d.total > 0 ? d.rto / d.total * 100 : 0 }))
+      .sort((a, b) => b.rate - a.rate)
+  }, [filteredOrders])
+
+  const rtoScoreBuckets = useMemo(() => {
+    const buckets = [
+      { label: '0–25',   min: 0,  max: 25,  count: 0, rto: 0 },
+      { label: '26–50',  min: 26, max: 50,  count: 0, rto: 0 },
+      { label: '51–75',  min: 51, max: 75,  count: 0, rto: 0 },
+      { label: '76–100', min: 76, max: 100, count: 0, rto: 0 },
+    ]
+    for (const o of filteredOrders) {
+      const b = buckets.find(x => o.rto_risk_score >= x.min && o.rto_risk_score <= x.max)
+      if (b) { b.count++; if (o.fulfillment_status === 'RTO_INITIATED') b.rto++ }
+    }
+    return buckets.map(b => ({ ...b, rate: b.count > 0 ? b.rto / b.count * 100 : 0 }))
+  }, [filteredOrders])
+
+  // ── Operations Intelligence ───────────────────────────────────────────────────
+  const timeToShipData = useMemo(() => {
+    const times: number[] = []
+    for (const o of filteredOrders) {
+      if (!o.shipments || o.shipments.length === 0) continue
+      const first = [...o.shipments].sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime())[0]
+      const hours = (new Date(first.created_at).getTime() - new Date(o.created_at).getTime()) / 3600000
+      if (hours >= 0 && hours < 720) times.push(hours)
+    }
+    if (times.length === 0) return null
+    const sorted = [...times].sort((a, b) => a - b)
+    return {
+      avg:    times.reduce((s, t) => s + t, 0) / times.length,
+      median: sorted[Math.floor(sorted.length / 2)],
+      total:  times.length,
+      buckets: [
+        { label: '<12h',  count: times.filter(t => t < 12).length },
+        { label: '12–24h',count: times.filter(t => t >= 12 && t < 24).length },
+        { label: '1–2d',  count: times.filter(t => t >= 24 && t < 48).length },
+        { label: '2–3d',  count: times.filter(t => t >= 48 && t < 72).length },
+        { label: '3–5d',  count: times.filter(t => t >= 72 && t < 120).length },
+        { label: '5d+',   count: times.filter(t => t >= 120).length },
+      ],
+    }
+  }, [filteredOrders])
+
+  const fulfillmentFunnel = useMemo(() => [
+    { label: 'Confirmed',        status: 'CONFIRMED' as const },
+    { label: 'Processing',       status: 'PROCESSING' as const },
+    { label: 'Shipped',          status: 'SHIPPED' as const },
+    { label: 'In Transit',       status: 'IN_TRANSIT' as const },
+    { label: 'Out for Delivery', status: 'OUT_FOR_DELIVERY' as const },
+    { label: 'Delivered',        status: 'DELIVERED' as const },
+  ].map(s => ({ ...s, count: filteredOrders.filter(o => o.fulfillment_status === s.status).length }))
+  , [filteredOrders])
+
+  const exceptionBreakdown = useMemo(() => {
+    const map = new Map<string, { total: number; unresolved: number }>()
+    for (const e of exceptions) {
+      const d = map.get(e.type) ?? { total: 0, unresolved: 0 }
+      map.set(e.type, { total: d.total + 1, unresolved: d.unresolved + (e.status === 'UNRESOLVED' ? 1 : 0) })
+    }
+    return Array.from(map.entries())
+      .map(([type, d]) => ({ type, label: type.replace(/_/g, ' '), ...d }))
+      .sort((a, b) => b.total - a.total)
+  }, [exceptions])
+
+  const opsKpis = useMemo(() => {
+    const shipped   = filteredOrders.filter(o => ['SHIPPED','IN_TRANSIT','OUT_FOR_DELIVERY','DELIVERED'].includes(o.fulfillment_status))
+    const ndrOrders = filteredOrders.filter(o => o.fulfillment_status === 'NDR')
+    return {
+      shipped:          shipped.length,
+      ndrRate:          filteredOrders.length > 0 ? ndrOrders.length / filteredOrders.length * 100 : 0,
+      avgHoursToShip:   timeToShipData?.avg ?? null,
+      medianHoursToShip:timeToShipData?.median ?? null,
+      exUnresolved:     exceptions.filter(e => e.status === 'UNRESOLVED').length,
+      returnCount:      returns.length,
+    }
+  }, [filteredOrders, exceptions, returns, timeToShipData])
+
+  const returnsByReason = useMemo(() => {
+    const map = new Map<string, number>()
+    for (const r of returns) {
+      map.set(r.return_reason, (map.get(r.return_reason) ?? 0) + 1)
+    }
+    return Array.from(map.entries())
+      .map(([reason, count]) => ({ reason: reason.replace(/_/g, ' '), count }))
+      .sort((a, b) => b.count - a.count)
+  }, [returns])
+
+  // ── Customer LTV / Segmentation ───────────────────────────────────────────────
+  const customerClv = useMemo(() => {
+    const map = new Map<string, {
+      id: string; name: string; phone: string; city: string; state: string
+      orderCount: number; totalSpent: number; firstOrderAt: number; lastOrderAt: number
+    }>()
+    for (const o of orders) {
+      if (!o.customer_id) continue
+      const cust = customers.find(c => c.id === o.customer_id)
+      if (!cust) continue
+      const e = map.get(o.customer_id) ?? {
+        id: o.customer_id, name: cust.name, phone: cust.phone,
+        city: cust.city, state: cust.state,
+        orderCount: 0, totalSpent: 0, firstOrderAt: Infinity, lastOrderAt: -Infinity,
+      }
+      const t = new Date(o.created_at).getTime()
+      map.set(o.customer_id, {
+        ...e,
+        orderCount: e.orderCount + 1,
+        totalSpent: e.totalSpent + (o.payment_status === 'PAID' ? o.gross_amount - o.discount_amount : 0),
+        firstOrderAt: Math.min(e.firstOrderAt, t),
+        lastOrderAt:  Math.max(e.lastOrderAt, t),
+      })
+    }
+    return Array.from(map.values()).map(c => ({
+      ...c,
+      daysSinceFirst: Math.round((Date.now() - c.firstOrderAt) / 86400000),
+      daysSinceLast:  Math.round((Date.now() - c.lastOrderAt) / 86400000),
+      avgOrderValue:  c.orderCount > 0 ? c.totalSpent / c.orderCount : 0,
+      segment: (c.orderCount >= 5 || c.totalSpent >= 10000) ? 'VIP' as const
+        : c.orderCount >= 3 ? 'LOYAL' as const
+        : c.orderCount >= 2 ? 'RETURNING' as const
+        : 'ONE_TIME' as const,
+    })).sort((a, b) => b.totalSpent - a.totalSpent)
+  }, [orders, customers])
+
+  const clvSegments = useMemo(() => {
+    const vip      = customerClv.filter(c => c.segment === 'VIP')
+    const loyal    = customerClv.filter(c => c.segment === 'LOYAL')
+    const ret      = customerClv.filter(c => c.segment === 'RETURNING')
+    const oneTime  = customerClv.filter(c => c.segment === 'ONE_TIME')
+    const total    = customerClv.reduce((s, c) => s + c.totalSpent, 0)
+    return {
+      vip:      { count: vip.length,    revenue: vip.reduce((s, c) => s + c.totalSpent, 0) },
+      loyal:    { count: loyal.length,  revenue: loyal.reduce((s, c) => s + c.totalSpent, 0) },
+      returning:{ count: ret.length,    revenue: ret.reduce((s, c) => s + c.totalSpent, 0) },
+      oneTime:  { count: oneTime.length,revenue: oneTime.reduce((s, c) => s + c.totalSpent, 0) },
+      total,
+      avgClv:   customerClv.length > 0 ? total / customerClv.length : 0,
+    }
+  }, [customerClv])
+
   const granularityLabel: Record<Granularity, string> = {
     hour: 'Hourly', day: 'Daily', week: 'Weekly', month: 'Monthly',
   }
 
   const TABS: { key: TabType; label: string }[] = [
-    { key: 'overview', label: 'Overview' },
-    { key: 'reorder',  label: 'Reorder Engine' },
-    { key: 'forecast', label: 'Demand Forecast' },
-    { key: 'pincode',  label: 'Pincode Intelligence' },
+    { key: 'overview',   label: 'Overview' },
+    { key: 'cohort',     label: 'Cohort Analysis' },
+    { key: 'products',   label: 'Product Analysis' },
+    { key: 'rto',        label: 'RTO Intelligence' },
+    { key: 'operations', label: 'Operations' },
+    { key: 'clv',        label: 'Customer LTV' },
+    { key: 'reorder',    label: 'Reorder Engine' },
+    { key: 'forecast',   label: 'Demand Forecast' },
+    { key: 'pincode',    label: 'Pincode Intelligence' },
   ]
 
   const onPincodeSort = (k: PincodeSortKey) => {
@@ -403,9 +786,18 @@ export default function Analytics() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-xl font-semibold tracking-tight text-gray-900 dark:text-white">Analytics</h1>
-          <p className="text-[13px] text-gray-400 mt-0.5">{tab === 'overview' ? periodMeta.label : tab === 'reorder' ? 'Churn intelligence' : 'Demand forecast'}</p>
+          <p className="text-[13px] text-gray-400 mt-0.5">
+            {tab === 'overview'    ? periodMeta.label
+             : tab === 'reorder'  ? 'Churn intelligence'
+             : tab === 'cohort'   ? 'Customer retention by monthly cohort'
+             : tab === 'products' ? 'Product-level performance, returns & inventory'
+             : tab === 'rto'      ? 'Return-to-origin root cause analysis — ' + periodMeta.shortLabel
+             : tab === 'operations'? 'Fulfillment velocity & exception management — ' + periodMeta.shortLabel
+             : tab === 'clv'      ? 'Customer lifetime value & segment intelligence'
+             : 'Demand forecast'}
+          </p>
         </div>
-        {tab !== 'forecast' && tab !== 'reorder' && (
+        {(['overview','rto','operations','pincode'] as TabType[]).includes(tab) && (
           <PeriodPicker value={period} onChange={setPeriod} />
         )}
       </div>
@@ -426,23 +818,35 @@ export default function Analytics() {
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
             <Card className="px-4 py-3.5">
               <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-widest mb-2">Revenue</p>
-              <p className="text-[26px] font-semibold text-gray-900 leading-none tabular-nums">₹{totalRevenue >= 1000 ? `${Math.round(totalRevenue / 1000)}k` : Math.round(totalRevenue)}</p>
-              <p className="text-[10px] text-gray-400 mt-1.5">{periodMeta.shortLabel}</p>
+              <p className="text-[26px] font-semibold text-gray-900 dark:text-white leading-none tabular-nums">₹{totalRevenue >= 1000 ? `${Math.round(totalRevenue / 1000)}k` : Math.round(totalRevenue)}</p>
+              <div className="flex items-center gap-1.5 mt-1.5">
+                <span className="text-[10px] text-gray-400">{periodMeta.shortLabel}</span>
+                <DeltaChip curr={totalRevenue} prev={prevKpis.revenue} />
+              </div>
             </Card>
             <Card className="px-4 py-3.5">
               <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-widest mb-2">Orders</p>
-              <p className="text-[26px] font-semibold text-gray-900 leading-none tabular-nums">{filteredOrders.length}</p>
-              <p className="text-[10px] text-gray-400 mt-1.5">{periodMeta.shortLabel}</p>
+              <p className="text-[26px] font-semibold text-gray-900 dark:text-white leading-none tabular-nums">{filteredOrders.length}</p>
+              <div className="flex items-center gap-1.5 mt-1.5">
+                <span className="text-[10px] text-gray-400">{periodMeta.shortLabel}</span>
+                <DeltaChip curr={filteredOrders.length} prev={prevKpis.orders} />
+              </div>
             </Card>
             <Card className="px-4 py-3.5">
               <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-widest mb-2">Avg Order Value</p>
-              <p className="text-[26px] font-semibold text-gray-900 leading-none tabular-nums">₹{aov.toLocaleString('en-IN')}</p>
-              <p className="text-[10px] text-gray-400 mt-1.5">paid orders</p>
+              <p className="text-[26px] font-semibold text-gray-900 dark:text-white leading-none tabular-nums">₹{aov.toLocaleString('en-IN')}</p>
+              <div className="flex items-center gap-1.5 mt-1.5">
+                <span className="text-[10px] text-gray-400">paid orders</span>
+                <DeltaChip curr={aov} prev={prevKpis.aov} />
+              </div>
             </Card>
             <Card className="px-4 py-3.5">
               <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-widest mb-2">RTO Rate</p>
               <p className="text-[26px] font-semibold text-red-600 dark:text-red-400 leading-none tabular-nums">{rtoRate.toFixed(1)}%</p>
-              <p className="text-[10px] text-gray-400 mt-1.5">{periodMeta.shortLabel}</p>
+              <div className="flex items-center gap-1.5 mt-1.5">
+                <span className="text-[10px] text-gray-400">{periodMeta.shortLabel}</span>
+                <DeltaChip curr={rtoRate} prev={prevKpis.rtoRate} invertGood />
+              </div>
             </Card>
             <Card className="px-4 py-3.5">
               <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-widest mb-2">Gross Margin</p>
@@ -451,7 +855,7 @@ export default function Analytics() {
             </Card>
             <Card className="px-4 py-3.5">
               <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-widest mb-2">RTO Loss</p>
-              <p className="text-[26px] font-semibold text-gray-900 leading-none tabular-nums">₹{Math.round(rtoLoss).toLocaleString('en-IN')}</p>
+              <p className="text-[26px] font-semibold text-gray-900 dark:text-white leading-none tabular-nums">₹{Math.round(rtoLoss).toLocaleString('en-IN')}</p>
               <p className="text-[10px] text-gray-400 mt-1.5">est. 15% of value</p>
             </Card>
           </div>
@@ -671,6 +1075,423 @@ export default function Analytics() {
         </div>
       )}
 
+      {/* ── RTO Intelligence Tab ────────────────────────────────────────────── */}
+      {tab === 'rto' && (
+        <div className="space-y-4">
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+            <Card className="p-4">
+              <p className="text-[11px] font-medium text-gray-400 uppercase tracking-wider mb-1">RTO Orders</p>
+              <p className="text-2xl font-semibold text-red-600 dark:text-red-400">{rtoKpis.total}</p>
+              <p className="text-[10px] text-gray-400 mt-0.5">{periodMeta.shortLabel}</p>
+            </Card>
+            <Card className="p-4">
+              <p className="text-[11px] font-medium text-gray-400 uppercase tracking-wider mb-1">RTO Rate</p>
+              <p className={`text-2xl font-semibold ${rtoKpis.rate >= 20 ? 'text-red-600 dark:text-red-400' : rtoKpis.rate >= 10 ? 'text-amber-600 dark:text-amber-400' : 'text-green-600 dark:text-green-400'}`}>
+                {rtoKpis.rate.toFixed(1)}%
+              </p>
+              <p className="text-[10px] text-gray-400 mt-0.5">of settled orders</p>
+            </Card>
+            <Card className="p-4">
+              <p className="text-[11px] font-medium text-gray-400 uppercase tracking-wider mb-1">Est. RTO Loss</p>
+              <p className="text-2xl font-semibold text-gray-900 dark:text-white">₹{Math.round(rtoKpis.estimatedLoss).toLocaleString('en-IN')}</p>
+              <p className="text-[10px] text-gray-400 mt-0.5">~15% of order value</p>
+            </Card>
+            <Card className="p-4">
+              <p className="text-[11px] font-medium text-gray-400 uppercase tracking-wider mb-1">High Risk Orders</p>
+              <p className={`text-2xl font-semibold ${rtoKpis.highRisk > 0 ? 'text-amber-600 dark:text-amber-400' : 'text-green-600 dark:text-green-400'}`}>
+                {rtoKpis.highRisk}
+              </p>
+              <p className="text-[10px] text-gray-400 mt-0.5">score ≥60, needs review</p>
+            </Card>
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            <Card>
+              <div className="px-4 py-3 border-b border-gray-100 dark:border-white/[0.05]">
+                <h3 className="text-[11px] font-medium text-gray-400 uppercase tracking-wider">RTO Rate by Channel</h3>
+                <p className="text-[10px] text-gray-400 mt-0.5">Which acquisition channel delivers the most RTOs</p>
+              </div>
+              {rtoByChannel.length === 0
+                ? <p className="px-4 py-8 text-center text-sm text-gray-400">No data for this period</p>
+                : <div className="divide-y divide-gray-50 dark:divide-white/[0.03]">
+                    {rtoByChannel.map(r => (
+                      <div key={r.channel} className="px-4 py-3">
+                        <div className="flex items-center justify-between mb-1.5">
+                          <span className="text-sm font-medium text-gray-900 dark:text-white">{r.channel}</span>
+                          <span className="text-xs text-gray-400">{r.rto} RTOs / {r.total} orders</span>
+                        </div>
+                        <div className="flex items-center gap-3">
+                          <div className="flex-1 h-2 bg-gray-100 dark:bg-white/10 rounded-full overflow-hidden">
+                            <div
+                              className={`h-full rounded-full transition-all duration-500 ${r.rate >= 20 ? 'bg-red-400' : r.rate >= 10 ? 'bg-amber-400' : 'bg-green-400'}`}
+                              style={{ width: `${Math.min(r.rate * 2.5, 100)}%` }}
+                            />
+                          </div>
+                          <span className={`text-sm font-semibold w-12 text-right shrink-0 ${r.rate >= 20 ? 'text-red-600 dark:text-red-400' : r.rate >= 10 ? 'text-amber-600 dark:text-amber-400' : 'text-green-600 dark:text-green-400'}`}>
+                            {r.rate.toFixed(1)}%
+                          </span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>}
+            </Card>
+
+            <Card>
+              <div className="px-4 py-3 border-b border-gray-100 dark:border-white/[0.05]">
+                <h3 className="text-[11px] font-medium text-gray-400 uppercase tracking-wider">RTO Rate by Payment Method</h3>
+                <p className="text-[10px] text-gray-400 mt-0.5">COD typically drives higher RTO — confirm here</p>
+              </div>
+              {rtoByPayment.length === 0
+                ? <p className="px-4 py-8 text-center text-sm text-gray-400">No data for this period</p>
+                : <div className="divide-y divide-gray-50 dark:divide-white/[0.03]">
+                    {rtoByPayment.map(r => (
+                      <div key={r.method} className="px-4 py-3">
+                        <div className="flex items-center justify-between mb-1.5">
+                          <span className="text-sm font-medium text-gray-900 dark:text-white">{r.method}</span>
+                          <span className="text-xs text-gray-400">{r.rto} RTOs / {r.total} orders</span>
+                        </div>
+                        <div className="flex items-center gap-3">
+                          <div className="flex-1 h-2 bg-gray-100 dark:bg-white/10 rounded-full overflow-hidden">
+                            <div
+                              className={`h-full rounded-full transition-all duration-500 ${r.rate >= 20 ? 'bg-red-400' : r.rate >= 10 ? 'bg-amber-400' : 'bg-green-400'}`}
+                              style={{ width: `${Math.min(r.rate * 2.5, 100)}%` }}
+                            />
+                          </div>
+                          <span className={`text-sm font-semibold w-12 text-right shrink-0 ${r.rate >= 20 ? 'text-red-600 dark:text-red-400' : r.rate >= 10 ? 'text-amber-600 dark:text-amber-400' : 'text-green-600 dark:text-green-400'}`}>
+                            {r.rate.toFixed(1)}%
+                          </span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>}
+            </Card>
+          </div>
+
+          <Card className="p-5">
+            <h3 className="text-sm font-semibold text-gray-900 dark:text-white mb-1">Risk Score Distribution vs Actual RTO Rate</h3>
+            <p className="text-xs text-gray-400 mb-4">Validates that the RTO model is correctly scoring high-risk orders</p>
+            <div className="grid grid-cols-4 gap-3">
+              {rtoScoreBuckets.map(b => {
+                const tiers = ['bg-green-50 dark:bg-green-900/10', 'bg-yellow-50 dark:bg-yellow-900/10', 'bg-amber-50 dark:bg-amber-900/10', 'bg-red-50 dark:bg-red-900/10']
+                const idx = rtoScoreBuckets.indexOf(b)
+                return (
+                  <div key={b.label} className={`rounded-xl p-4 text-center ${tiers[idx]}`}>
+                    <p className="text-[11px] font-semibold text-gray-500 dark:text-gray-400 mb-2">Score {b.label}</p>
+                    <p className="text-2xl font-bold text-gray-900 dark:text-white">{b.count}</p>
+                    <p className="text-[10px] text-gray-400 mt-1">orders</p>
+                    {b.count > 0 && (
+                      <div className="mt-2 pt-2 border-t border-black/5 dark:border-white/10">
+                        <p className={`text-xs font-semibold ${b.rate >= 20 ? 'text-red-600 dark:text-red-400' : b.rate >= 10 ? 'text-amber-600 dark:text-amber-400' : 'text-green-600 dark:text-green-400'}`}>
+                          {b.rate.toFixed(0)}% RTO
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                )
+              })}
+            </div>
+            <p className="text-[10px] text-gray-400 mt-3">
+              Avg risk score: <span className="font-semibold text-gray-700 dark:text-gray-300">{rtoKpis.avgScore.toFixed(1)}</span>
+              {' · '}Pending review: <span className="font-semibold text-amber-600">{rtoKpis.pendingReview}</span>
+            </p>
+          </Card>
+        </div>
+      )}
+
+      {/* ── Operations Tab ───────────────────────────────────────────────────── */}
+      {tab === 'operations' && (
+        <div className="space-y-4">
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+            <Card className="p-4">
+              <p className="text-[11px] font-medium text-gray-400 uppercase tracking-wider mb-1">Avg Time to Ship</p>
+              <p className="text-2xl font-semibold text-gray-900 dark:text-white">
+                {opsKpis.avgHoursToShip !== null
+                  ? opsKpis.avgHoursToShip < 24
+                    ? `${Math.round(opsKpis.avgHoursToShip)}h`
+                    : `${(opsKpis.avgHoursToShip / 24).toFixed(1)}d`
+                  : '—'}
+              </p>
+              <p className="text-[10px] text-gray-400 mt-0.5">order → first shipment</p>
+            </Card>
+            <Card className="p-4">
+              <p className="text-[11px] font-medium text-gray-400 uppercase tracking-wider mb-1">Orders Shipped</p>
+              <p className="text-2xl font-semibold text-gray-900 dark:text-white">{opsKpis.shipped}</p>
+              <p className="text-[10px] text-gray-400 mt-0.5">{periodMeta.shortLabel}</p>
+            </Card>
+            <Card className="p-4">
+              <p className="text-[11px] font-medium text-gray-400 uppercase tracking-wider mb-1">Open Exceptions</p>
+              <p className={`text-2xl font-semibold ${opsKpis.exUnresolved > 0 ? 'text-red-600 dark:text-red-400' : 'text-green-600 dark:text-green-400'}`}>
+                {opsKpis.exUnresolved}
+              </p>
+              <p className="text-[10px] text-gray-400 mt-0.5">unresolved</p>
+            </Card>
+            <Card className="p-4">
+              <p className="text-[11px] font-medium text-gray-400 uppercase tracking-wider mb-1">NDR Rate</p>
+              <p className={`text-2xl font-semibold ${opsKpis.ndrRate >= 5 ? 'text-amber-600 dark:text-amber-400' : 'text-green-600 dark:text-green-400'}`}>
+                {opsKpis.ndrRate.toFixed(1)}%
+              </p>
+              <p className="text-[10px] text-gray-400 mt-0.5">non-delivery reports</p>
+            </Card>
+          </div>
+
+          {/* Fulfillment Pipeline */}
+          <Card className="p-5">
+            <h3 className="text-sm font-semibold text-gray-900 dark:text-white mb-1">Fulfillment Pipeline</h3>
+            <p className="text-xs text-gray-400 mb-5">Live count of orders in each fulfillment stage — {periodMeta.shortLabel}</p>
+            <div className="flex items-end gap-2 overflow-x-auto pb-2">
+              {fulfillmentFunnel.map(stage => {
+                const maxC = Math.max(...fulfillmentFunnel.map(s => s.count), 1)
+                const h = Math.max(stage.count / maxC * 72, 6)
+                const colorMap: Record<string, string> = {
+                  DELIVERED: 'bg-green-400 dark:bg-green-500',
+                  OUT_FOR_DELIVERY: 'bg-blue-400 dark:bg-blue-500',
+                  IN_TRANSIT: 'bg-brand-400 dark:bg-brand-500',
+                  SHIPPED: 'bg-brand-300 dark:bg-brand-400',
+                }
+                return (
+                  <div key={stage.status} className="flex-1 min-w-[70px] flex flex-col items-center gap-2">
+                    <span className="text-base font-bold text-gray-900 dark:text-white">{stage.count}</span>
+                    <div className="w-full flex flex-col justify-end" style={{ height: '72px' }}>
+                      <div
+                        className={`w-full rounded-t-lg transition-all duration-700 ${colorMap[stage.status] ?? 'bg-gray-200 dark:bg-white/20'}`}
+                        style={{ height: `${h}px` }}
+                      />
+                    </div>
+                    <span className="text-[10px] text-gray-400 text-center leading-tight">{stage.label}</span>
+                  </div>
+                )
+              })}
+            </div>
+          </Card>
+
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            {/* Time to Ship */}
+            <Card className="p-5">
+              <h3 className="text-sm font-semibold text-gray-900 dark:text-white mb-1">Time to Ship Distribution</h3>
+              <p className="text-xs text-gray-400 mb-4">
+                {timeToShipData
+                  ? `Avg ${timeToShipData.avg < 24 ? `${Math.round(timeToShipData.avg)}h` : `${(timeToShipData.avg/24).toFixed(1)}d`}  ·  Median ${timeToShipData.median < 24 ? `${Math.round(timeToShipData.median)}h` : `${(timeToShipData.median/24).toFixed(1)}d`}  ·  ${timeToShipData.total} orders`
+                  : 'No shipment data available'}
+              </p>
+              {timeToShipData ? (
+                <div className="space-y-2">
+                  {timeToShipData.buckets.map(b => {
+                    const maxC = Math.max(...timeToShipData.buckets.map(x => x.count), 1)
+                    return (
+                      <div key={b.label} className="flex items-center gap-3">
+                        <span className="text-xs text-gray-500 dark:text-gray-400 w-14 shrink-0">{b.label}</span>
+                        <div className="flex-1 h-5 bg-gray-100 dark:bg-white/10 rounded-md overflow-hidden">
+                          <div
+                            className="h-full bg-brand-400 dark:bg-brand-500 rounded-md transition-all duration-500"
+                            style={{ width: `${b.count / maxC * 100}%` }}
+                          />
+                        </div>
+                        <span className="text-xs font-medium text-gray-700 dark:text-gray-300 w-6 text-right shrink-0">{b.count}</span>
+                      </div>
+                    )
+                  })}
+                </div>
+              ) : (
+                <p className="text-sm text-gray-400 text-center py-6">No shipments found in this period</p>
+              )}
+            </Card>
+
+            {/* Exception + Returns breakdown */}
+            <div className="space-y-4">
+              <Card>
+                <div className="px-4 py-3 border-b border-gray-100 dark:border-white/[0.05]">
+                  <h3 className="text-[11px] font-medium text-gray-400 uppercase tracking-wider">Exception Breakdown</h3>
+                </div>
+                {exceptionBreakdown.length === 0
+                  ? <p className="px-4 py-6 text-center text-sm text-gray-400">No exceptions</p>
+                  : <div className="overflow-x-auto">
+                      <table className="w-full">
+                        <thead>
+                          <tr className="border-b border-gray-100 dark:border-white/[0.05]">
+                            <th className="px-4 py-2.5 text-left text-[11px] font-medium text-gray-400 uppercase tracking-wider">Type</th>
+                            <th className="px-4 py-2.5 text-right text-[11px] font-medium text-gray-400 uppercase tracking-wider">Total</th>
+                            <th className="px-4 py-2.5 text-right text-[11px] font-medium text-gray-400 uppercase tracking-wider">Open</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {exceptionBreakdown.map(e => (
+                            <tr key={e.type} className="border-b border-gray-50 dark:border-white/[0.03]">
+                              <td className="px-4 py-2.5 text-sm text-gray-900 dark:text-white capitalize">{e.label.toLowerCase()}</td>
+                              <td className="px-4 py-2.5 text-right text-sm text-gray-700 dark:text-gray-300">{e.total}</td>
+                              <td className="px-4 py-2.5 text-right">
+                                <span className={`text-sm font-medium ${e.unresolved > 0 ? 'text-red-600 dark:text-red-400' : 'text-gray-400'}`}>{e.unresolved}</span>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>}
+              </Card>
+
+              {returnsByReason.length > 0 && (
+                <Card>
+                  <div className="px-4 py-3 border-b border-gray-100 dark:border-white/[0.05]">
+                    <h3 className="text-[11px] font-medium text-gray-400 uppercase tracking-wider">Returns by Reason</h3>
+                  </div>
+                  <div className="divide-y divide-gray-50 dark:divide-white/[0.03]">
+                    {returnsByReason.map(r => {
+                      const maxC = returnsByReason[0].count
+                      return (
+                        <div key={r.reason} className="px-4 py-2.5 flex items-center gap-3">
+                          <span className="text-sm text-gray-700 dark:text-gray-300 capitalize flex-1">{r.reason}</span>
+                          <div className="w-20 h-1.5 bg-gray-100 dark:bg-white/10 rounded-full overflow-hidden">
+                            <div className="h-full bg-amber-400 rounded-full" style={{ width: `${r.count / maxC * 100}%` }} />
+                          </div>
+                          <span className="text-sm font-medium text-gray-900 dark:text-white w-6 text-right shrink-0">{r.count}</span>
+                        </div>
+                      )
+                    })}
+                  </div>
+                </Card>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── Customer LTV Tab ─────────────────────────────────────────────────── */}
+      {tab === 'clv' && (
+        <div className="space-y-4">
+          {/* Segment cards */}
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+            <Card className="p-4">
+              <div className="flex items-center gap-2 mb-2">
+                <span className="w-2 h-2 rounded-full bg-purple-400 shrink-0" />
+                <p className="text-[11px] font-medium text-gray-400 uppercase tracking-wider">VIP</p>
+              </div>
+              <p className="text-2xl font-semibold text-purple-600 dark:text-purple-400">{clvSegments.vip.count}</p>
+              <p className="text-[10px] text-gray-400 mt-0.5">₹{Math.round(clvSegments.vip.revenue).toLocaleString('en-IN')} LTV</p>
+              <p className="text-[10px] text-gray-300 dark:text-gray-600 mt-0.5">5+ orders or ₹10k+ spend</p>
+            </Card>
+            <Card className="p-4">
+              <div className="flex items-center gap-2 mb-2">
+                <span className="w-2 h-2 rounded-full bg-blue-400 shrink-0" />
+                <p className="text-[11px] font-medium text-gray-400 uppercase tracking-wider">Loyal</p>
+              </div>
+              <p className="text-2xl font-semibold text-blue-600 dark:text-blue-400">{clvSegments.loyal.count}</p>
+              <p className="text-[10px] text-gray-400 mt-0.5">₹{Math.round(clvSegments.loyal.revenue).toLocaleString('en-IN')} LTV</p>
+              <p className="text-[10px] text-gray-300 dark:text-gray-600 mt-0.5">3–4 orders</p>
+            </Card>
+            <Card className="p-4">
+              <div className="flex items-center gap-2 mb-2">
+                <span className="w-2 h-2 rounded-full bg-green-400 shrink-0" />
+                <p className="text-[11px] font-medium text-gray-400 uppercase tracking-wider">Returning</p>
+              </div>
+              <p className="text-2xl font-semibold text-green-600 dark:text-green-400">{clvSegments.returning.count}</p>
+              <p className="text-[10px] text-gray-400 mt-0.5">₹{Math.round(clvSegments.returning.revenue).toLocaleString('en-IN')} LTV</p>
+              <p className="text-[10px] text-gray-300 dark:text-gray-600 mt-0.5">2 orders</p>
+            </Card>
+            <Card className="p-4">
+              <div className="flex items-center gap-2 mb-2">
+                <span className="w-2 h-2 rounded-full bg-gray-300 dark:bg-gray-600 shrink-0" />
+                <p className="text-[11px] font-medium text-gray-400 uppercase tracking-wider">One-time</p>
+              </div>
+              <p className="text-2xl font-semibold text-gray-600 dark:text-gray-300">{clvSegments.oneTime.count}</p>
+              <p className="text-[10px] text-gray-400 mt-0.5">₹{Math.round(clvSegments.oneTime.revenue).toLocaleString('en-IN')} LTV</p>
+              <p className="text-[10px] text-gray-300 dark:text-gray-600 mt-0.5">single order</p>
+            </Card>
+          </div>
+
+          {/* Revenue concentration stacked bar */}
+          <Card className="p-5">
+            <h3 className="text-sm font-semibold text-gray-900 dark:text-white mb-1">Revenue Concentration by Segment</h3>
+            <p className="text-xs text-gray-400 mb-4">
+              Total LTV: ₹{Math.round(clvSegments.total).toLocaleString('en-IN')}  ·  Avg CLV: ₹{Math.round(clvSegments.avgClv).toLocaleString('en-IN')}  ·  {customerClv.length} customers
+            </p>
+            {clvSegments.total > 0 && (
+              <>
+                <div className="h-6 w-full rounded-full overflow-hidden flex">
+                  {([
+                    { key: 'vip',      val: clvSegments.vip.revenue,       color: 'bg-purple-400' },
+                    { key: 'loyal',    val: clvSegments.loyal.revenue,     color: 'bg-blue-400' },
+                    { key: 'returning',val: clvSegments.returning.revenue,  color: 'bg-green-400' },
+                    { key: 'oneTime',  val: clvSegments.oneTime.revenue,    color: 'bg-gray-200 dark:bg-white/20' },
+                  ] as const).map(s => (
+                    <div
+                      key={s.key}
+                      className={`h-full transition-all duration-700 ${s.color}`}
+                      style={{ width: `${s.val / clvSegments.total * 100}%` }}
+                      title={`₹${Math.round(s.val).toLocaleString('en-IN')} (${Math.round(s.val / clvSegments.total * 100)}%)`}
+                    />
+                  ))}
+                </div>
+                <div className="flex items-center gap-4 mt-3 flex-wrap text-[11px] text-gray-500">
+                  {[
+                    { label: 'VIP',       color: 'bg-purple-400', rev: clvSegments.vip.revenue },
+                    { label: 'Loyal',     color: 'bg-blue-400',   rev: clvSegments.loyal.revenue },
+                    { label: 'Returning', color: 'bg-green-400',  rev: clvSegments.returning.revenue },
+                    { label: 'One-time',  color: 'bg-gray-300 dark:bg-white/30', rev: clvSegments.oneTime.revenue },
+                  ].map(s => (
+                    <span key={s.label} className="flex items-center gap-1.5">
+                      <span className={`w-2.5 h-2.5 rounded-sm ${s.color}`} />
+                      {s.label} ({Math.round(s.rev / clvSegments.total * 100)}%)
+                    </span>
+                  ))}
+                </div>
+              </>
+            )}
+          </Card>
+
+          {/* Customer LTV table */}
+          <Card>
+            <div className="px-4 py-3 border-b border-gray-100 dark:border-white/[0.05]">
+              <h3 className="text-[11px] font-medium text-gray-400 uppercase tracking-wider">Top Customers by Lifetime Value</h3>
+            </div>
+            {customerClv.length === 0
+              ? <p className="px-4 py-10 text-center text-sm text-gray-400">No customer purchase history</p>
+              : <>
+                  <div className="overflow-x-auto">
+                    <table className="w-full">
+                      <thead>
+                        <tr className="border-b border-gray-100 dark:border-white/[0.05]">
+                          <th className="px-4 py-3 text-left text-[11px] font-medium text-gray-400 uppercase tracking-wider w-8">#</th>
+                          <th className="px-4 py-3 text-left text-[11px] font-medium text-gray-400 uppercase tracking-wider">Customer</th>
+                          <th className="px-4 py-3 text-left text-[11px] font-medium text-gray-400 uppercase tracking-wider hidden sm:table-cell">Segment</th>
+                          <th className="px-4 py-3 text-right text-[11px] font-medium text-gray-400 uppercase tracking-wider">Orders</th>
+                          <th className="px-4 py-3 text-right text-[11px] font-medium text-gray-400 uppercase tracking-wider">LTV</th>
+                          <th className="px-4 py-3 text-right text-[11px] font-medium text-gray-400 uppercase tracking-wider hidden md:table-cell">Avg Order</th>
+                          <th className="px-4 py-3 text-right text-[11px] font-medium text-gray-400 uppercase tracking-wider hidden lg:table-cell">Last Order</th>
+                        </tr>
+                      </thead>
+                      <tbody className="stagger-rows">
+                        {customerClv.slice(0, 25).map((c, i) => (
+                          <tr key={c.id} className="border-b border-gray-50 dark:border-white/[0.03] hover:bg-gray-50/50 dark:hover:bg-white/[0.02]">
+                            <td className="px-4 py-3 text-xs text-gray-400 font-mono">{i + 1}</td>
+                            <td className="px-4 py-3">
+                              <p className="text-sm font-medium text-gray-900 dark:text-white">{c.name}</p>
+                              <p className="text-xs text-gray-400">{c.city}, {c.state}</p>
+                            </td>
+                            <td className="px-4 py-3 hidden sm:table-cell">
+                              <ClvSegmentBadge segment={c.segment} />
+                            </td>
+                            <td className="px-4 py-3 text-right text-sm text-gray-700 dark:text-gray-300">{c.orderCount}</td>
+                            <td className="px-4 py-3 text-right text-sm font-semibold text-gray-900 dark:text-white">
+                              ₹{Math.round(c.totalSpent).toLocaleString('en-IN')}
+                            </td>
+                            <td className="px-4 py-3 text-right text-sm text-gray-600 dark:text-gray-400 hidden md:table-cell">
+                              ₹{Math.round(c.avgOrderValue).toLocaleString('en-IN')}
+                            </td>
+                            <td className="px-4 py-3 text-right text-xs text-gray-400 hidden lg:table-cell">
+                              {c.daysSinceLast === 0 ? 'today' : `${c.daysSinceLast}d ago`}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                  <div className="px-4 py-3 border-t border-gray-100 dark:border-white/[0.05] text-xs text-gray-400">
+                    Top 25 of {customerClv.length} customers by lifetime value
+                  </div>
+                </>}
+          </Card>
+        </div>
+      )}
+
       {/* ── Reorder Engine Tab ───────────────────────────────────────────────── */}
       {tab === 'reorder' && (
         <div className="space-y-4">
@@ -874,6 +1695,241 @@ export default function Analytics() {
         </div>
       )}
 
+      {/* ── Cohort Analysis Tab ─────────────────────────────────────────────── */}
+      {tab === 'cohort' && (
+        <div className="space-y-4">
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+            <Card className="p-4">
+              <p className="text-[11px] font-medium text-gray-400 uppercase tracking-wider mb-1">Cohorts Tracked</p>
+              <p className="text-2xl font-semibold text-gray-900 dark:text-white">{cohortAnalysis.rows.length}</p>
+              <p className="text-[10px] text-gray-400 mt-0.5">monthly cohorts</p>
+            </Card>
+            <Card className="p-4">
+              <p className="text-[11px] font-medium text-gray-400 uppercase tracking-wider mb-1">Avg M+1 Retention</p>
+              <p className={`text-2xl font-semibold ${cohortSummary.avgM1Retention >= 30 ? 'text-green-600 dark:text-green-400' : cohortSummary.avgM1Retention >= 15 ? 'text-amber-600 dark:text-amber-400' : 'text-gray-900 dark:text-white'}`}>
+                {cohortSummary.avgM1Retention > 0 ? `${cohortSummary.avgM1Retention.toFixed(1)}%` : '—'}
+              </p>
+              <p className="text-[10px] text-gray-400 mt-0.5">returned next month</p>
+            </Card>
+            <Card className="p-4">
+              <p className="text-[11px] font-medium text-gray-400 uppercase tracking-wider mb-1">Total Customers</p>
+              <p className="text-2xl font-semibold text-gray-900 dark:text-white">{cohortSummary.totalCustomers}</p>
+              <p className="text-[10px] text-gray-400 mt-0.5">with order history</p>
+            </Card>
+            <Card className="p-4">
+              <p className="text-[11px] font-medium text-gray-400 uppercase tracking-wider mb-1">Best Cohort</p>
+              <p className="text-xl font-semibold text-brand-600 dark:text-brand-400 truncate">{cohortSummary.bestCohort?.label ?? '—'}</p>
+              <p className="text-[10px] text-gray-400 mt-0.5">
+                {cohortSummary.bestCohort ? `${cohortSummary.bestCohort.retention[1] ?? 0}% M+1 retention` : 'no data yet'}
+              </p>
+            </Card>
+          </div>
+
+          <Card>
+            <div className="px-4 py-3 border-b border-gray-100 dark:border-white/[0.05]">
+              <h3 className="text-[11px] font-medium text-gray-400 uppercase tracking-wider">Monthly Retention Cohorts</h3>
+              <p className="text-[10px] text-gray-400 mt-0.5">% of cohort customers who placed an order in each subsequent month</p>
+            </div>
+            {cohortAnalysis.rows.length === 0 ? (
+              <p className="px-4 py-10 text-center text-sm text-gray-400">Not enough order history to build cohorts</p>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="border-b border-gray-100 dark:border-white/[0.05]">
+                      <th className="px-4 py-3 text-left text-[11px] font-medium text-gray-400 uppercase tracking-wider whitespace-nowrap">Cohort</th>
+                      <th className="px-4 py-3 text-center text-[11px] font-medium text-gray-400 uppercase tracking-wider">Size</th>
+                      {Array.from({ length: cohortAnalysis.maxPeriods + 1 }, (_, i) => (
+                        <th key={i} className="px-2 py-3 text-center text-[11px] font-medium text-gray-400 uppercase tracking-wider whitespace-nowrap">
+                          {i === 0 ? 'M+0' : `M+${i}`}
+                        </th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {cohortAnalysis.rows.map(row => (
+                      <tr key={row.cohortMonth} className="border-b border-gray-50 dark:border-white/[0.03]">
+                        <td className="px-4 py-3 text-sm font-medium text-gray-900 dark:text-white whitespace-nowrap">{row.label}</td>
+                        <td className="px-4 py-3 text-center text-sm text-gray-500 dark:text-gray-400">{row.size}</td>
+                        {row.retention.map((pct, i) => (
+                          <CohortCell key={i} pct={pct} isFirst={i === 0} />
+                        ))}
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+            <div className="px-4 py-3 border-t border-gray-100 dark:border-white/[0.05] flex flex-wrap items-center gap-3 text-[10px] text-gray-400">
+              <span>Retention heat:</span>
+              <span className="flex items-center gap-1"><span className="w-3 h-3 rounded bg-brand-100 dark:bg-brand-900/30 inline-block" /> M+0 (100%)</span>
+              <span className="flex items-center gap-1"><span className="w-3 h-3 rounded bg-emerald-100 dark:bg-emerald-900/30 inline-block" /> ≥30%</span>
+              <span className="flex items-center gap-1"><span className="w-3 h-3 rounded bg-amber-50 dark:bg-amber-900/20 inline-block" /> ≥15%</span>
+              <span className="flex items-center gap-1"><span className="w-3 h-3 rounded bg-red-50 dark:bg-red-900/10 inline-block" /> &lt;15%</span>
+              <span className="flex items-center gap-1"><span className="w-3 h-3 rounded bg-gray-100 dark:bg-white/10 inline-block" /> future</span>
+            </div>
+          </Card>
+        </div>
+      )}
+
+      {/* ── Product Analysis Tab ─────────────────────────────────────────────── */}
+      {tab === 'products' && (
+        <div className="space-y-4">
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+            <Card className="p-4">
+              <p className="text-[11px] font-medium text-gray-400 uppercase tracking-wider mb-1">SKUs Tracked</p>
+              <p className="text-2xl font-semibold text-gray-900 dark:text-white">{enhancedProductPerf.length}</p>
+              <p className="text-[10px] text-gray-400 mt-0.5">with sales history</p>
+            </Card>
+            <Card className="p-4">
+              <p className="text-[11px] font-medium text-gray-400 uppercase tracking-wider mb-1">Avg Return Rate</p>
+              <p className={`text-2xl font-semibold ${productPerfSummary.avgReturnRate >= 20 ? 'text-red-600 dark:text-red-400' : productPerfSummary.avgReturnRate >= 10 ? 'text-amber-600 dark:text-amber-400' : 'text-green-600 dark:text-green-400'}`}>
+                {productPerfSummary.avgReturnRate.toFixed(1)}%
+              </p>
+              <p className="text-[10px] text-gray-400 mt-0.5">across all SKUs</p>
+            </Card>
+            <Card className="p-4">
+              <p className="text-[11px] font-medium text-gray-400 uppercase tracking-wider mb-1">Avg Gross Margin</p>
+              <p className={`text-2xl font-semibold ${productPerfSummary.avgMargin > 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-gray-400'}`}>
+                {productPerfSummary.avgMargin > 0 ? `${productPerfSummary.avgMargin.toFixed(1)}%` : '—'}
+              </p>
+              <p className="text-[10px] text-gray-400 mt-0.5">revenue minus COGS</p>
+            </Card>
+            <Card className="p-4">
+              <p className="text-[11px] font-medium text-gray-400 uppercase tracking-wider mb-1">High Return SKUs</p>
+              <p className={`text-2xl font-semibold ${productPerfSummary.highReturnCount > 0 ? 'text-red-600 dark:text-red-400' : 'text-green-600 dark:text-green-400'}`}>
+                {productPerfSummary.highReturnCount}
+              </p>
+              <p className="text-[10px] text-gray-400 mt-0.5">≥20% return rate</p>
+            </Card>
+          </div>
+
+          {/* Category filter */}
+          <div className="flex gap-2 flex-wrap">
+            {productCategories.map(cat => (
+              <button
+                key={cat}
+                onClick={() => setProductCategory(cat)}
+                className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
+                  productCategory === cat
+                    ? 'bg-brand-600 text-white'
+                    : 'bg-gray-100 dark:bg-white/10 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-white/20'
+                }`}
+              >
+                {cat === 'all' ? 'All Categories' : cat}
+              </button>
+            ))}
+          </div>
+
+          <Card>
+            {sortedProductPerf.length === 0 ? (
+              <p className="px-4 py-10 text-center text-sm text-gray-400">No paid orders yet</p>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full">
+                  <thead>
+                    <tr className="border-b border-gray-100 dark:border-white/[0.05]">
+                      <th className="px-4 py-3 text-left text-[11px] font-medium text-gray-400 uppercase tracking-wider w-8">#</th>
+                      <th className="px-4 py-3 text-left text-[11px] font-medium text-gray-400 uppercase tracking-wider">Product</th>
+                      <th className="px-4 py-3 text-left text-[11px] font-medium text-gray-400 uppercase tracking-wider hidden md:table-cell">Category</th>
+                      <th
+                        className="px-4 py-3 text-right text-[11px] font-medium uppercase tracking-wider hidden sm:table-cell cursor-pointer select-none hover:text-gray-700 dark:hover:text-gray-200 transition-colors"
+                        onClick={() => toggleProductSort('units')}
+                      >
+                        <span className={`inline-flex items-center gap-1 ${productSort === 'units' ? 'text-brand-600 dark:text-brand-400' : 'text-gray-400'}`}>
+                          Units {productSort === 'units' ? (productSortAsc ? <ChevronUp size={11} /> : <ChevronDown size={11} />) : <ChevronDown size={11} className="opacity-30" />}
+                        </span>
+                      </th>
+                      <th
+                        className="px-4 py-3 text-right text-[11px] font-medium uppercase tracking-wider cursor-pointer select-none hover:text-gray-700 dark:hover:text-gray-200 transition-colors"
+                        onClick={() => toggleProductSort('revenue')}
+                      >
+                        <span className={`inline-flex items-center gap-1 ${productSort === 'revenue' ? 'text-brand-600 dark:text-brand-400' : 'text-gray-400'}`}>
+                          Revenue {productSort === 'revenue' ? (productSortAsc ? <ChevronUp size={11} /> : <ChevronDown size={11} />) : <ChevronDown size={11} className="opacity-30" />}
+                        </span>
+                      </th>
+                      <th
+                        className="px-4 py-3 text-right text-[11px] font-medium uppercase tracking-wider cursor-pointer select-none hover:text-gray-700 dark:hover:text-gray-200 transition-colors"
+                        onClick={() => toggleProductSort('return_rate')}
+                      >
+                        <span className={`inline-flex items-center gap-1 ${productSort === 'return_rate' ? 'text-brand-600 dark:text-brand-400' : 'text-gray-400'}`}>
+                          Returns {productSort === 'return_rate' ? (productSortAsc ? <ChevronUp size={11} /> : <ChevronDown size={11} />) : <ChevronDown size={11} className="opacity-30" />}
+                        </span>
+                      </th>
+                      <th
+                        className="px-4 py-3 text-right text-[11px] font-medium uppercase tracking-wider hidden md:table-cell cursor-pointer select-none hover:text-gray-700 dark:hover:text-gray-200 transition-colors"
+                        onClick={() => toggleProductSort('margin')}
+                      >
+                        <span className={`inline-flex items-center gap-1 ${productSort === 'margin' ? 'text-brand-600 dark:text-brand-400' : 'text-gray-400'}`}>
+                          Margin {productSort === 'margin' ? (productSortAsc ? <ChevronUp size={11} /> : <ChevronDown size={11} />) : <ChevronDown size={11} className="opacity-30" />}
+                        </span>
+                      </th>
+                      <th
+                        className="px-4 py-3 text-right text-[11px] font-medium uppercase tracking-wider hidden lg:table-cell cursor-pointer select-none hover:text-gray-700 dark:hover:text-gray-200 transition-colors"
+                        onClick={() => toggleProductSort('dioh')}
+                      >
+                        <span className={`inline-flex items-center gap-1 ${productSort === 'dioh' ? 'text-brand-600 dark:text-brand-400' : 'text-gray-400'}`}>
+                          DIOH {productSort === 'dioh' ? (productSortAsc ? <ChevronUp size={11} /> : <ChevronDown size={11} />) : <ChevronDown size={11} className="opacity-30" />}
+                        </span>
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody className="stagger-rows">
+                    {sortedProductPerf.map((p, i) => (
+                      <tr key={p.sku} className="border-b border-gray-50 dark:border-white/[0.03] hover:bg-gray-50/50 dark:hover:bg-white/[0.02]">
+                        <td className="px-4 py-3 text-xs text-gray-400 font-mono">{i + 1}</td>
+                        <td className="px-4 py-3">
+                          <p className="text-sm font-medium text-gray-900 dark:text-white">{p.name}</p>
+                          <p className="text-xs text-gray-400">{p.sku}</p>
+                        </td>
+                        <td className="px-4 py-3 text-sm text-gray-600 dark:text-gray-400 hidden md:table-cell">{p.category}</td>
+                        <td className="px-4 py-3 text-right text-sm text-gray-700 dark:text-gray-300 hidden sm:table-cell">{p.units_sold}</td>
+                        <td className="px-4 py-3 text-right text-sm font-medium text-gray-900 dark:text-white">
+                          ₹{Math.round(p.revenue).toLocaleString('en-IN')}
+                        </td>
+                        <td className="px-4 py-3 text-right">
+                          <span className={`text-sm font-medium ${
+                            p.return_rate >= 20 ? 'text-red-600 dark:text-red-400' :
+                            p.return_rate >= 10 ? 'text-amber-600 dark:text-amber-400' :
+                            p.return_rate > 0  ? 'text-yellow-600 dark:text-yellow-500' :
+                            'text-green-600 dark:text-green-400'
+                          }`}>
+                            {p.return_rate.toFixed(1)}%
+                          </span>
+                        </td>
+                        <td className="px-4 py-3 text-right text-sm text-gray-700 dark:text-gray-300 hidden md:table-cell">
+                          {p.gross_margin !== null
+                            ? <span className={p.gross_margin >= 30 ? 'text-emerald-600 dark:text-emerald-400' : p.gross_margin >= 15 ? 'text-gray-700 dark:text-gray-300' : 'text-red-600 dark:text-red-400'}>{p.gross_margin.toFixed(1)}%</span>
+                            : <span className="text-gray-300 dark:text-gray-600">—</span>}
+                        </td>
+                        <td className="px-4 py-3 text-right hidden lg:table-cell">
+                          {p.dioh !== null ? (
+                            <span className={`text-sm font-medium ${
+                              p.dioh <= 7  ? 'text-red-600 dark:text-red-400' :
+                              p.dioh <= 14 ? 'text-amber-600 dark:text-amber-400' :
+                              'text-gray-700 dark:text-gray-300'
+                            }`}>
+                              {p.dioh >= 999 ? '∞' : `${p.dioh}d`}
+                            </span>
+                          ) : <span className="text-gray-300 dark:text-gray-600">—</span>}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+            <div className="px-4 py-3 border-t border-gray-100 dark:border-white/[0.05] text-xs text-gray-400 flex flex-wrap gap-3">
+              <span>{sortedProductPerf.length} products</span>
+              <span>·</span>
+              <span>Return rate: <span className="text-green-600">0%</span> → <span className="text-amber-600">10%</span> → <span className="text-red-600">≥20%</span></span>
+              <span>·</span>
+              <span>DIOH = Days of Inventory on Hand</span>
+            </div>
+          </Card>
+        </div>
+      )}
+
       {/* ── Forecast Tab ─────────────────────────────────────────────────────── */}
       {tab === 'forecast' && (
         <div className="space-y-4">
@@ -954,6 +2010,40 @@ function SumCard({ label, value, cls }: { label: string; value: number; cls: str
       <p className={`text-2xl font-semibold ${cls}`}>{value}</p>
       <p className="text-[11px] font-medium text-gray-400 uppercase tracking-wider mt-0.5">{label}</p>
     </Card>
+  )
+}
+
+function CohortCell({ pct, isFirst }: { pct: number | null; isFirst: boolean }) {
+  if (pct === null) {
+    return (
+      <td className="px-2 py-3 text-center">
+        <span className="inline-flex items-center justify-center w-11 h-6 rounded text-[10px] text-gray-200 dark:text-gray-700">—</span>
+      </td>
+    )
+  }
+  let bg: string, txt: string
+  if (isFirst) {
+    bg = 'bg-brand-100 dark:bg-brand-900/40'
+    txt = 'text-brand-700 dark:text-brand-400 font-semibold'
+  } else if (pct >= 30) {
+    bg = 'bg-emerald-100 dark:bg-emerald-900/30'
+    txt = 'text-emerald-700 dark:text-emerald-400'
+  } else if (pct >= 15) {
+    bg = 'bg-amber-50 dark:bg-amber-900/20'
+    txt = 'text-amber-700 dark:text-amber-500'
+  } else if (pct > 0) {
+    bg = 'bg-red-50 dark:bg-red-900/10'
+    txt = 'text-red-600 dark:text-red-400'
+  } else {
+    bg = ''
+    txt = 'text-gray-300 dark:text-gray-600'
+  }
+  return (
+    <td className="px-2 py-3 text-center">
+      <span className={`inline-flex items-center justify-center w-11 h-6 rounded text-[11px] font-medium ${bg} ${txt}`}>
+        {pct}%
+      </span>
+    </td>
   )
 }
 

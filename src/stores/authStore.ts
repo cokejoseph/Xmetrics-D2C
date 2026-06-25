@@ -28,14 +28,14 @@ export const useAuthStore = create<AuthState>((set) => ({
         if (!DEMO_MODE) {
           supabase!.auth.getSession().then(({ data: { session } }) => {
             if (!session) {
-              try { sessionStorage.removeItem(SESSION_KEY) } catch {}
+              try { sessionStorage.removeItem(SESSION_KEY) } catch { /* best-effort — ignore storage/cleanup failures */ }
               set({ user: null })
             }
           })
         }
         return
       }
-    } catch {}
+    } catch { /* best-effort — ignore storage/cleanup failures */ }
 
     if (DEMO_MODE) {
       set({ isLoading: false })
@@ -54,14 +54,14 @@ export const useAuthStore = create<AuthState>((set) => ({
   signIn: async (email, password) => {
     if (DEMO_MODE) {
       const user: AuthUser = { id: 'demo-user', email: email || 'demo@xmetrics.app' }
-      try { sessionStorage.setItem(SESSION_KEY, JSON.stringify(user)) } catch {}
+      try { sessionStorage.setItem(SESSION_KEY, JSON.stringify(user)) } catch { /* best-effort — ignore storage/cleanup failures */ }
       set({ user })
       return { error: null }
     }
     const { data, error } = await supabase!.auth.signInWithPassword({ email, password })
     if (!error && data.user) {
       const user: AuthUser = { id: data.user.id, email: data.user.email! }
-      try { sessionStorage.setItem(SESSION_KEY, JSON.stringify(user)) } catch {}
+      try { sessionStorage.setItem(SESSION_KEY, JSON.stringify(user)) } catch { /* best-effort — ignore storage/cleanup failures */ }
       set({ user })
     }
     return { error: error?.message ?? null }
@@ -77,7 +77,7 @@ export const useAuthStore = create<AuthState>((set) => ({
     // If a session is returned, email confirmation is disabled — log user in immediately
     if (data.session) {
       const user: AuthUser = { id: data.user.id, email: data.user.email! }
-      try { sessionStorage.setItem(SESSION_KEY, JSON.stringify(user)) } catch {}
+      try { sessionStorage.setItem(SESSION_KEY, JSON.stringify(user)) } catch { /* best-effort — ignore storage/cleanup failures */ }
       set({ user })
       return { error: null }
     }
@@ -86,10 +86,10 @@ export const useAuthStore = create<AuthState>((set) => ({
   },
 
   signOut: async () => {
-    try { sessionStorage.removeItem(SESSION_KEY) } catch {}
+    try { sessionStorage.removeItem(SESSION_KEY) } catch { /* best-effort — ignore storage/cleanup failures */ }
     // Tear down realtime channels before dropping the session so we don't leak
     // Supabase subscriptions across accounts.
-    try { useAppStore.getState().cleanup() } catch {}
+    try { useAppStore.getState().cleanup() } catch { /* best-effort — ignore storage/cleanup failures */ }
     if (!DEMO_MODE) await supabase!.auth.signOut()
     set({ user: null })
   },

@@ -1,11 +1,6 @@
-import { clsx } from 'clsx'
-import { twMerge } from 'tailwind-merge'
 import { X, ChevronLeft, ChevronRight } from 'lucide-react'
 import * as DialogPrimitive from '@radix-ui/react-dialog'
-
-export function cn(...inputs: Parameters<typeof clsx>) {
-  return twMerge(clsx(...inputs))
-}
+import { cn } from '../../lib/utils'
 
 // ─── Button ────────────────────────────────────────────────────────────────
 

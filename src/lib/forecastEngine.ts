@@ -36,9 +36,9 @@ export function buildSKUForecast(products: Product[], orders: Order[]): {
 
       const avgDailyDemand = totalUnitsSold30d / 30
 
-      let daysOfStock = 0
+      let daysOfStock: number
       let predictedStockoutDate: string | null = null
-      let reorderQuantity = 0
+      let reorderQuantity: number
       let status: ForecastStatus
 
       if (product.inventory_count === 0) {

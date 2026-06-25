@@ -201,13 +201,17 @@ export interface Order {
   warehouse_id: string | null
   notes: string | null
   external_ref?: string | null
-  // OMS routing (migration 13)
-  routing_decision: RoutingDecision | null
-  routing_decided_at: string | null
-  oms_push_status: OmsPushStatus
-  oms_pushed_at: string | null
-  oms_order_id: string | null
-  oms_push_error: string | null
+  // OMS routing (migration 13). Optional: these are lifecycle fields that are
+  // null/absent until an order is routed or pushed to the OMS. Live rows from
+  // the DB always include them (possibly null); locally-seeded and freshly
+  // created orders legitimately omit them until a push occurs. Consumers already
+  // treat oms_push_status as nullable (null → PENDING).
+  routing_decision?: RoutingDecision | null
+  routing_decided_at?: string | null
+  oms_push_status?: OmsPushStatus
+  oms_pushed_at?: string | null
+  oms_order_id?: string | null
+  oms_push_error?: string | null
   created_at: string
   // Populated relations
   customer?: Customer
@@ -313,12 +317,14 @@ export interface Exception {
   title: string
   description: string
   created_at: string
-  // Resolution tracking (migration 13)
-  resolved_by: string | null
-  resolved_at: string | null
-  resolution_reason: string | null
-  resolution_notes: string | null
-  audit_log_id: string | null
+  // Resolution tracking (migration 13). Optional: these are populated only once
+  // an exception is resolved. Live DB rows always include them (null until
+  // resolved); seeded/unresolved exceptions legitimately omit them.
+  resolved_by?: string | null
+  resolved_at?: string | null
+  resolution_reason?: string | null
+  resolution_notes?: string | null
+  audit_log_id?: string | null
   order?: Order
 }
 
@@ -623,6 +629,14 @@ export type AuditActionType =
   | 'ORDER_CANCELLED'
   | 'PUSHED_TO_OMS'
   | 'AUTO_PUSHED_TO_OMS'
+  // System-wide events — broaden the trail beyond order approvals so the log
+  // reads as a true audit log, not just an approval queue.
+  | 'RETURN_APPROVED'
+  | 'RETURN_REFUNDED'
+  | 'INTEGRATION_CONNECTED'
+  | 'INTEGRATION_DISCONNECTED'
+  | 'SETTINGS_UPDATED'
+  | 'DATA_EXPORTED'
 
 export interface ApprovalAuditLog {
   id: string

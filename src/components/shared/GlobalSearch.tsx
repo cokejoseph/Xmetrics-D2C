@@ -357,6 +357,9 @@ export default function GlobalSearch() {
   const totalNavCount = navItems.length
   const hasResults = totalNavCount > 0
 
+  // Sync the dropdown open-state + reset the highlighted row whenever the query
+  // or result set changes. `open` is also toggled imperatively (Escape, blur,
+  // select, clear), so it can't be a pure render-derived value.
   useEffect(() => {
     setActiveIdx(-1)
     setOpen(query.length >= 2 && hasResults)
