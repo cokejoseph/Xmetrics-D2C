@@ -5,6 +5,8 @@ import { buildSKUForecast } from '../../lib/forecastEngine'
 import { buildReorderNudgeList } from '../../lib/reorderEngine'
 import type { ChurnLevel } from '../../lib/reorderEngine'
 import { buildProfitAnalysis } from '../../lib/profitEngine'
+import { buildCampaignAnalysis, campaignTotals } from '../../lib/campaignEngine'
+import { useCampaignStore } from '../../stores/campaignStore'
 import { Card, Input } from '../../components/ui'
 import { RevenueAreaChart, OrdersBarChart, StatusDonut, ChannelBarChart } from '../../components/charts'
 import type { Order, ForecastStatus } from '../../types'
@@ -141,7 +143,7 @@ const FORECAST_STATUS_STYLE: Record<ForecastStatus, { label: string; dot: string
   UNPREDICTABLE:     { label: 'Unpredictable',      dot: 'bg-gray-300',   text: 'text-gray-400' },
 }
 
-type TabType = 'overview' | 'profit' | 'cohort' | 'products' | 'rto' | 'operations' | 'clv' | 'reorder' | 'forecast' | 'pincode'
+type TabType = 'overview' | 'profit' | 'campaigns' | 'cohort' | 'products' | 'rto' | 'operations' | 'clv' | 'reorder' | 'forecast' | 'pincode'
 type PincodeSortKey = 'orders' | 'revenue' | 'aov' | 'rto_rate'
 type ProductSortKey = 'revenue' | 'units' | 'return_rate' | 'margin' | 'dioh'
 
@@ -280,6 +282,23 @@ export default function Analytics() {
     () => buildProfitAnalysis(filteredOrders, products, returns),
     [filteredOrders, products, returns],
   )
+
+  // ── Campaign ROI — manual spend → true contribution margin per coupon ───────
+  const { campaigns, addCampaign, removeCampaign } = useCampaignStore()
+  const [cName, setCName] = useState('')
+  const [cCoupon, setCCoupon] = useState('')
+  const [cSpend, setCSpend] = useState('')
+  const [cChannel, setCChannel] = useState('')
+  // Campaign attribution spans the full order history (a campaign isn't bound to
+  // the analytics period filter), so it reads from `orders`, not filteredOrders.
+  const campaignResults = useMemo(() => buildCampaignAnalysis(campaigns, orders, products), [campaigns, orders, products])
+  const campaignSum = useMemo(() => campaignTotals(campaignResults), [campaignResults])
+  const submitCampaign = () => {
+    const spend = Math.round(Number(cSpend))
+    if (!cName.trim() || !cCoupon.trim() || !Number.isFinite(spend) || spend <= 0) return
+    addCampaign({ name: cName.trim(), coupon_code: cCoupon.trim(), spend, channel: cChannel.trim() || null, started_at: null })
+    setCName(''); setCCoupon(''); setCSpend(''); setCChannel('')
+  }
 
   // ── Previous period (MoM delta) ──────────────────────────────────────────────
   const prevFrom = useMemo(() => new Date(from.getTime() - (to.getTime() - from.getTime())), [from, to])
@@ -772,6 +791,7 @@ export default function Analytics() {
   const TABS: { key: TabType; label: string }[] = [
     { key: 'overview',   label: 'Overview' },
     { key: 'profit',     label: 'Profit Intelligence' },
+    { key: 'campaigns',  label: 'Campaign ROI' },
     { key: 'cohort',     label: 'Cohort Analysis' },
     { key: 'products',   label: 'Product Analysis' },
     { key: 'rto',        label: 'RTO Intelligence' },
@@ -797,6 +817,7 @@ export default function Analytics() {
           <p className="text-[13px] text-gray-400 mt-0.5">
             {tab === 'overview'    ? periodMeta.label
              : tab === 'profit'   ? 'True contribution margin after COD, RTO & all costs — ' + periodMeta.shortLabel
+             : tab === 'campaigns'? 'Marketing ROI on true profit, not revenue — manual spend by coupon'
              : tab === 'reorder'  ? 'Churn intelligence'
              : tab === 'cohort'   ? 'Customer retention by monthly cohort'
              : tab === 'products' ? 'Product-level performance, returns & inventory'
@@ -1236,6 +1257,134 @@ export default function Analytics() {
                   </div>}
             </Card>
           </div>
+        </div>
+        )
+      })()}
+
+      {/* ── Campaign ROI Tab ────────────────────────────────────────────────── */}
+      {tab === 'campaigns' && (() => {
+        const money = (n: number) => `${n < 0 ? '−' : ''}₹${Math.abs(Math.round(n)).toLocaleString('en-IN')}`
+        const verdictStyle = {
+          PROFITABLE: 'bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-400',
+          BREAKEVEN:  'bg-gray-100 dark:bg-white/[0.06] text-gray-600 dark:text-gray-400',
+          LOSS:       'bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-400',
+          NO_DATA:    'bg-gray-50 dark:bg-white/[0.04] text-gray-400',
+        } as const
+        const vanityTraps = campaignResults.filter(r => r.verdict !== 'NO_DATA' && r.revenueRoas >= 1.5 && r.netProfit < 0)
+        return (
+        <div className="space-y-4">
+          {/* Summary */}
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+            <Card className="p-4">
+              <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-widest mb-2">Marketing Spend</p>
+              <p className="text-[24px] font-semibold text-gray-900 dark:text-white leading-none tabular-nums">{money(campaignSum.spend)}</p>
+              <p className="text-[10px] text-gray-400 mt-1.5">{campaignResults.length} campaigns tracked</p>
+            </Card>
+            <Card className="p-4">
+              <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-widest mb-2">Net Profit (after spend)</p>
+              <p className={`text-[24px] font-semibold leading-none tabular-nums ${campaignSum.netProfit >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-600 dark:text-red-400'}`}>{money(campaignSum.netProfit)}</p>
+              <p className="text-[10px] text-gray-400 mt-1.5">contribution {money(campaignSum.contribution)} − spend</p>
+            </Card>
+            <Card className="p-4">
+              <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-widest mb-2">True Margin ROAS</p>
+              <p className={`text-[24px] font-semibold leading-none tabular-nums ${campaignSum.blendedMarginRoas >= 1 ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-600 dark:text-red-400'}`}>{campaignSum.blendedMarginRoas.toFixed(2)}×</p>
+              <p className="text-[10px] text-gray-400 mt-1.5">₹ margin per ₹ spend (not revenue)</p>
+            </Card>
+            <Card className="p-4">
+              <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-widest mb-2">Loss-making</p>
+              <p className={`text-[24px] font-semibold leading-none tabular-nums ${campaignSum.losers > 0 ? 'text-red-600 dark:text-red-400' : 'text-emerald-600 dark:text-emerald-400'}`}>{campaignSum.losers}</p>
+              <p className="text-[10px] text-gray-400 mt-1.5">campaigns losing money after RTO</p>
+            </Card>
+          </div>
+
+          {/* The vanity-ROAS trap callout */}
+          {vanityTraps.length > 0 && (
+            <Card className="p-4 border border-red-100 dark:border-red-900/20 bg-red-50/50 dark:bg-red-900/10">
+              <div className="flex items-start gap-3">
+                <span className="w-1.5 h-1.5 rounded-full bg-red-500 mt-1.5 shrink-0" />
+                <div>
+                  <p className="text-[13px] font-semibold text-gray-900 dark:text-white">{vanityTraps.length} campaign{vanityTraps.length > 1 ? 's look' : ' looks'} like a winner but loses money</p>
+                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5 leading-relaxed">
+                    {vanityTraps.map(r => `${r.campaign.name} (${r.revenueRoas.toFixed(1)}× revenue ROAS → ${money(r.netProfit)} net after RTO)`).join(' · ')}.
+                    Revenue ROAS hides the truth — these orders go COD to high-RTO pincodes and the margin never lands.
+                  </p>
+                </div>
+              </div>
+            </Card>
+          )}
+
+          {/* Add campaign — manual entry */}
+          <Card className="p-4">
+            <p className="text-[11px] font-medium text-gray-400 uppercase tracking-wider mb-3">Add campaign spend</p>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-2.5">
+              <Input placeholder="Campaign name" value={cName} onChange={e => setCName(e.target.value)} />
+              <Input placeholder="Coupon code" value={cCoupon} onChange={e => setCCoupon(e.target.value.toUpperCase())} />
+              <Input placeholder="Spend (₹)" type="number" value={cSpend} onChange={e => setCSpend(e.target.value)} />
+              <Input placeholder="Channel (optional)" value={cChannel} onChange={e => setCChannel(e.target.value)} />
+              <button
+                onClick={submitCampaign}
+                disabled={!cName.trim() || !cCoupon.trim() || !(Number(cSpend) > 0)}
+                className="px-4 py-2 rounded-lg text-sm font-medium bg-brand-600 text-white hover:bg-brand-500 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+              >
+                Add campaign
+              </button>
+            </div>
+            <p className="text-[10px] text-gray-400 mt-2">Orders that used the coupon are attributed to the campaign and run through the contribution-margin engine.</p>
+          </Card>
+
+          {/* Results table */}
+          <Card>
+            <div className="px-4 py-3 border-b border-gray-100 dark:border-white/[0.05]">
+              <h3 className="text-[11px] font-medium text-gray-400 uppercase tracking-wider">Campaign profitability — worst first</h3>
+            </div>
+            {campaignResults.length === 0 ? (
+              <p className="px-4 py-10 text-center text-sm text-gray-400">No campaigns yet — add one above.</p>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full">
+                  <thead>
+                    <tr className="border-b border-gray-100 dark:border-white/[0.05]">
+                      <th className="px-4 py-3 text-left text-[11px] font-medium text-gray-400 uppercase tracking-wider">Campaign</th>
+                      <th className="px-4 py-3 text-right text-[11px] font-medium text-gray-400 uppercase tracking-wider">Spend</th>
+                      <th className="px-4 py-3 text-right text-[11px] font-medium text-gray-400 uppercase tracking-wider hidden sm:table-cell">Orders</th>
+                      <th className="px-4 py-3 text-right text-[11px] font-medium text-gray-400 uppercase tracking-wider hidden lg:table-cell">RTO</th>
+                      <th className="px-4 py-3 text-right text-[11px] font-medium text-gray-400 uppercase tracking-wider hidden md:table-cell" title="Revenue / spend — the vanity metric">Rev ROAS</th>
+                      <th className="px-4 py-3 text-right text-[11px] font-medium text-gray-400 uppercase tracking-wider" title="True contribution margin / spend">Margin ROAS</th>
+                      <th className="px-4 py-3 text-right text-[11px] font-medium text-gray-400 uppercase tracking-wider">Net Profit</th>
+                      <th className="px-4 py-3 text-right text-[11px] font-medium text-gray-400 uppercase tracking-wider w-8" />
+                    </tr>
+                  </thead>
+                  <tbody className="stagger-rows">
+                    {campaignResults.map(r => (
+                      <tr key={r.campaign.id} className="border-b border-gray-50 dark:border-white/[0.03] hover:bg-gray-50/50 dark:hover:bg-white/[0.02] group">
+                        <td className="px-4 py-3">
+                          <div className="flex items-center gap-2">
+                            <p className="text-sm font-medium text-gray-900 dark:text-white">{r.campaign.name}</p>
+                            <span className={`text-[9px] font-semibold px-1.5 py-0.5 rounded-full ${verdictStyle[r.verdict]}`}>{r.verdict.replace('_', ' ')}</span>
+                          </div>
+                          <p className="text-[11px] text-gray-400">{r.campaign.coupon_code}{r.campaign.channel ? ` · ${r.campaign.channel}` : ''}</p>
+                        </td>
+                        <td className="px-4 py-3 text-right text-sm text-gray-700 dark:text-gray-300 tabular-nums">{money(r.spend)}</td>
+                        <td className="px-4 py-3 text-right text-sm text-gray-600 dark:text-gray-400 tabular-nums hidden sm:table-cell">{r.delivered}<span className="text-gray-300 dark:text-gray-600">/{r.orders}</span></td>
+                        <td className="px-4 py-3 text-right text-sm tabular-nums hidden lg:table-cell">
+                          <span className={r.rtoRate >= 20 ? 'text-red-500' : r.rtoRate >= 10 ? 'text-amber-500' : 'text-gray-500'}>{r.rtoRate.toFixed(0)}%</span>
+                        </td>
+                        <td className="px-4 py-3 text-right text-sm text-gray-400 tabular-nums hidden md:table-cell line-through decoration-gray-300">{r.verdict === 'NO_DATA' ? '—' : `${r.revenueRoas.toFixed(1)}×`}</td>
+                        <td className={`px-4 py-3 text-right text-sm font-semibold tabular-nums ${r.marginRoas >= 1 ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-600 dark:text-red-400'}`}>{r.verdict === 'NO_DATA' ? '—' : `${r.marginRoas.toFixed(2)}×`}</td>
+                        <td className={`px-4 py-3 text-right text-sm font-semibold tabular-nums ${r.netProfit >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-600 dark:text-red-400'}`}>{r.verdict === 'NO_DATA' ? '—' : money(r.netProfit)}</td>
+                        <td className="px-4 py-3 text-right">
+                          <button onClick={() => removeCampaign(r.campaign.id)} className="opacity-0 group-hover:opacity-100 transition-opacity text-gray-400 hover:text-red-500 text-xs" title="Remove campaign">✕</button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+                <div className="px-4 py-3 border-t border-gray-100 dark:border-white/[0.05] text-[11px] text-gray-400">
+                  Margin ROAS uses true contribution margin (after COGS, shipping, RTO, COD &amp; gateway fees) — not revenue. A campaign can win on Rev ROAS and still lose money.
+                </div>
+              </div>
+            )}
+          </Card>
         </div>
         )
       })()}

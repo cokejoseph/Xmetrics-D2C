@@ -201,6 +201,7 @@ export interface Order {
   warehouse_id: string | null
   notes: string | null
   external_ref?: string | null
+  coupon_code?: string | null   // discount/campaign code used at checkout (for Campaign ROI attribution)
   // OMS routing (migration 13). Optional: these are lifecycle fields that are
   // null/absent until an order is routed or pushed to the OMS. Live rows from
   // the DB always include them (possibly null); locally-seeded and freshly

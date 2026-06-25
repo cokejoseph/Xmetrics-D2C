@@ -147,7 +147,7 @@ function addr(custId: string) {
 
 // ─── Orders ────────────────────────────────────────────────────────────────
 
-export const DEMO_ORDERS: Order[] = [
+const BASE_DEMO_ORDERS: Order[] = [
 
   // ═══════════════════════════════════════════════════════════════
   // TODAY (dAt 0) — 18 orders, ~₹20k gross
@@ -983,6 +983,15 @@ export const DEMO_ORDERS: Order[] = [
 ]
 
 // ─── Payments (auto-generated from orders) ────────────────────────────────
+
+// Attach demo coupon codes to ~1/3 of orders so Campaign ROI has attributable
+// data. Real orders carry the coupon used at checkout; this only seeds the demo.
+const DEMO_CAMPAIGN_COUPONS = ['DIWALI25', 'FIRST10', 'WHATSAPP15']
+export const DEMO_ORDERS: Order[] = BASE_DEMO_ORDERS.map((o, i) =>
+  i % 3 === 0
+    ? { ...o, coupon_code: DEMO_CAMPAIGN_COUPONS[Math.floor(i / 3) % DEMO_CAMPAIGN_COUPONS.length] }
+    : { ...o, coupon_code: null },
+)
 
 export const DEMO_PAYMENTS: Payment[] = DEMO_ORDERS.map(order => ({
   id: `pay-${order.id}`,
