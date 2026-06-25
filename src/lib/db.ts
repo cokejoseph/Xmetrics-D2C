@@ -8,7 +8,8 @@ import { supabase, callAuthEdgeFunction } from './supabase'
 import type {
   Brand, BrandMember, Warehouse, Product, Customer,
   Order, OrderItem, Payment, Exception, Integration,
-  Shipment, OrderTimeline,
+  Shipment, OrderTimeline, ApprovalAuditLog, NdrEvent, OmsPushLog,
+  AuditActionType,
 } from '../types'
 
 // ─── Type helpers ──────────────────────────────────────────────────────────
@@ -470,4 +471,233 @@ export function subscribeToExceptions(
       payload => onInsert(payload.new as Exception)
     )
     .subscribe()
+}
+
+// ─── Approval Audit Log ────────────────────────────────────────────────────
+
+export async function insertAuditLog(
+  entry: Omit<ApprovalAuditLog, 'id'>
+): Promise<{ id: string | null; error: string | null }> {
+  const { data, error } = await supabase!
+    .from('approval_audit_log')
+    .insert(entry)
+    .select('id')
+    .single()
+  return { id: data?.id ?? null, error: error?.message ?? null }
+}
+
+export async function getAuditLog(
+  brandId: string,
+  orderId?: string,
+  limit = 50
+): Promise<ApprovalAuditLog[]> {
+  let q = supabase!
+    .from('approval_audit_log')
+    .select('*')
+    .eq('brand_id', brandId)
+    .order('action_timestamp', { ascending: false })
+    .limit(limit)
+
+  if (orderId) q = q.eq('order_id', orderId)
+
+  const { data } = await q
+  return (data ?? []) as ApprovalAuditLog[]
+}
+
+// ─── Exception resolution ──────────────────────────────────────────────────
+
+export async function resolveExceptionWithAudit(
+  exceptionId: string,
+  userId: string,
+  reason: string,
+  notes?: string,
+  auditLogId?: string
+): Promise<{ error: string | null }> {
+  const { error } = await supabase!
+    .from('exceptions')
+    .update({
+      status: 'RESOLVED',
+      resolved_by: userId,
+      resolved_at: new Date().toISOString(),
+      resolution_reason: reason,
+      resolution_notes: notes ?? null,
+      audit_log_id: auditLogId ?? null,
+    })
+    .eq('id', exceptionId)
+  return { error: error?.message ?? null }
+}
+
+// ─── OMS Push ─────────────────────────────────────────────────────────────
+
+export async function pushOrderToOms(
+  brandId: string,
+  orderId: string,
+  pushType: 'AUTO' | 'MANUAL' = 'MANUAL'
+): Promise<{ ok: boolean; error: string | null }> {
+  const result = await callAuthEdgeFunction('oms-push', {
+    action: 'push_order',
+    brand_id: brandId,
+    order_id: orderId,
+    push_type: pushType,
+  })
+  if (result.error) return { ok: false, error: result.error.message }
+  return { ok: result.data?.ok ?? false, error: result.data?.error ?? null }
+}
+
+export async function getOmsPushLog(
+  brandId: string,
+  orderId: string
+): Promise<OmsPushLog[]> {
+  const result = await callAuthEdgeFunction('oms-push', {
+    action: 'get_push_log',
+    brand_id: brandId,
+    order_id: orderId,
+  })
+  return result.data?.log ?? []
+}
+
+export async function retryFailedOmsPushes(
+  brandId: string
+): Promise<{ retried: number; succeeded: number; still_failed: number; error: string | null }> {
+  const result = await callAuthEdgeFunction('oms-push', {
+    action: 'retry_failed',
+    brand_id: brandId,
+  })
+  if (result.error) return { retried: 0, succeeded: 0, still_failed: 0, error: result.error.message }
+  return {
+    retried: result.data?.retried ?? 0,
+    succeeded: result.data?.succeeded ?? 0,
+    still_failed: result.data?.still_failed ?? 0,
+    error: null,
+  }
+}
+
+// ─── NDR Events ───────────────────────────────────────────────────────────
+
+export async function getNdrEvents(
+  brandId: string,
+  orderId?: string
+): Promise<NdrEvent[]> {
+  let q = supabase!
+    .from('ndr_events')
+    .select('*')
+    .eq('brand_id', brandId)
+    .order('received_at', { ascending: false })
+
+  if (orderId) q = q.eq('order_id', orderId)
+
+  const { data } = await q
+  return (data ?? []) as NdrEvent[]
+}
+
+export async function insertNdrEvent(
+  event: Omit<NdrEvent, 'id'>
+): Promise<{ id: string | null; error: string | null }> {
+  const { data, error } = await supabase!
+    .from('ndr_events')
+    .insert(event)
+    .select('id')
+    .single()
+  return { id: data?.id ?? null, error: error?.message ?? null }
+}
+
+export async function updateNdrEvent(
+  id: string,
+  changes: Partial<NdrEvent>
+): Promise<{ error: string | null }> {
+  const { error } = await supabase!
+    .from('ndr_events')
+    .update(changes)
+    .eq('id', id)
+  return { error: error?.message ?? null }
+}
+
+// ─── NDR Shiprocket actions ────────────────────────────────────────────────
+
+export async function ndrReschedule(
+  email: string, password: string, awb: string, comment?: string
+): Promise<{ ok: boolean; error: string | null }> {
+  const result = await callAuthEdgeFunction('shiprocket-proxy', {
+    action: 'reschedule_delivery',
+    email, password, awb,
+    ndr_comment: comment,
+  })
+  if (result.error) return { ok: false, error: result.error.message }
+  return { ok: result.data?.ok ?? false, error: result.data?.error ?? null }
+}
+
+export async function ndrUpdateAddress(
+  email: string, password: string,
+  awb: string,
+  address: { address: string; city: string; state: string; pincode: string; name?: string; phone?: string }
+): Promise<{ ok: boolean; error: string | null }> {
+  const result = await callAuthEdgeFunction('shiprocket-proxy', {
+    action: 'update_ndr_address',
+    email, password, awb,
+    ...address,
+  })
+  if (result.error) return { ok: false, error: result.error.message }
+  return { ok: result.data?.ok ?? false, error: result.data?.error ?? null }
+}
+
+export async function ndrAcceptRto(
+  email: string, password: string, awb: string, comment?: string
+): Promise<{ ok: boolean; error: string | null }> {
+  const result = await callAuthEdgeFunction('shiprocket-proxy', {
+    action: 'accept_rto',
+    email, password, awb,
+    comment,
+  })
+  if (result.error) return { ok: false, error: result.error.message }
+  return { ok: result.data?.ok ?? false, error: result.data?.error ?? null }
+}
+
+// ─── OMS Settings ─────────────────────────────────────────────────────────
+
+export async function updateOmsSettings(
+  brandId: string,
+  settings: {
+    oms_webhook_url?: string
+    oms_webhook_secret?: string
+    oms_webhook_enabled?: boolean
+    auto_push_green?: boolean
+    auto_push_yellow?: boolean
+  }
+): Promise<{ error: string | null }> {
+  // Merge into existing brand.settings JSONB
+  const { data: brand } = await supabase!
+    .from('brands')
+    .select('settings')
+    .eq('id', brandId)
+    .single()
+
+  const merged = { ...(brand?.settings ?? {}), ...settings }
+
+  const { error } = await supabase!
+    .from('brands')
+    .update({ settings: merged })
+    .eq('id', brandId)
+
+  return { error: error?.message ?? null }
+}
+
+export async function getOmsSettings(brandId: string): Promise<{
+  oms_webhook_url: string | null
+  oms_webhook_enabled: boolean
+  auto_push_green: boolean
+  auto_push_yellow: boolean
+}> {
+  const { data } = await supabase!
+    .from('brands')
+    .select('settings')
+    .eq('id', brandId)
+    .single()
+
+  const s = (data?.settings ?? {}) as Record<string, unknown>
+  return {
+    oms_webhook_url: (s.oms_webhook_url as string) ?? null,
+    oms_webhook_enabled: (s.oms_webhook_enabled as boolean) ?? false,
+    auto_push_green: (s.auto_push_green as boolean) ?? false,
+    auto_push_yellow: (s.auto_push_yellow as boolean) ?? false,
+  }
 }

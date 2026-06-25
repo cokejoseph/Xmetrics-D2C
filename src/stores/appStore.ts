@@ -42,6 +42,9 @@ import {
   updateIntegrationDB,
   subscribeToOrders,
   subscribeToExceptions,
+  pushOrderToOms,
+  insertAuditLog,
+  resolveExceptionWithAudit,
 } from '../lib/db'
 
 // ─── Module-level channel storage (outside Zustand to avoid serialisation issues) ─
@@ -100,6 +103,9 @@ interface AppState {
   addReturn: (ret: Return) => void
   updateReturn: (id: string, changes: Partial<Return>) => void
   setSubscription: (sub: SubscriptionData | null) => void
+  pushToOms: (orderId: string, pushType?: 'AUTO' | 'MANUAL') => Promise<{ ok: boolean; error: string | null }>
+  bulkPushToOms: (orderIds: string[]) => Promise<{ succeeded: number; failed: number }>
+  approveExceptionAndPush: (exceptionId: string, orderId: string, reason: string, notes?: string) => Promise<{ ok: boolean; error: string | null }>
 }
 
 // ─── Demo subscription factory ─────────────────────────────────────────────
@@ -747,6 +753,109 @@ export const useAppStore = create<AppState>((set, get) => ({
     if (!DEMO_MODE) {
       updateExceptionDB(id, { status: previousStatus as ExceptionStatus }).catch(console.error)
     }
+  },
+
+  // ─── OMS Push ─────────────────────────────────────────────────────────────
+
+  pushToOms: async (orderId, pushType = 'MANUAL') => {
+    const brandId = get().currentBrand?.id
+    if (!brandId) return { ok: false, error: 'No active brand' }
+
+    // Optimistic update
+    set(state => ({
+      orders: state.orders.map(o =>
+        o.id === orderId ? { ...o, oms_push_status: 'PENDING' as const } : o
+      ),
+    }))
+
+    if (DEMO_MODE) {
+      // Simulate successful push in demo
+      await new Promise(r => setTimeout(r, 600))
+      set(state => ({
+        orders: state.orders.map(o =>
+          o.id === orderId
+            ? { ...o, oms_push_status: 'PUSHED' as const, oms_pushed_at: new Date().toISOString(), routing_decision: pushType === 'AUTO' ? 'AUTO_PUSHED' as const : 'MANUALLY_PUSHED' as const }
+            : o
+        ),
+      }))
+      return { ok: true, error: null }
+    }
+
+    const { ok, error } = await pushOrderToOms(brandId, orderId, pushType)
+    set(state => ({
+      orders: state.orders.map(o =>
+        o.id === orderId
+          ? {
+              ...o,
+              oms_push_status: ok ? 'PUSHED' as const : 'FAILED' as const,
+              oms_pushed_at: ok ? new Date().toISOString() : null,
+              routing_decision: ok ? (pushType === 'AUTO' ? 'AUTO_PUSHED' as const : 'MANUALLY_PUSHED' as const) : o.routing_decision,
+              oms_push_error: ok ? null : error,
+            }
+          : o
+      ),
+    }))
+    return { ok, error }
+  },
+
+  bulkPushToOms: async (orderIds) => {
+    const brandId = get().currentBrand?.id
+    if (!brandId) return { succeeded: 0, failed: orderIds.length }
+
+    const results = await Promise.allSettled(
+      orderIds.map(id => get().pushToOms(id, 'MANUAL'))
+    )
+    const succeeded = results.filter(r => r.status === 'fulfilled' && r.value.ok).length
+    return { succeeded, failed: orderIds.length - succeeded }
+  },
+
+  approveExceptionAndPush: async (exceptionId, orderId, reason, notes) => {
+    const brandId = get().currentBrand?.id
+    if (!brandId) return { ok: false, error: 'No active brand' }
+
+    const order = get().orders.find(o => o.id === orderId)
+    if (!order) return { ok: false, error: 'Order not found' }
+
+    // Approve in Zustand
+    set(state => ({
+      orders: state.orders.map(o =>
+        o.id === orderId ? { ...o, rto_review_status: 'APPROVED' as const } : o
+      ),
+      exceptions: state.exceptions.map(e =>
+        e.id === exceptionId ? { ...e, status: 'RESOLVED' as const } : e
+      ),
+    }))
+
+    if (!DEMO_MODE) {
+      // Write audit log
+      const { id: auditId } = await insertAuditLog({
+        brand_id: brandId,
+        order_id: orderId,
+        order_number: order.order_number,
+        exception_id: exceptionId,
+        action_type: 'MANUALLY_APPROVED',
+        actor_id: null,
+        actor_name: null,
+        actor_role: null,
+        action_timestamp: new Date().toISOString(),
+        original_rto_score: order.rto_risk_score,
+        new_rto_score: order.rto_risk_score,
+        original_status: order.rto_review_status,
+        new_status: 'APPROVED',
+        reason,
+        notes: notes ?? null,
+        metadata: { exception_id: exceptionId },
+      })
+
+      // Resolve exception with audit link
+      await resolveExceptionWithAudit(exceptionId, '', reason, notes, auditId ?? undefined)
+
+      // Update order review status in DB
+      await updateOrderDB(orderId, { rto_review_status: 'APPROVED' })
+    }
+
+    // Push to OMS
+    return get().pushToOms(orderId, 'MANUAL')
   },
 
   // ─── Products ──────────────────────────────────────────────────────────────

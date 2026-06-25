@@ -163,6 +163,8 @@ export type FulfillmentStatus =
 
 export type RTOReviewStatus = 'PENDING' | 'APPROVED' | 'HELD' | 'FLAGGED' | 'NOT_REQUIRED'
 export type RTORiskLevel = 'LOW' | 'MEDIUM' | 'HIGH'
+export type OmsPushStatus = 'PENDING' | 'PUSHED' | 'FAILED' | 'NOT_APPLICABLE'
+export type RoutingDecision = 'READY_FOR_PUSH' | 'EXCEPTION_HOLD' | 'AUTO_PUSHED' | 'MANUALLY_PUSHED'
 
 export interface ShippingAddress {
   name?: string
@@ -198,6 +200,13 @@ export interface Order {
   warehouse_id: string | null
   notes: string | null
   external_ref?: string | null
+  // OMS routing (migration 13)
+  routing_decision: RoutingDecision | null
+  routing_decided_at: string | null
+  oms_push_status: OmsPushStatus
+  oms_pushed_at: string | null
+  oms_order_id: string | null
+  oms_push_error: string | null
   created_at: string
   // Populated relations
   customer?: Customer
@@ -303,6 +312,12 @@ export interface Exception {
   title: string
   description: string
   created_at: string
+  // Resolution tracking (migration 13)
+  resolved_by: string | null
+  resolved_at: string | null
+  resolution_reason: string | null
+  resolution_notes: string | null
+  audit_log_id: string | null
   order?: Order
 }
 
@@ -572,6 +587,99 @@ export interface RazorpayPaymentSynced {
   settlement_amount: number
   created_at: string
   notes: Record<string, string>
+}
+
+// ─── OMS Push Log ──────────────────────────────────────────────────────────
+
+export interface OmsPushLog {
+  id: string
+  brand_id: string
+  order_id: string
+  order_number: string
+  push_type: 'AUTO' | 'MANUAL' | 'RETRY'
+  pushed_at: string
+  payload: Record<string, unknown>
+  http_status: number | null
+  response_body: Record<string, unknown> | null
+  success: boolean
+  error_message: string | null
+  attempt_number: number
+}
+
+// ─── Approval Audit Log ────────────────────────────────────────────────────
+
+export type AuditActionType =
+  | 'AUTO_APPROVED'
+  | 'MANUALLY_APPROVED'
+  | 'APPROVED_HIGH_RTO'
+  | 'APPROVED_INVALID_ADDRESS'
+  | 'APPROVED_LOW_INVENTORY'
+  | 'APPROVED_PAYMENT_MISMATCH'
+  | 'ADDRESS_CORRECTED_AND_APPROVED'
+  | 'HELD'
+  | 'RELEASED_FROM_HOLD'
+  | 'ORDER_CANCELLED'
+  | 'PUSHED_TO_OMS'
+  | 'AUTO_PUSHED_TO_OMS'
+
+export interface ApprovalAuditLog {
+  id: string
+  brand_id: string
+  order_id: string
+  order_number: string
+  exception_id: string | null
+  action_type: AuditActionType
+  actor_id: string | null
+  actor_name: string | null
+  actor_role: string | null
+  action_timestamp: string
+  original_rto_score: number | null
+  new_rto_score: number | null
+  original_status: string | null
+  new_status: string | null
+  reason: string | null
+  notes: string | null
+  metadata: Record<string, unknown>
+}
+
+// ─── NDR Events ────────────────────────────────────────────────────────────
+
+export type NdrRecoveryAction = 'RESCHEDULE' | 'ADDRESS_UPDATE' | 'ACCEPT_RTO' | 'CUSTOMER_NOTIFIED' | 'PENDING'
+export type NdrRecoveryActor = 'FOUNDER' | 'CUSTOMER' | 'AUTO'
+export type NdrOutcome = 'DELIVERED' | 'RTO' | 'PENDING' | 'ESCALATED'
+export type NdrCustomerResponse = 'RESCHEDULE' | 'UPDATE_ADDRESS' | 'ACCEPT_RTO' | 'NO_RESPONSE'
+
+export interface NdrEvent {
+  id: string
+  brand_id: string
+  order_id: string
+  awb_number: string
+  shiprocket_ndr_id: string | null
+  attempt_number: number
+  ndr_reason: string | null
+  ndr_reason_code: string | null
+  received_at: string
+  recovery_action: NdrRecoveryAction
+  recovery_action_at: string | null
+  recovery_actor: NdrRecoveryActor | null
+  rescheduled_date: string | null
+  updated_address: Record<string, string> | null
+  wa_customer_sent_at: string | null
+  wa_founder_sent_at: string | null
+  customer_response: NdrCustomerResponse | null
+  customer_responded_at: string | null
+  final_outcome: NdrOutcome
+  final_outcome_at: string | null
+}
+
+// ─── OMS Integration Settings (stored in brands.settings) ─────────────────
+
+export interface OmsSettings {
+  oms_webhook_url?: string
+  oms_webhook_secret?: string
+  oms_webhook_enabled?: boolean
+  auto_push_green?: boolean
+  auto_push_yellow?: boolean
 }
 
 // ─── Subscription & Billing ─────────────────────────────────────────────────

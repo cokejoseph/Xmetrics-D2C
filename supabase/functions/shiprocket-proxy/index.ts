@@ -205,6 +205,79 @@ Deno.serve(async (req: Request) => {
     })
   }
 
+  // ── reschedule_delivery ───────────────────────────────────────────────────
+  // Used for NDR recovery: ask Shiprocket to reattempt delivery on a new date.
+  if (action === 'reschedule_delivery') {
+    const { awb, ndr_comment } = body
+    if (!awb) return json({ error: 'awb required' }, 400)
+
+    const token = await getShiprocketToken(email, password, cacheKey)
+    if (!token) return json({ ok: false, error: 'Auth failed' })
+
+    const res = await fetch(`${SR_BASE}/orders/ndr/action`, {
+      method: 'POST',
+      headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        awbs: [{ awb, action: 're-attempt', comment: ndr_comment ?? 'Customer requested re-attempt' }],
+      }),
+    })
+    if (!res.ok) return json({ ok: false, error: `HTTP ${res.status}` })
+    const d = await res.json()
+    return json({ ok: true, data: d })
+  }
+
+  // ── update_ndr_address ────────────────────────────────────────────────────
+  // Used for NDR recovery: update delivery address and request re-attempt.
+  if (action === 'update_ndr_address') {
+    const { awb, address, city, state, pincode, name, phone, comment } = body
+    if (!awb || !address || !pincode) return json({ error: 'awb, address, pincode required' }, 400)
+
+    const token = await getShiprocketToken(email, password, cacheKey)
+    if (!token) return json({ ok: false, error: 'Auth failed' })
+
+    const res = await fetch(`${SR_BASE}/orders/ndr/action`, {
+      method: 'POST',
+      headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        awbs: [{
+          awb,
+          action: 're-attempt',
+          comment: comment ?? 'Address updated by customer',
+          address,
+          city: city ?? '',
+          state: state ?? '',
+          pincode,
+          name: name ?? '',
+          phone: phone ?? '',
+        }],
+      }),
+    })
+    if (!res.ok) return json({ ok: false, error: `HTTP ${res.status}` })
+    const d = await res.json()
+    return json({ ok: true, data: d })
+  }
+
+  // ── accept_rto ────────────────────────────────────────────────────────────
+  // Used for NDR recovery: tell Shiprocket to return to origin.
+  if (action === 'accept_rto') {
+    const { awb, comment } = body
+    if (!awb) return json({ error: 'awb required' }, 400)
+
+    const token = await getShiprocketToken(email, password, cacheKey)
+    if (!token) return json({ ok: false, error: 'Auth failed' })
+
+    const res = await fetch(`${SR_BASE}/orders/ndr/action`, {
+      method: 'POST',
+      headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        awbs: [{ awb, action: 'return', comment: comment ?? 'RTO accepted by founder' }],
+      }),
+    })
+    if (!res.ok) return json({ ok: false, error: `HTTP ${res.status}` })
+    const d = await res.json()
+    return json({ ok: true, data: d })
+  }
+
   // ── cancel_shipment ───────────────────────────────────────────────────────
   if (action === 'cancel_shipment') {
     const { awbs } = body
