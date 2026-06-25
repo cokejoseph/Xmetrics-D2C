@@ -4,6 +4,7 @@ import { useAppStore } from '../../stores/appStore'
 import { buildSKUForecast } from '../../lib/forecastEngine'
 import { buildReorderNudgeList } from '../../lib/reorderEngine'
 import type { ChurnLevel } from '../../lib/reorderEngine'
+import { buildProfitAnalysis } from '../../lib/profitEngine'
 import { Card, Input } from '../../components/ui'
 import { RevenueAreaChart, OrdersBarChart, StatusDonut, ChannelBarChart } from '../../components/charts'
 import type { Order, ForecastStatus } from '../../types'
@@ -140,7 +141,7 @@ const FORECAST_STATUS_STYLE: Record<ForecastStatus, { label: string; dot: string
   UNPREDICTABLE:     { label: 'Unpredictable',      dot: 'bg-gray-300',   text: 'text-gray-400' },
 }
 
-type TabType = 'overview' | 'cohort' | 'products' | 'rto' | 'operations' | 'clv' | 'reorder' | 'forecast' | 'pincode'
+type TabType = 'overview' | 'profit' | 'cohort' | 'products' | 'rto' | 'operations' | 'clv' | 'reorder' | 'forecast' | 'pincode'
 type PincodeSortKey = 'orders' | 'revenue' | 'aov' | 'rto_rate'
 type ProductSortKey = 'revenue' | 'units' | 'return_rate' | 'margin' | 'dioh'
 
@@ -272,6 +273,12 @@ export default function Analytics() {
   const filteredOrders = useMemo(
     () => orders.filter(o => { const t = new Date(o.created_at); return t >= from && t < to }),
     [orders, from, to],
+  )
+
+  // ── Profit Intelligence — true contribution margin after COD + RTO ──────────
+  const profit = useMemo(
+    () => buildProfitAnalysis(filteredOrders, products, returns),
+    [filteredOrders, products, returns],
   )
 
   // ── Previous period (MoM delta) ──────────────────────────────────────────────
@@ -764,6 +771,7 @@ export default function Analytics() {
 
   const TABS: { key: TabType; label: string }[] = [
     { key: 'overview',   label: 'Overview' },
+    { key: 'profit',     label: 'Profit Intelligence' },
     { key: 'cohort',     label: 'Cohort Analysis' },
     { key: 'products',   label: 'Product Analysis' },
     { key: 'rto',        label: 'RTO Intelligence' },
@@ -788,6 +796,7 @@ export default function Analytics() {
           <h1 className="text-xl font-semibold tracking-tight text-gray-900 dark:text-white">Analytics</h1>
           <p className="text-[13px] text-gray-400 mt-0.5">
             {tab === 'overview'    ? periodMeta.label
+             : tab === 'profit'   ? 'True contribution margin after COD, RTO & all costs — ' + periodMeta.shortLabel
              : tab === 'reorder'  ? 'Churn intelligence'
              : tab === 'cohort'   ? 'Customer retention by monthly cohort'
              : tab === 'products' ? 'Product-level performance, returns & inventory'
@@ -797,7 +806,7 @@ export default function Analytics() {
              : 'Demand forecast'}
           </p>
         </div>
-        {(['overview','rto','operations','pincode'] as TabType[]).includes(tab) && (
+        {(['overview','profit','rto','operations','pincode'] as TabType[]).includes(tab) && (
           <PeriodPicker value={period} onChange={setPeriod} />
         )}
       </div>
@@ -1074,6 +1083,162 @@ export default function Analytics() {
 
         </div>
       )}
+
+      {/* ── Profit Intelligence Tab ─────────────────────────────────────────── */}
+      {tab === 'profit' && (() => {
+        const s = profit.summary
+        const wfTotal = s.cogs + s.forwardShipping + s.paymentFees + s.rtoLosses + Math.max(s.contributionMargin, 0)
+        const wf = [
+          { label: 'COGS',          val: s.cogs,            color: 'bg-amber-400' },
+          { label: 'Forward ship',  val: s.forwardShipping, color: 'bg-orange-400' },
+          { label: 'Payment fees',  val: s.paymentFees,     color: 'bg-violet-400' },
+          { label: 'RTO losses',    val: s.rtoLosses,       color: 'bg-red-400' },
+          { label: 'Contribution',  val: Math.max(s.contributionMargin, 0), color: 'bg-emerald-400' },
+        ]
+        const sevStyle = {
+          critical: { dot: 'bg-red-500',   box: 'bg-red-50/60 dark:bg-red-900/10 border-red-100 dark:border-red-900/20',   val: 'text-red-600 dark:text-red-400' },
+          warning:  { dot: 'bg-amber-500', box: 'bg-amber-50/60 dark:bg-amber-900/10 border-amber-100 dark:border-amber-900/20', val: 'text-amber-600 dark:text-amber-400' },
+          good:     { dot: 'bg-emerald-500', box: 'bg-emerald-50/60 dark:bg-emerald-900/10 border-emerald-100 dark:border-emerald-900/20', val: 'text-emerald-600 dark:text-emerald-400' },
+        } as const
+        const money = (n: number) => `${n < 0 ? '−' : ''}₹${Math.abs(Math.round(n)).toLocaleString('en-IN')}`
+        return (
+        <div className="space-y-4">
+          {/* Headline KPIs */}
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+            <Card className="p-4">
+              <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-widest mb-2">True Contribution Margin</p>
+              <p className={`text-[26px] font-semibold leading-none tabular-nums ${s.contributionMargin >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-600 dark:text-red-400'}`}>
+                {money(s.contributionMargin)}
+              </p>
+              <p className="text-[10px] text-gray-400 mt-1.5">{s.contributionMarginPct.toFixed(1)}% of delivered revenue · after RTO</p>
+            </Card>
+            <Card className="p-4">
+              <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-widest mb-2">Gross Revenue</p>
+              <p className="text-[26px] font-semibold text-gray-900 dark:text-white leading-none tabular-nums">{money(s.grossRevenue)}</p>
+              <p className="text-[10px] text-gray-400 mt-1.5">{s.delivered} delivered orders</p>
+            </Card>
+            <Card className="p-4">
+              <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-widest mb-2">RTO Losses</p>
+              <p className="text-[26px] font-semibold text-red-600 dark:text-red-400 leading-none tabular-nums">−{money(s.rtoLosses).replace('−','')}</p>
+              <p className="text-[10px] text-gray-400 mt-1.5">{s.rto} RTO orders · round-trip + handling</p>
+            </Card>
+            <Card className="p-4">
+              <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-widest mb-2">Cash Locked (COD)</p>
+              <p className="text-[26px] font-semibold text-amber-600 dark:text-amber-400 leading-none tabular-nums">{money(s.codCashInTransit)}</p>
+              <p className="text-[10px] text-gray-400 mt-1.5">shipped, not yet remitted</p>
+            </Card>
+          </div>
+
+          {/* The insights — what the P&L is hiding */}
+          {profit.insights.length > 0 && (
+            <Card className="p-5">
+              <h3 className="text-sm font-semibold text-gray-900 dark:text-white mb-1">What your revenue number is hiding</h3>
+              <p className="text-xs text-gray-400 mb-4">Decisions you can act on today — the economics no other tool surfaces for COD + RTO.</p>
+              <div className="space-y-2.5">
+                {profit.insights.map((ins, i) => {
+                  const st = sevStyle[ins.severity]
+                  return (
+                    <div key={i} className={`flex items-start gap-3 p-3 rounded-lg border ${st.box}`}>
+                      <span className={`w-1.5 h-1.5 rounded-full mt-1.5 shrink-0 ${st.dot}`} />
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-baseline justify-between gap-3">
+                          <span className="text-[13px] font-semibold text-gray-900 dark:text-white">{ins.title}</span>
+                          {ins.value && <span className={`text-sm font-bold tabular-nums shrink-0 ${st.val}`}>{ins.value}</span>}
+                        </div>
+                        <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5 leading-relaxed">{ins.detail}</p>
+                      </div>
+                    </div>
+                  )
+                })}
+              </div>
+            </Card>
+          )}
+
+          {/* P&L waterfall */}
+          <Card className="p-5">
+            <h3 className="text-sm font-semibold text-gray-900 dark:text-white mb-1">Where every rupee of delivered revenue goes</h3>
+            <p className="text-xs text-gray-400 mb-4">Gross revenue {money(s.grossRevenue)} → contribution {money(s.contributionMargin)}</p>
+            {wfTotal > 0 ? (
+              <>
+                <div className="h-7 w-full rounded-lg overflow-hidden flex mb-3">
+                  {wf.filter(seg => seg.val > 0).map(seg => (
+                    <div key={seg.label} className={`h-full ${seg.color}`} style={{ width: `${seg.val / wfTotal * 100}%` }} title={`${seg.label}: ${money(seg.val)}`} />
+                  ))}
+                </div>
+                <div className="grid grid-cols-2 sm:grid-cols-5 gap-2">
+                  {wf.map(seg => (
+                    <div key={seg.label} className="flex items-center gap-1.5">
+                      <span className={`w-2.5 h-2.5 rounded-sm ${seg.color}`} />
+                      <div className="min-w-0">
+                        <p className="text-[10px] text-gray-400 leading-tight">{seg.label}</p>
+                        <p className="text-xs font-semibold text-gray-700 dark:text-gray-300 tabular-nums">{money(seg.val)}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </>
+            ) : <p className="text-sm text-gray-400 text-center py-6">No delivered orders in this period yet.</p>}
+          </Card>
+
+          {/* By channel + by payment method */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            <Card>
+              <div className="px-4 py-3 border-b border-gray-100 dark:border-white/[0.05]">
+                <h3 className="text-[11px] font-medium text-gray-400 uppercase tracking-wider">Contribution Margin by Channel</h3>
+                <p className="text-[10px] text-gray-400 mt-0.5">Worst first — negative channels lose money after RTO</p>
+              </div>
+              {profit.byChannel.length === 0
+                ? <p className="px-4 py-8 text-center text-sm text-gray-400">No realized orders this period</p>
+                : <div className="divide-y divide-gray-50 dark:divide-white/[0.03]">
+                    {profit.byChannel.map(g => (
+                      <div key={g.key} className="px-4 py-3">
+                        <div className="flex items-center justify-between mb-1">
+                          <span className="text-sm font-medium text-gray-900 dark:text-white">{g.key}</span>
+                          <span className={`text-sm font-semibold tabular-nums ${g.contribution >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-600 dark:text-red-400'}`}>
+                            {money(g.contribution)}
+                          </span>
+                        </div>
+                        <div className="flex items-center justify-between text-[11px] text-gray-400">
+                          <span>{g.delivered} delivered · {g.rto} RTO</span>
+                          <span className={g.negative ? 'text-red-500 font-medium' : ''}>
+                            {g.negative ? 'MARGIN-NEGATIVE' : `${g.marginPct.toFixed(0)}% margin`}
+                          </span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>}
+            </Card>
+
+            <Card>
+              <div className="px-4 py-3 border-b border-gray-100 dark:border-white/[0.05]">
+                <h3 className="text-[11px] font-medium text-gray-400 uppercase tracking-wider">Contribution Margin by Payment Method</h3>
+                <p className="text-[10px] text-gray-400 mt-0.5">The real COD vs prepaid profitability</p>
+              </div>
+              {profit.byPayment.length === 0
+                ? <p className="px-4 py-8 text-center text-sm text-gray-400">No realized orders this period</p>
+                : <div className="divide-y divide-gray-50 dark:divide-white/[0.03]">
+                    {profit.byPayment.map(g => (
+                      <div key={g.key} className="px-4 py-3">
+                        <div className="flex items-center justify-between mb-1">
+                          <span className="text-sm font-medium text-gray-900 dark:text-white">{g.key}</span>
+                          <span className={`text-sm font-semibold tabular-nums ${g.contribution >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-600 dark:text-red-400'}`}>
+                            {money(g.contribution)}
+                          </span>
+                        </div>
+                        <div className="flex items-center justify-between text-[11px] text-gray-400">
+                          <span>{g.delivered} delivered · {g.rto} RTO</span>
+                          <span className={g.negative ? 'text-red-500 font-medium' : ''}>
+                            {g.negative ? 'MARGIN-NEGATIVE' : `${g.marginPct.toFixed(0)}% margin`}
+                          </span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>}
+            </Card>
+          </div>
+        </div>
+        )
+      })()}
 
       {/* ── RTO Intelligence Tab ────────────────────────────────────────────── */}
       {tab === 'rto' && (
