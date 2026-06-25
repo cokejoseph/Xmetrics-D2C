@@ -68,6 +68,11 @@ const PLANS: PlanDef[] = [
 
 const PLAN_RANK: Record<PlanType, number> = { STARTER: 1, GROWTH: 2, SCALE: 3, ENTERPRISE: 4 }
 
+// While the product is in founding/early access we offer a single public plan.
+// The full PLANS array stays intact (current-plan lookups, retry-payment, etc.),
+// but only these plan types are shown in the upgrade grid.
+const VISIBLE_PLAN_TYPES: PlanType[] = ['GROWTH']
+
 // ─── Cancel modal ───────────────────────────────────────────────────────────
 
 const CANCEL_REASONS = [
@@ -428,7 +433,7 @@ export default function Billing() {
           {subscription ? 'Available plans' : 'Choose a plan'}
         </p>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          {PLANS.map(plan => {
+          {PLANS.filter(plan => VISIBLE_PLAN_TYPES.includes(plan.type)).map(plan => {
             const isCurrent = plan.type === currentPlanType
             const rank = PLAN_RANK[plan.type]
             const isUpgrade = rank > currentRank
