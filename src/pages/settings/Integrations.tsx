@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { CheckCircle, XCircle, AlertCircle, Clock, Plus, Loader2, RefreshCw } from 'lucide-react'
+import { CheckCircle, XCircle, AlertCircle, Clock, Plus, Loader2, RefreshCw, Eye, EyeOff, Webhook, Lock } from 'lucide-react'
 import { useAppStore } from '../../stores/appStore'
 import { Card, Button, Modal, Input } from '../../components/ui'
 import { useConfirm } from '../../hooks/useConfirm'
@@ -7,6 +7,9 @@ import { connectShopify, testShopifyConnection, normaliseShopDomain, deregisterS
 import { connectRazorpay, testRazorpayConnection } from '../../lib/razorpay'
 import { connectShiprocket, testShiprocketConnection } from '../../lib/shiprocket'
 import { testWhatsAppConnection } from '../../lib/whatsapp'
+import { getOmsSettings, updateOmsSettings } from '../../lib/db'
+import { showToast } from '../../lib/toast'
+import { DEMO_MODE } from '../../lib/supabase'
 import type { Integration, IntegrationPlatform } from '../../types'
 
 // ─── Platform metadata ──────────────────────────────────────────────────────
@@ -179,7 +182,6 @@ function ConnectModal({
           result = { ok: false, error: testResult.error }
         }
       } else {
-        // ECOMEXPRESS / UNICOMMERCE — test not yet implemented server-side
         addLog(`Testing ${meta.name} connection…`)
         await new Promise(r => setTimeout(r, 800))
         addLog(`✓ ${meta.name} credentials saved`)
@@ -229,9 +231,9 @@ function ConnectModal({
             <Loader2 size={18} className="animate-spin" />
             <span className="text-sm font-medium">Connecting to {meta.name}…</span>
           </div>
-          <div className="bg-gray-50 rounded-md p-4 space-y-2 min-h-[100px]">
+          <div className="bg-gray-50 dark:bg-white/[0.04] rounded-md p-4 space-y-2 min-h-[100px]">
             {progressLog.map((log, i) => (
-              <p key={i} className="text-xs text-gray-600 font-mono">{log}</p>
+              <p key={i} className="text-xs text-gray-600 dark:text-gray-400 font-mono">{log}</p>
             ))}
             {progressLog.length === 0 && (
               <p className="text-xs text-gray-400 animate-pulse">Initialising…</p>
@@ -286,6 +288,258 @@ function ConnectModal({
   )
 }
 
+// ─── OMS Webhook Section ─────────────────────────────────────────────────────
+
+function OmsWebhookSection({ brandId }: { brandId: string }) {
+  const [webhookUrl, setWebhookUrl] = useState('')
+  const [webhookSecret, setWebhookSecret] = useState('')
+  const [secretPlaceholder, setSecretPlaceholder] = useState('Not set')
+  const [showSecret, setShowSecret] = useState(false)
+  const [webhookEnabled, setWebhookEnabled] = useState(false)
+  const [autoPushGreen, setAutoPushGreen] = useState(false)
+  const [autoPushYellow, setAutoPushYellow] = useState(false)
+  const [loading, setLoading] = useState(true)
+  const [saving, setSaving] = useState(false)
+  const [testing, setTesting] = useState(false)
+  const [testResult, setTestResult] = useState<{ ok: boolean; msg: string } | null>(null)
+
+  useEffect(() => {
+    if (!brandId || DEMO_MODE) { setLoading(false); return }
+    getOmsSettings(brandId).then(s => {
+      setWebhookUrl(s.oms_webhook_url ?? '')
+      setWebhookEnabled(s.oms_webhook_enabled)
+      setAutoPushGreen(s.auto_push_green)
+      setAutoPushYellow(s.auto_push_yellow)
+      if (s.oms_webhook_url) setSecretPlaceholder('••••••••••••••••')
+      setLoading(false)
+    })
+  }, [brandId])
+
+  const generateSecret = () => {
+    const bytes = new Uint8Array(32)
+    crypto.getRandomValues(bytes)
+    const secret = Array.from(bytes).map(b => b.toString(16).padStart(2, '0')).join('')
+    setWebhookSecret(secret)
+    setShowSecret(true)
+  }
+
+  const handleSave = async () => {
+    if (DEMO_MODE) { showToast.settingsUpdated(); return }
+    setSaving(true)
+    const { error } = await updateOmsSettings(brandId, {
+      oms_webhook_url: webhookUrl || undefined,
+      oms_webhook_secret: webhookSecret || undefined,
+      oms_webhook_enabled: webhookEnabled,
+      auto_push_green: autoPushGreen,
+      auto_push_yellow: autoPushYellow,
+    })
+    setSaving(false)
+    if (error) showToast.error(error)
+    else {
+      showToast.settingsUpdated()
+      if (webhookSecret) {
+        setWebhookSecret('')
+        setSecretPlaceholder('••••••••••••••••')
+        setShowSecret(false)
+      }
+    }
+  }
+
+  const handleTest = async () => {
+    if (!webhookUrl) return
+    setTesting(true)
+    setTestResult(null)
+    try {
+      const res = await fetch(webhookUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ type: 'ping', from: 'xmetrics', timestamp: new Date().toISOString() }),
+        signal: AbortSignal.timeout(10_000),
+      })
+      setTestResult({
+        ok: res.ok,
+        msg: res.ok
+          ? `HTTP ${res.status} — endpoint reachable`
+          : `HTTP ${res.status} — endpoint returned an error`,
+      })
+    } catch (e) {
+      setTestResult({ ok: false, msg: e instanceof Error ? e.message : 'Network error' })
+    }
+    setTesting(false)
+    setTimeout(() => setTestResult(null), 8000)
+  }
+
+  if (loading) {
+    return (
+      <div className="h-8 flex items-center gap-2 text-gray-400 text-sm">
+        <Loader2 size={14} className="animate-spin" /> Loading OMS settings…
+      </div>
+    )
+  }
+
+  return (
+    <div className="space-y-5">
+      <div className="flex items-start gap-3">
+        <div className="w-10 h-10 rounded-xl bg-gray-100 dark:bg-white/[0.06] flex items-center justify-center shrink-0">
+          <Webhook size={18} className="text-gray-600 dark:text-gray-400" />
+        </div>
+        <div>
+          <h3 className="text-sm font-medium text-gray-900 dark:text-white">OMS Webhook</h3>
+          <p className="text-xs text-gray-500 mt-0.5 leading-relaxed">
+            Xmetrics pushes approved orders to your OMS via a signed webhook. Configure the endpoint and auto-push rules below.
+          </p>
+        </div>
+        <label className="ml-auto flex items-center gap-2 cursor-pointer shrink-0">
+          <span className="text-xs text-gray-500">{webhookEnabled ? 'Enabled' : 'Disabled'}</span>
+          <button
+            onClick={() => setWebhookEnabled(v => !v)}
+            className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors focus:outline-none ${
+              webhookEnabled ? 'bg-brand-600' : 'bg-gray-200 dark:bg-white/[0.1]'
+            }`}
+            role="switch"
+            aria-checked={webhookEnabled}
+          >
+            <span className={`inline-block h-3.5 w-3.5 transform rounded-full bg-white transition-transform ${
+              webhookEnabled ? 'translate-x-4' : 'translate-x-0.5'
+            }`} />
+          </button>
+        </label>
+      </div>
+
+      {/* Webhook URL */}
+      <div>
+        <label className="block text-xs font-medium text-gray-500 mb-1.5">Webhook URL</label>
+        <Input
+          type="url"
+          value={webhookUrl}
+          onChange={e => setWebhookUrl(e.target.value)}
+          placeholder="https://your-oms.com/api/xmetrics/orders"
+        />
+        <p className="text-[11px] text-gray-400 mt-1">
+          Xmetrics will POST approved orders to this URL, signed with HMAC-SHA256.
+        </p>
+      </div>
+
+      {/* HMAC Secret */}
+      <div>
+        <label className="block text-xs font-medium text-gray-500 mb-1.5">HMAC Signing Secret</label>
+        <div className="flex gap-2">
+          <div className="relative flex-1">
+            <Input
+              type={showSecret ? 'text' : 'password'}
+              value={webhookSecret}
+              onChange={e => setWebhookSecret(e.target.value)}
+              placeholder={secretPlaceholder}
+              className="pr-9 font-mono text-xs"
+            />
+            {webhookSecret && (
+              <button
+                onClick={() => setShowSecret(v => !v)}
+                className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
+              >
+                {showSecret ? <EyeOff size={14} /> : <Eye size={14} />}
+              </button>
+            )}
+          </div>
+          <Button variant="secondary" size="sm" onClick={generateSecret} className="whitespace-nowrap">
+            Generate
+          </Button>
+        </div>
+        <p className="text-[11px] text-gray-400 mt-1">
+          Your OMS should verify the <code className="text-[10px] bg-gray-100 dark:bg-white/[0.08] px-1 py-0.5 rounded">X-Xmetrics-Signature</code> header on every incoming request.
+        </p>
+      </div>
+
+      {/* Auto-push rules */}
+      <div>
+        <p className="text-xs font-medium text-gray-500 mb-3">Auto-push rules</p>
+        <div className="space-y-3">
+          <label className="flex items-start gap-3 cursor-pointer group">
+            <div className="pt-0.5">
+              <input
+                type="checkbox"
+                checked={autoPushGreen}
+                onChange={e => setAutoPushGreen(e.target.checked)}
+                className="rounded accent-brand-600 w-4 h-4 cursor-pointer"
+              />
+            </div>
+            <div>
+              <div className="flex items-center gap-2">
+                <span className="w-2 h-2 rounded-full bg-green-500 shrink-0" />
+                <span className="text-sm font-medium text-gray-800 dark:text-gray-200">GREEN orders (RTO score &lt; 50)</span>
+              </div>
+              <p className="text-xs text-gray-500 mt-0.5">
+                Push automatically as soon as they enter Xmetrics — no manual review needed.
+              </p>
+            </div>
+          </label>
+
+          <label className="flex items-start gap-3 cursor-pointer group">
+            <div className="pt-0.5">
+              <input
+                type="checkbox"
+                checked={autoPushYellow}
+                onChange={e => setAutoPushYellow(e.target.checked)}
+                className="rounded accent-brand-600 w-4 h-4 cursor-pointer"
+              />
+            </div>
+            <div>
+              <div className="flex items-center gap-2">
+                <span className="w-2 h-2 rounded-full bg-amber-500 shrink-0" />
+                <span className="text-sm font-medium text-gray-800 dark:text-gray-200">YELLOW orders (RTO score 50–59)</span>
+              </div>
+              <p className="text-xs text-gray-500 mt-0.5">
+                Push automatically. Exceptions are still created for visibility but don't block the push.
+              </p>
+            </div>
+          </label>
+
+          <div className="flex items-start gap-3 opacity-60 cursor-not-allowed">
+            <div className="pt-0.5">
+              <Lock size={14} className="text-gray-400 mt-0.5 ml-0.5" />
+            </div>
+            <div>
+              <div className="flex items-center gap-2">
+                <span className="w-2 h-2 rounded-full bg-red-500 shrink-0" />
+                <span className="text-sm font-medium text-gray-800 dark:text-gray-200">RED orders (RTO score ≥ 60)</span>
+              </div>
+              <p className="text-xs text-gray-500 mt-0.5">
+                Always require manual review and approval — cannot be auto-pushed.
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Test result */}
+      {testResult && (
+        <div className={`flex items-center gap-2 px-3 py-2.5 rounded-lg text-sm ${
+          testResult.ok
+            ? 'bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-400'
+            : 'bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-400'
+        }`}>
+          {testResult.ok ? <CheckCircle size={14} /> : <XCircle size={14} />}
+          {testResult.msg}
+        </div>
+      )}
+
+      {/* Actions */}
+      <div className="flex gap-2 pt-1">
+        <Button onClick={handleSave} disabled={saving}>
+          {saving ? 'Saving…' : 'Save Changes'}
+        </Button>
+        <Button
+          variant="secondary"
+          onClick={handleTest}
+          disabled={!webhookUrl || testing}
+        >
+          {testing ? <><Loader2 size={13} className="animate-spin" /> Testing…</> : 'Test Webhook'}
+        </Button>
+      </div>
+    </div>
+  )
+}
+
 // ─── Main page ──────────────────────────────────────────────────────────────
 
 export default function Integrations() {
@@ -297,10 +551,6 @@ export default function Integrations() {
   const [testResults, setTestResults] = useState<Record<string, string>>({})
 
   const brandId = currentBrand?.id ?? ''
-
-  const openConnect = (platform: IntegrationPlatform) => {
-    setConnectPlatform(platform)
-  }
 
   const handleConnected = async (platform: IntegrationPlatform, credentials: Record<string, string>) => {
     await connectIntegration(platform, credentials)
@@ -318,8 +568,6 @@ export default function Integrations() {
     })
     if (!ok) return
 
-    // For Shopify, deregister webhooks on the merchant's store so Shopify
-    // stops sending events to our endpoint after disconnect.
     if (integration.platform === 'SHOPIFY' && integration.credentials?.shop_domain) {
       await deregisterShopifyWebhooks(brandId, {
         shop_domain: integration.credentials.shop_domain as string,
@@ -392,105 +640,117 @@ export default function Integrations() {
   }
 
   return (
-    <div className="space-y-6 max-w-3xl">
+    <div className="space-y-8 max-w-3xl">
       <div>
         <h1 className="text-xl font-semibold tracking-tight text-gray-900 dark:text-white">Integrations</h1>
         <p className="text-[13px] text-gray-400 mt-0.5">Connect your tools to sync orders, process payments, and automate shipments.</p>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        {ALL_PLATFORMS.map(platform => {
-          const meta = PLATFORM_META[platform]
-          const integration = integrations.find(i => i.platform === platform)
-          const status = integration?.status ?? 'DISCONNECTED'
-          const isConnected = status === 'CONNECTED'
-          const sc = STATUS_CONFIG[status]
-          const isTesting = testingPlatform === platform
-          const testMsg = testResults[platform]
+      {/* Platform integrations */}
+      <div>
+        <h2 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-4">Platforms</h2>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          {ALL_PLATFORMS.map(platform => {
+            const meta = PLATFORM_META[platform]
+            const integration = integrations.find(i => i.platform === platform)
+            const status = integration?.status ?? 'DISCONNECTED'
+            const isConnected = status === 'CONNECTED'
+            const sc = STATUS_CONFIG[status]
+            const isTesting = testingPlatform === platform
+            const testMsg = testResults[platform]
 
-          return (
-            <Card key={platform} className="p-5">
-              <div className="flex items-start justify-between mb-3">
-                <div className="flex items-center gap-3">
-                  <div className={`w-10 h-10 rounded-xl flex items-center justify-center text-[13px] font-bold shrink-0 ${meta.color}`}>
-                    {meta.logo}
-                  </div>
-                  <div>
-                    <div className="flex items-center gap-1.5">
-                      <h3 className="text-sm font-medium text-gray-900">{meta.name}</h3>
-                      {meta.badge && (
-                        <span className="px-1.5 py-0.5 text-[10px] font-medium bg-brand-50 text-brand-600 rounded-full">
-                          {meta.badge}
-                        </span>
-                      )}
+            return (
+              <Card key={platform} className="p-5">
+                <div className="flex items-start justify-between mb-3">
+                  <div className="flex items-center gap-3">
+                    <div className={`w-10 h-10 rounded-xl flex items-center justify-center text-[13px] font-bold shrink-0 ${meta.color}`}>
+                      {meta.logo}
                     </div>
-                    <div className="flex items-center gap-1 mt-0.5">
-                      {sc.icon}
-                      <span className={`text-xs ${sc.color}`}>{sc.label}</span>
+                    <div>
+                      <div className="flex items-center gap-1.5">
+                        <h3 className="text-sm font-medium text-gray-900 dark:text-white">{meta.name}</h3>
+                        {meta.badge && (
+                          <span className="px-1.5 py-0.5 text-[10px] font-medium bg-brand-50 text-brand-600 rounded-full">
+                            {meta.badge}
+                          </span>
+                        )}
+                      </div>
+                      <div className="flex items-center gap-1 mt-0.5">
+                        {sc.icon}
+                        <span className={`text-xs ${sc.color}`}>{sc.label}</span>
+                      </div>
                     </div>
                   </div>
                 </div>
-              </div>
 
-              <p className="text-xs text-gray-500 mb-4 leading-relaxed">{meta.description}</p>
+                <p className="text-xs text-gray-500 mb-4 leading-relaxed">{meta.description}</p>
 
-              {integration?.last_sync_at && isConnected && (
-                <p className="text-[10px] text-gray-400 mb-3">
-                  Last sync: {new Date(integration.last_sync_at).toLocaleString('en-IN', {
-                    dateStyle: 'short', timeStyle: 'short',
-                  })}
-                </p>
-              )}
-
-              {integration?.error_message && status === 'ERROR' && (
-                <p className="text-xs text-red-600 mb-3 bg-red-50 px-2 py-1.5 rounded-md">
-                  {integration.error_message}
-                </p>
-              )}
-
-              {testMsg && (
-                <p className={`text-xs mb-3 px-2 py-1.5 rounded-md font-medium ${
-                  testMsg.startsWith('✓')
-                    ? 'bg-green-50 text-green-700'
-                    : 'bg-red-50 text-red-700'
-                }`}>
-                  {testMsg}
-                </p>
-              )}
-
-              <div className="flex gap-2">
-                {!isConnected ? (
-                  <Button size="sm" onClick={() => openConnect(platform)}>
-                    <Plus size={12} /> Connect
-                  </Button>
-                ) : (
-                  <>
-                    <Button
-                      size="sm"
-                      variant="secondary"
-                      onClick={() => integration && handleTest(integration)}
-                      disabled={isTesting}
-                    >
-                      {isTesting ? (
-                        <><Loader2 size={12} className="animate-spin" /> Testing…</>
-                      ) : (
-                        <><RefreshCw size={12} /> Test</>
-                      )}
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      className="text-red-600 hover:bg-red-50"
-                      onClick={() => integration && handleDisconnect(integration)}
-                    >
-                      Disconnect
-                    </Button>
-                  </>
+                {integration?.last_sync_at && isConnected && (
+                  <p className="text-[10px] text-gray-400 mb-3">
+                    Last sync: {new Date(integration.last_sync_at).toLocaleString('en-IN', {
+                      dateStyle: 'short', timeStyle: 'short',
+                    })}
+                  </p>
                 )}
-              </div>
-            </Card>
-          )
-        })}
+
+                {integration?.error_message && status === 'ERROR' && (
+                  <p className="text-xs text-red-600 mb-3 bg-red-50 px-2 py-1.5 rounded-md">
+                    {integration.error_message}
+                  </p>
+                )}
+
+                {testMsg && (
+                  <p className={`text-xs mb-3 px-2 py-1.5 rounded-md font-medium ${
+                    testMsg.startsWith('✓')
+                      ? 'bg-green-50 text-green-700'
+                      : 'bg-red-50 text-red-700'
+                  }`}>
+                    {testMsg}
+                  </p>
+                )}
+
+                <div className="flex gap-2">
+                  {!isConnected ? (
+                    <Button size="sm" onClick={() => setConnectPlatform(platform)}>
+                      <Plus size={12} /> Connect
+                    </Button>
+                  ) : (
+                    <>
+                      <Button
+                        size="sm"
+                        variant="secondary"
+                        onClick={() => integration && handleTest(integration)}
+                        disabled={isTesting}
+                      >
+                        {isTesting ? (
+                          <><Loader2 size={12} className="animate-spin" /> Testing…</>
+                        ) : (
+                          <><RefreshCw size={12} /> Test</>
+                        )}
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        className="text-red-600 hover:bg-red-50"
+                        onClick={() => integration && handleDisconnect(integration)}
+                      >
+                        Disconnect
+                      </Button>
+                    </>
+                  )}
+                </div>
+              </Card>
+            )
+          })}
+        </div>
+      </div>
+
+      {/* OMS webhook section */}
+      <div>
+        <h2 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-4">OMS Integration</h2>
+        <Card className="p-5">
+          <OmsWebhookSection brandId={brandId} />
+        </Card>
       </div>
 
       {connectPlatform && (
