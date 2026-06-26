@@ -36,14 +36,20 @@ serve(async (req) => {
       })
     }
 
-    // Verify HMAC-SHA256 signature
-    if (signature) {
-      const expectedSignature = await hmacSha256Hex(secret, body)
-      if (signature !== expectedSignature) {
-        return new Response(JSON.stringify({ error: 'Invalid signature' }), {
-          status: 400, headers: { ...CORS_HEADERS, 'Content-Type': 'application/json' },
-        })
-      }
+    // Verify HMAC-SHA256 signature — MANDATORY. Razorpay always sends
+    // x-razorpay-signature on webhooks; a request without one is forged. Never
+    // process an unsigned webhook — it could otherwise mark a checkout_payments
+    // row PAID or flip a D2C order's payment_status with no real payment.
+    if (!signature) {
+      return new Response(JSON.stringify({ error: 'Missing x-razorpay-signature' }), {
+        status: 401, headers: { ...CORS_HEADERS, 'Content-Type': 'application/json' },
+      })
+    }
+    const expectedSignature = await hmacSha256Hex(secret, body)
+    if (signature !== expectedSignature) {
+      return new Response(JSON.stringify({ error: 'Invalid signature' }), {
+        status: 400, headers: { ...CORS_HEADERS, 'Content-Type': 'application/json' },
+      })
     }
 
     const event = JSON.parse(body)

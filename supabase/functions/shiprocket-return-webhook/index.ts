@@ -66,14 +66,20 @@ Deno.serve(async (req: Request) => {
   if (req.method === 'OPTIONS') return new Response(null, { headers: corsHeaders })
   if (req.method !== 'POST') return json({ error: 'Method Not Allowed' }, 405)
 
-  // Optional webhook token guard
+  // Webhook token guard — MANDATORY. Without it, anyone who knows the URL could
+  // forge return-status pushes (advance a return toward refund, fire LOST
+  // exceptions). Mirrors the mandatory token in shiprocket-webhooks. Set the
+  // SHIPROCKET_WEBHOOK_TOKEN env and the matching token in the Shiprocket
+  // dashboard webhook config. Fail closed if it isn't configured.
   const webhookToken = Deno.env.get('SHIPROCKET_WEBHOOK_TOKEN')
-  if (webhookToken) {
-    const incoming = req.headers.get('x-shiprocket-token') ?? ''
-    if (incoming !== webhookToken) {
-      console.error('shiprocket-return-webhook: invalid token')
-      return json({ error: 'Unauthorized' }, 401)
-    }
+  if (!webhookToken) {
+    console.error('shiprocket-return-webhook: SHIPROCKET_WEBHOOK_TOKEN not set')
+    return json({ error: 'Webhook token not configured' }, 500)
+  }
+  const incoming = req.headers.get('x-shiprocket-token') ?? ''
+  if (incoming !== webhookToken) {
+    console.error('shiprocket-return-webhook: invalid token')
+    return json({ error: 'Unauthorized' }, 401)
   }
 
   // Use service-role client (no JWT from Shiprocket)

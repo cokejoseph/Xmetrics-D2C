@@ -82,14 +82,18 @@ Deno.serve(async (req: Request) => {
     oms_webhook_enabled?: boolean
   }
 
-  // Verify signature if secret is configured
-  if (settings.oms_webhook_secret) {
-    if (!incomingSignature) {
-      return json({ error: 'Missing X-Xmetrics-Signature header' }, 401)
-    }
-    const valid = await verifyHmac(rawBody, settings.oms_webhook_secret, incomingSignature)
-    if (!valid) return json({ error: 'Invalid signature' }, 401)
+  // Verify signature — MANDATORY. A status push with no signature (or for a
+  // brand that hasn't configured a secret) is untrusted and must be rejected,
+  // otherwise anyone who knows a brand_id + order number could forge shipment
+  // status. Fail closed.
+  if (!settings.oms_webhook_secret) {
+    return json({ error: 'OMS webhook secret not configured for this brand' }, 401)
   }
+  if (!incomingSignature) {
+    return json({ error: 'Missing X-Xmetrics-Signature header' }, 401)
+  }
+  const valid = await verifyHmac(rawBody, settings.oms_webhook_secret, incomingSignature)
+  if (!valid) return json({ error: 'Invalid signature' }, 401)
 
   let body: Record<string, unknown>
   try {
