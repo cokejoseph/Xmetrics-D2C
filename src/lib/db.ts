@@ -626,6 +626,49 @@ export async function updateNdrEvent(
   return { error: error?.message ?? null }
 }
 
+// ─── Campaigns (Campaign ROI / Discount Leakage) ───────────────────────────
+
+type CampaignRow = {
+  id: string; name: string; coupon_code: string; spend: number
+  channel: string | null; started_at: string | null; notes: string | null
+}
+
+export async function getCampaigns(brandId: string): Promise<CampaignRow[]> {
+  if (!supabase) return []
+  const { data } = await supabase
+    .from('campaigns')
+    .select('id, name, coupon_code, spend, channel, started_at, notes')
+    .eq('brand_id', brandId)
+    .order('created_at', { ascending: false })
+  return (data ?? []) as CampaignRow[]
+}
+
+export async function addCampaignDB(
+  brandId: string,
+  c: { name: string; coupon_code: string; spend: number; channel?: string | null; started_at?: string | null; notes?: string | null },
+): Promise<string | null> {
+  if (!supabase) return null
+  const { data } = await supabase
+    .from('campaigns')
+    .insert({
+      brand_id: brandId,
+      name: c.name,
+      coupon_code: c.coupon_code,
+      spend: c.spend,
+      channel: c.channel ?? null,
+      started_at: c.started_at ?? null,
+      notes: c.notes ?? null,
+    })
+    .select('id')
+    .single()
+  return (data?.id as string) ?? null
+}
+
+export async function removeCampaignDB(id: string): Promise<void> {
+  if (!supabase) return
+  await supabase.from('campaigns').delete().eq('id', id)
+}
+
 // ─── NDR Shiprocket actions ────────────────────────────────────────────────
 
 export async function ndrReschedule(

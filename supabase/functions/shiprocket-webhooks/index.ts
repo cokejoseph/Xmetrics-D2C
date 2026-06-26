@@ -219,6 +219,32 @@ Deno.serve(async (req: Request) => {
     }
 
     if (event === 'NDR_RAISED') {
+      // Create the NDR recovery record the founder acts on (the NDR Recovery
+      // Center reads ndr_events). One open record per AWB — re-sent webhooks
+      // bump the attempt instead of stacking duplicates.
+      const { data: openNdr } = await supabase
+        .from('ndr_events')
+        .select('id, attempt_number')
+        .eq('brand_id', brandId)
+        .eq('awb_number', awb)
+        .eq('final_outcome', 'PENDING')
+        .maybeSingle()
+
+      if (openNdr) {
+        await supabase
+          .from('ndr_events')
+          .update({ attempt_number: (openNdr.attempt_number ?? 1) + 1 })
+          .eq('id', openNdr.id)
+      } else {
+        await supabase.from('ndr_events').insert({
+          brand_id: brandId,
+          order_id: orderId,
+          awb_number: awb,
+          ndr_reason: body.tracking_data?.current_status ?? 'Non-delivery reported',
+          attempt_number: 1,
+        })
+      }
+
       await ensureException({
         brand_id: brandId,
         order_id: orderId,

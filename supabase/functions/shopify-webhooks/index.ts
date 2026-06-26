@@ -71,6 +71,7 @@ interface ShopifyOrder {
   gateway: string
   total_price: string
   total_discounts: string
+  discount_codes?: Array<{ code: string; amount: string; type: string }>
   created_at: string
   line_items: ShopifyLineItem[]
   shipping_address: ShopifyAddress | null
@@ -494,6 +495,7 @@ async function handleOrder(brandId: string, shopifyOrder: ShopifyOrder, topic: s
     channel: 'SHOPIFY',
     gross_amount: orderAmount,
     discount_amount: parseFloat(shopifyOrder.total_discounts || '0'),
+    coupon_code: shopifyOrder.discount_codes?.[0]?.code ?? null,
     payment_status: mapPaymentStatus(shopifyOrder.financial_status),
     payment_method: mapPaymentMethod(shopifyOrder.gateway),
     shipping_address: shippingAddressObj,

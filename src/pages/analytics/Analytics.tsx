@@ -286,7 +286,8 @@ export default function Analytics() {
   )
 
   // ── Campaign ROI — manual spend → true contribution margin per coupon ───────
-  const { campaigns, addCampaign, removeCampaign } = useCampaignStore()
+  const { campaigns, addCampaign, removeCampaign, hydrate: hydrateCampaigns } = useCampaignStore()
+  useEffect(() => { hydrateCampaigns() }, [hydrateCampaigns])
   const [cName, setCName] = useState('')
   const [cCoupon, setCCoupon] = useState('')
   const [cSpend, setCSpend] = useState('')
