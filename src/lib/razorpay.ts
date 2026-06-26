@@ -1,5 +1,5 @@
 /**
- * razorpay.ts — Client-side Razorpay integration helpers for Centinal.
+ * razorpay.ts — Client-side Razorpay integration helpers for Xmetrics.
  *
  * Razorpay integration covers:
  *   1. Validating API credentials (test connection)

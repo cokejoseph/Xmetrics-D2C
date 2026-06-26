@@ -1,5 +1,5 @@
 /**
- * whatsapp.ts — WhatsApp Business API helpers for Centinal.
+ * whatsapp.ts — WhatsApp Business API helpers for Xmetrics.
  *
  * Currently covers credential validation from Settings → Integrations.
  * Message sending (reorder nudges, order notifications, daily brief) will be

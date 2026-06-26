@@ -1,5 +1,5 @@
 /**
- * shiprocket.ts — Client-side Shiprocket integration helpers for Centinal.
+ * shiprocket.ts — Client-side Shiprocket integration helpers for Xmetrics.
  *
  * Currently covers credential validation + connect flow from
  * Settings → Integrations. Shipment creation, tracking, and label

@@ -1,5 +1,5 @@
 /**
- * shopify.ts — Client-side Shopify integration helpers for Centinal.
+ * shopify.ts — Client-side Shopify integration helpers for Xmetrics.
  *
  * Used by Settings → Integrations page and the initial sync flow.
  * All actual data writing happens via the edge function (shopify-webhooks).

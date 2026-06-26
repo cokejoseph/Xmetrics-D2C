@@ -1,5 +1,5 @@
 /**
- * db.ts — All Supabase database operations for Sentinal (live mode only).
+ * db.ts — All Supabase database operations for Xmetrics (live mode only).
  * Every function is a no-op guard if called in demo mode — the appStore
  * checks DEMO_MODE before calling any of these.
  */

@@ -2,7 +2,7 @@
  * shiprocket-webhooks — Supabase Edge Function
  *
  * Receives Shiprocket shipment tracking webhooks and updates shipment +
- * order statuses in Sentinal. Also creates exceptions for critical events
+ * order statuses in Xmetrics. Also creates exceptions for critical events
  * like RTO initiation.
  *
  * Shiprocket sends a JSON POST with an "event" field.
@@ -49,7 +49,7 @@ async function ensureException(row: {
   await supabase.from('exceptions').insert(row)
 }
 
-// Shiprocket → Sentinal status map
+// Shiprocket → Xmetrics status map
 const SHIPMENT_STATUS_MAP: Record<string, string> = {
   SHIPMENT_PICKUP_GENERATED: 'LABEL_CREATED',
   SHIPMENT_PICKUP_SCHEDULED: 'PICKUP_SCHEDULED',
@@ -135,15 +135,15 @@ Deno.serve(async (req: Request) => {
     return json({ ok: true, note: 'No AWB — skipped' })
   }
 
-  const sentinalStatus = SHIPMENT_STATUS_MAP[event] ?? 'IN_TRANSIT'
-  const fulfillmentStatus = FULFILLMENT_STATUS_MAP[sentinalStatus] ?? 'IN_TRANSIT'
+  const xmetricsStatus = SHIPMENT_STATUS_MAP[event] ?? 'IN_TRANSIT'
+  const fulfillmentStatus = FULFILLMENT_STATUS_MAP[xmetricsStatus] ?? 'IN_TRANSIT'
 
   // ── Update shipment ──────────────────────────────────────────────────────
   const shipmentUpdate: Record<string, unknown> = {
-    status: sentinalStatus,
+    status: xmetricsStatus,
     courier: courier ?? 'Shiprocket',
   }
-  if (sentinalStatus === 'DELIVERED' && body.tracking_data?.delivered_date) {
+  if (xmetricsStatus === 'DELIVERED' && body.tracking_data?.delivered_date) {
     shipmentUpdate.delivered_at = body.tracking_data.delivered_date
   }
 
@@ -174,9 +174,9 @@ Deno.serve(async (req: Request) => {
         courier: courier ?? 'Shiprocket',
         awb_number: awb,
         tracking_number: awb,
-        status: sentinalStatus,
+        status: xmetricsStatus,
         pickup_scheduled_at: null,
-        delivered_at: sentinalStatus === 'DELIVERED' ? body.tracking_data?.delivered_date ?? null : null,
+        delivered_at: xmetricsStatus === 'DELIVERED' ? body.tracking_data?.delivered_date ?? null : null,
         created_at: new Date().toISOString(),
       }, { onConflict: 'order_id,awb_number' })
     }
@@ -276,7 +276,7 @@ Deno.serve(async (req: Request) => {
     .eq('brand_id', brandId)
     .eq('platform', 'SHIPROCKET')
 
-  return json({ ok: true, event, awb, status: sentinalStatus })
+  return json({ ok: true, event, awb, status: xmetricsStatus })
 })
 
 function json(data: unknown, status = 200) {
