@@ -9,6 +9,14 @@ export default defineConfig({
     include: ['src/**/*.test.ts'],
   },
   plugins: [react()],
+  // Dedicated, strict port so the Xmetrics dev server is never confused with
+  // another project (e.g. Sentinel on Vite's default 5173). strictPort makes
+  // Vite FAIL loudly if 5273 is taken instead of silently drifting to another
+  // port or sharing — so Preview always opens Xmetrics, never a stray app.
+  server: {
+    port: 5273,
+    strictPort: true,
+  },
   resolve: {
     alias: {
       '@': path.resolve(__dirname, './src'),
