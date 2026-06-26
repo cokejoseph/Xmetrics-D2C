@@ -283,7 +283,7 @@ export async function getOrders(brandId: string): Promise<Order[]> {
     .select('*, customer:customers(*)')
     .eq('brand_id', brandId)
     .order('created_at', { ascending: false })
-    .limit(500)
+    .limit(5000)
 
   const orders = (ordersRes.data ?? []) as Order[]
   if (orders.length === 0) return []
@@ -382,7 +382,7 @@ export async function getPayments(brandId: string): Promise<Payment[]> {
     .select('*')
     .eq('brand_id', brandId)
     .order('created_at', { ascending: false })
-    .limit(500)
+    .limit(5000)
   return (data ?? []) as Payment[]
 }
 
